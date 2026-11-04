@@ -131,7 +131,7 @@ Completion record (2026-11-04): Git repository initialized on branch `main` with
 ### TASK-005: Obtain and Inspect the Dataset
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-001
 
 Description:
@@ -144,6 +144,8 @@ Evidence:
 - Actual columns documented.
 - Data coverage and quality inspected.
 - Limitations documented.
+
+Completion record (2026-11-04): The Kaggle Store Item Demand dataset was already downloaded to `data/raw/train.csv` (913,000 rows) and was inspected programmatically (`/tmp/opencode/inspect_dataset.py`). Verified: expected columns exactly (`date,store,item,sales`), date range 2013-01-01 → 2017-12-31 (1,826 days), 10 stores × 50 items with a complete daily sequence for every store-item combination, zero missing values, zero duplicate keys, zero negative or fractional sales, one zero-sales record. Store 1 subset (DEC-015 target) holds 91,300 rows across all 50 items. Verified characteristics recorded in `../03-data/dataset-overview.md`. Limitation: `test.csv` is the competition's unlabeled 90-day future set (date, store, item only) — it cannot be used for evaluation; all evaluation must use chronological splits of `train.csv`.
 
 ### TASK-006: Implement Dataset Loader
 

@@ -32,6 +32,31 @@ The dataset contains historical daily sales records from multiple stores and pro
 
 These characteristics must be verified against the downloaded dataset before implementation.
 
+### Verified Actual Characteristics (TASK-005 inspection, 2026-11-04)
+
+The file `data/raw/train.csv` was inspected programmatically. Verified facts:
+
+| Property | Verified Value |
+|---|---|
+| Records | 913,000 exactly (10 stores × 50 items × 1,826 days) |
+| Columns | `date` (string), `store` (int64), `item` (int64), `sales` (int64) |
+| Date range | 2013-01-01 → 2017-12-31 (1,826 days) |
+| Stores | Integers 1–10 |
+| Items | Integers 1–50, every store has all 50 items |
+| Missing values | 0 in all columns |
+| Duplicate (date, store, item) keys | 0 |
+| Negative sales | 0 |
+| Fractional sales | 0 |
+| Day gaps within store-item series | 1 day only — the daily sequence is complete for every combination |
+| Zero-sales records | 1 (in the entire dataset) |
+| Mean sales | 52.25 overall; 47.27 within store 1 |
+
+Conclusions:
+
+- The dataset is complete and internally consistent; no record-level quality issues were found.
+- Date completeness means the missing-date handling policy (see `data-preprocessing.md`) has no effect on this dataset, but the pipeline still performs the check and reports gaps.
+- Store 1 (per DEC-015) contains 91,300 rows covering all 50 items across the full five-year range — sufficient history for model development and chronological evaluation.
+
 ---
 
 ## 3. Dataset Files
