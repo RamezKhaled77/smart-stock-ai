@@ -280,9 +280,13 @@ It does not imply that the application itself has been implemented.
 ### Added
 
 - [TASK-002] Approved dependencies documented in `requirements.txt` (streamlit, pandas, numpy, scikit-learn, plotly, joblib, pytest) with minimum-version constraints.
+- [TASK-005] Verified dataset characteristics recorded in `../03-data/dataset-overview.md` (913,000 rows, complete daily sequence, no quality issues).
+- [TASK-006] Dataset loader `load_historical_dataset()` with clear `DatasetError` reporting, plus preprocessing functions (`filter_store`, `sort_chronologically`, `detect_date_gaps`, `preprocess_dataset`) and `scripts/prepare_dataset.py` (TASK-008).
+- [TASK-007] Dataset validation (`validate_and_parse_dataset`) with rejection policies documented in `../03-data/data-preprocessing.md` section 19.
 
 ### Technical
 
+- [TASK-005] Dataset inspection executed programmatically (dataset overview updated; competition `test.csv` recorded as unusable for evaluation).
 - Established a documentation-first development workflow.
     
 - Defined the separation between forecasting, inventory calculations, and restocking recommendations.
@@ -293,6 +297,7 @@ It does not imply that the application itself has been implemented.
 - [TASK-003] Project structure created per the approved `../02-architecture/project-structure.md` (`src/smartstock/` package layout, `data/`, `models/artifacts/`, `scripts/`, `tests/`); Kaggle dataset files relocated to git-ignored `data/raw/`.
 - [TASK-004] Git repository initialized on branch `main` with the approved `.gitignore`; checkpoint commits recorded.
 - [TASK-003] Minimal Streamlit entry point (`app.py`) and centralized configuration (`config.py`) added; verified by a headless smoke test (HTTP 200, no errors) and `py_compile`.
+- [TASK-006] Test suite started: `tests/test_preprocessing.py` covers loading, validation, and preprocessing (24 passing tests, TASK-006 … TASK-008).
 
 ## 6. Future Entry Template
 

@@ -377,19 +377,20 @@ Tests should use small controlled datasets rather than depending on the complete
 
 ## 19. Open Decisions
 
-- Exact invalid-record policy.
-    
-- Duplicate aggregation policy.
-    
-- Missing-date interpretation.
-    
-- Negative sales handling.
-    
-- Final train/validation/test date ranges.
-    
-- Processed dataset formats.
-    
-- Whether preprocessing should preserve additional source columns.
+Resolved by implementation based on TASK-005 inspection evidence (2026-11-04). The source dataset contains zero missing values, zero duplicate keys, zero negative or fractional sales, and a complete daily sequence for every store-item combination, so strict rejection policies can be applied without any effect on the actual data:
+
+| Question | Resolved Policy | Rationale |
+|---|---|---|
+| Invalid-record policy | Reject with a clear `DatasetError` naming the column and count; never silently convert or drop. | No conversions needed for the source data; loud failure protects future imported data. |
+| Duplicate aggregation policy | Reject duplicate (date, store, item) keys; no silent dropping. | Source contains none. If a future import introduces duplicates, aggregation requires investigation and would change data; that must be explicit, not automatic. |
+| Missing-date interpretation | Reported via `detect_date_gaps`; dates are read as observed, zeros are not fabricated. | Source is complete, so any gap is unexpected; inserting synthetic zeros would invent demand evidence. Implemented in `detect_date_gaps`. |
+| Negative sales handling | Reject. | Dataset is expected to represent units sold; the source has none. Negative values must be investigated before use, never auto-corrected. |
+| Processed dataset formats | `data/processed/store_1_cleaned_sales.csv` produced by `scripts/prepare_dataset.py` (sideline: cannot be regenerated without `data/raw/train.csv`). | Reproducible single store-cleaned output (DEC-015); git-ignored per the data directory rules. |
+| Preserve additional columns | Only the four required columns are kept. | Per DEC-015 the `store` column is filtered away at preprocessing; surviving frame preserves `date, item, sales` plus store for join/verification. |
+
+Still open (to be resolved in the ML phases):
+
+- Final train/validation/test date ranges (selected after the chronological-split design in the model evaluation phase).
     
 
 ## 20. Related Documentation

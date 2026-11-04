@@ -11,7 +11,11 @@ import pytest
 
 from smartstock.ml.preprocessing import (
     DatasetError,
+    detect_date_gaps,
+    filter_store,
     load_historical_dataset,
+    preprocess_dataset,
+    sort_chronologically,
     validate_and_parse_dataset,
 )
 
@@ -162,3 +166,96 @@ class TestValidateAndParseDataset:
         df = _df_from_csv(VALID_CSV + "2013-01-03,1,1,\n")
         with pytest.raises(DatasetError, match="train.csv"):
             validate_and_parse_dataset(df, source_name="train.csv")
+
+
+def _validated_two_store_df() -> pd.DataFrame:
+    """A small validated dataset with two stores and a date gap."""
+    csv_text = (
+        "date,store,item,sales\n"
+        "2013-01-02,1,1,11\n"
+        "2013-01-01,1,1,13\n"
+        "2013-01-01,2,1,7\n"
+        "2013-01-02,2,1,9\n"
+        "2013-01-03,2,1,4\n"
+        "2013-01-01,1,2,2\n"
+        "2013-01-03,1,2,3\n"
+    )
+    return validate_and_parse_dataset(_df_from_csv(csv_text))
+
+
+class TestFilterStore:
+    """Store filtering per DEC-015 (one store, item -> product)."""
+
+    def test_keeps_only_selected_store(self) -> None:
+        df = _validated_two_store_df()
+        result = filter_store(df, store_id=1)
+        assert set(result["store"]) == {1}
+        assert len(result) == 4
+
+    def test_unknown_store_raises_with_available_list(self) -> None:
+        df = _validated_two_store_df()
+        with pytest.raises(DatasetError, match="Available stores"):
+            filter_store(df, store_id=99)
+
+
+class TestSortChronologically:
+    """Sorting by store, item, then date."""
+
+    def test_sorts_by_store_item_date(self) -> None:
+        df = _validated_two_store_df()
+        result = sort_chronologically(df)
+        # Stores in ascending order; dates ascending within each series.
+        assert list(result["store"]) == sorted(result["store"])
+        grouped = result.groupby(["store", "item"])["date"]
+        for _, dates in grouped:
+            assert list(dates) == sorted(dates)
+        # Date gap remains visible: store 1 item 2 skips 2013-01-02.
+        item2_dates = sorted(
+            result.loc[
+                (result["store"] == 1) & (result["item"] == 2), "date"
+            ].dt.strftime("%Y-%m-%d")
+        )
+        assert "2013-01-02" not in item2_dates
+
+
+class TestDetectDateGaps:
+    """Daily-sequence completeness checking."""
+
+    def test_reports_gap_for_incomplete_series(self) -> None:
+        df = sort_chronologically(filter_store(
+            _validated_two_store_df(), store_id=1
+        ))
+        gaps = detect_date_gaps(df)
+        assert gaps["combinations_checked"] == 2
+        assert gaps["combinations_with_gaps"] == 1
+        assert gaps["total_missing_dates"] == 1
+
+    def test_reports_no_gap_for_complete_series(self) -> None:
+        df = _validated_two_store_df()
+        # Store 2 has three consecutive days for item 1.
+        store2 = df[df["store"] == 2]
+        gaps = detect_date_gaps(store2)
+        assert gaps == {
+            "combinations_checked": 1,
+            "combinations_with_gaps": 0,
+            "total_missing_dates": 0,
+        }
+
+
+class TestPreprocessDataset:
+    """End-to-end pipeline on a small CSV file."""
+
+    def test_pipeline_returns_sorted_store_1_data(self, valid_csv: Path) -> None:
+        result, report = preprocess_dataset(valid_csv, store_id=1)
+        assert list(result["store"]) == [1, 1]
+        assert list(result["date"].dt.strftime("%Y-%m-%d")) == [
+            "2013-01-01", "2013-01-02",
+        ]
+        assert report["prepared_record_count"] == 2
+        assert report["source_record_count"] == 2
+        assert report["product_count"] == 1
+        assert report["total_missing_dates"] == 0
+
+    def test_pipeline_rejects_unknown_store(self, valid_csv: Path) -> None:
+        with pytest.raises(DatasetError, match="Available stores"):
+            preprocess_dataset(valid_csv, store_id=42)

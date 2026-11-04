@@ -161,3 +161,118 @@ def validate_and_parse_dataset(
         )
 
     return validated
+
+
+def filter_store(df: pd.DataFrame, store_id: int) -> pd.DataFrame:
+    """Filter the history to exactly one store (DEC-015).
+
+    Task-005 evidence shows every store contains the same 50 items, so
+    filtering by store yields a complete per-product history.
+
+    Args:
+        df: Validated dataset (from ``validate_and_parse_dataset``).
+        store_id: Store identifier to keep (1-10 in the source data).
+
+    Returns:
+        Filtered DataFrame with a fresh index.
+
+    Raises:
+        DatasetError: If the store identifier is unknown or the filter
+            would produce an empty dataset.
+    """
+    filtered = df[df["store"] == store_id]
+    if filtered.empty:
+        available = sorted(df["store"].unique().tolist())
+        raise DatasetError(
+            f"Store {store_id} not found in dataset. "
+            f"Available stores: {available}"
+        )
+    return filtered.reset_index(drop=True)
+
+
+def sort_chronologically(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort records by store, item, then date (ascending).
+
+    Chronological order is required for lag features, rolling
+    averages, and time-based splitting.
+
+    Args:
+        df: Validated (and optionally store-filtered) dataset.
+
+    Returns:
+        A new DataFrame sorted by store, item, date with reset index.
+    """
+    return df.sort_values(
+        ["store", "item", "date"], kind="stable"
+    ).reset_index(drop=True)
+
+
+def detect_date_gaps(df: pd.DataFrame) -> dict:
+    """Check that every store-item series runs on consecutive days.
+
+    Args:
+        df: Validated dataset covering one or more stores.
+
+    Returns:
+        Summary with ``combinations_checked``, ``combinations_with_gaps``,
+        and ``total_missing_dates`` across all series.
+    """
+    gaps_total = 0
+    combos_with_gaps = 0
+    for _, group in df.groupby(["store", "item"]):
+        dates = group["date"].sort_values()
+        expected = pd.date_range(
+            dates.min(), dates.max(), freq="D"
+        )
+        missing = len(expected.difference(dates))
+        if missing:
+            combos_with_gaps += 1
+            gaps_total += missing
+
+    return {
+        "combinations_checked": int(df.groupby(["store", "item"]).ngroups),
+        "combinations_with_gaps": combos_with_gaps,
+        "total_missing_dates": int(gaps_total),
+    }
+
+
+def preprocess_dataset(
+    csv_path: Path, store_id: int = 1
+) -> tuple[pd.DataFrame, dict]:
+    """Run the full preprocessing workflow for the selected store.
+
+    Workflow per ``docs/03-data/data-preprocessing.md``:
+    load -> validate -> filter to the selected store (DEC-015) ->
+    sort chronologically -> detect date gaps -> summarize.
+
+    Args:
+        csv_path: Path to the historical CSV file.
+        store_id: Store to keep (default 1 per DEC-015).
+
+    Returns:
+        Tuple of (prepared DataFrame for the selected store, report
+        dictionary with the details listed in the preprocessing
+        documentation section 17).
+
+    Raises:
+        DatasetError: On any loading or validation failure.
+    """
+    raw_df = load_historical_dataset(csv_path)
+    validated_df = validate_and_parse_dataset(
+        raw_df, source_name=csv_path.name
+    )
+    store_df = sort_chronologically(filter_store(validated_df, store_id))
+    gaps = detect_date_gaps(store_df)
+
+    zero_sales_count = int((store_df["sales"] == 0).sum())
+    report = {
+        "source_file": str(csv_path),
+        "source_record_count": int(len(raw_df)),
+        "store_id": store_id,
+        "prepared_record_count": int(len(store_df)),
+        "date_range": (store_df["date"].min(), store_df["date"].max()),
+        "product_count": int(store_df["item"].nunique()),
+        "zero_sales_record_count": zero_sales_count,
+        **gaps,
+    }
+    return store_df, report

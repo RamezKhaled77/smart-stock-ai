@@ -88,7 +88,7 @@ Do not duplicate the full task list here.
 | Milestone | Description | Initial Status |
 |---|---|---|
 | M-001 | Documentation and environment setup | Completed (2026-11-04) |
-| M-002 | Dataset exploration and preparation | Not Started |
+| M-002 | Dataset exploration and preparation | Completed (2026-11-04) |
 | M-003 | Database and persistence layer | Not Started |
 | M-004 | Product and inventory management | Not Started |
 | M-005 | Sales management | Not Started |
@@ -224,3 +224,19 @@ It does not claim that the documentation has been created as local files or that
 - Tasks Updated: TASK-001 → Verified, TASK-002 → Verified, TASK-003 → Verified, TASK-004 → Verified (see `../06-development/task-breakdown.md`).
 - Blockers: None recorded.
 - Next Steps: Phase 1 — obtain and inspect the dataset (TASK-005), then data loading and validation (TASK-006 … TASK-008).
+
+### Phase 1: Dataset and Data Preparation Completed
+
+- Date: 2026-11-04.
+- Status: Phase 1 complete (TASK-005 … TASK-008). Database and application layers not started.
+- Work Completed:
+  - TASK-005: programmatic inspection of `data/raw/train.csv` — verified 913,000 rows (10 stores × 50 items × 1,826 days), complete daily sequence, zero missing/duplicate/negative/fractional records; findings recorded in `../03-data/dataset-overview.md` and noted limitation that the competition `test.csv` is unusable for evaluation (unlabeled).
+  - TASK-006: `load_historical_dataset()` with clear `DatasetError` reporting for missing/unreadable/empty/invalid-column files.
+  - TASK-007: `validate_and_parse_dataset()` — type/date/value/duplicate validation with rejection policies documented from inspection evidence (data-preprocessing.md section 19).
+  - TASK-008: `filter_store()`, `sort_chronologically()`, `detect_date_gaps()`, `preprocess_dataset()`, plus `scripts/prepare_dataset.py` producing git-ignored `data/processed/store_1_cleaned_sales.csv` (store 1 per DEC-015).
+- Tests Executed: `pytest tests/test_preprocessing.py` (24 tests); real-dataset checks: full-load + validation of 913,000 rows (~0.6 s) and the preprocessing report run for store 1.
+- Test Results: 24/24 passed. Real-dataset run: 91,300 prepared records, 50 products, 0 date gaps, 0 zero-sales records.
+- Tasks Updated: TASK-005 … TASK-008 → Verified; milestone M-002 → Completed.
+- Decisions Made: preprocessing rejection policies resolved by implementation (documented in data-preprocessing.md §19); split dates remain open pending the ML evaluation phase.
+- Blockers: None recorded.
+- Next Steps: Phase 2 — database schema and persistence layer (TASK-009 …).

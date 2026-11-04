@@ -150,7 +150,7 @@ Completion record (2026-11-04): The Kaggle Store Item Demand dataset was already
 ### TASK-006: Implement Dataset Loader
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-005
 
 Description:
@@ -163,10 +163,12 @@ Evidence:
 - Missing or unreadable files produce clear errors.
 - Loader tests pass.
 
+Completion record (2026-11-04): `load_historical_dataset()` implemented in `src/smartstock/ml/preprocessing.py` with a dedicated `DatasetError` type and checks for missing file, unreadable file, empty file, and missing required columns (error messages name the file and columns). Tests: 6 loader tests in `tests/test_preprocessing.py`, all passing. Real-dataset check: `data/raw/train.csv` loads (913,000 rows).
+
 ### TASK-007: Implement Data Validation
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-006
 
 Description:
@@ -179,10 +181,12 @@ Evidence:
 - Invalid data is handled safely.
 - Validation tests pass.
 
+Completion record (2026-11-04): `validate_and_parse_dataset()` implemented — rejects missing required values, nonnumeric or noninteger identifiers, nonnumeric sales, negative sales, unparseable dates, and duplicate (date, store, item) keys with clear errors; parses `date` to datetime and identifiers to integers; returns a copy (input never mutated). Rejection policies documented in `../03-data/data-preprocessing.md` section 19 based on TASK-005 evidence. Tests: 11 validation tests passing (two initial test bugs were in the test fixtures themselves — a misplaced empty field and a wrong dtype expectation — and were fixed; validation code unchanged). Real-dataset check: all 913,000 rows validate in ~0.6 s.
+
 ### TASK-008: Implement Data Preprocessing
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-007
 
 Description:
@@ -194,6 +198,8 @@ Evidence:
 - Preprocessing functions are reusable.
 - Data quality issues are handled according to approved rules.
 - Tests pass.
+
+Completion record (2026-11-04): Implemented in `src/smartstock/ml/preprocessing.py`: `filter_store()` (DEC-015 store filtering with unknown-store rejection), `sort_chronologically()` (store, item, date), `detect_date_gaps()` (daily-sequence completeness per store-item series), `preprocess_dataset()` (full workflow returning a prepared DataFrame and the section-17 report). `scripts/prepare_dataset.py` writes the cleaned subset to git-ignored `data/processed/store_1_cleaned_sales.csv`. Real-dataset run report: source 913,000 records → store 1: 91,300 records, 50 products, date range 2013-01-01 → 2017-12-31, 0 zero-sales records, 50 series checked, 0 with gaps, 0 missing dates. Tests: 7 preprocessing tests passing (plus TASK-006/007 tests, 24 total).
 
 ---
 
