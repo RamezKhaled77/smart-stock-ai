@@ -1,0 +1,466 @@
+# Project Decisions
+
+## 1. Purpose
+
+This document records important project decisions and their current status.
+
+It helps maintain consistency across:
+
+- Product requirements.
+- Architecture.
+- Data processing.
+- Machine learning.
+- Business logic.
+- User interface.
+- Development workflow.
+
+The AI Agent must consult this document before making changes that affect established project decisions.
+
+---
+
+## 2. Decision Statuses
+
+| Status | Meaning |
+|---|---|
+| Accepted | Explicitly agreed upon and should be followed. |
+| Proposed | Suggested but not necessarily approved. |
+| Open | Requires clarification or a decision. |
+| Rejected | Considered and intentionally not selected. |
+| Superseded | Replaced by a newer decision. |
+
+A proposed decision must not be treated as accepted.
+
+---
+
+## 3. Project Direction
+
+### DEC-001: Project Identity
+
+- Status: Accepted
+- Decision: The project name is SmartStock AI.
+- Context: The project is an AI and Python college project focused on inventory management and demand forecasting.
+
+### DEC-002: Main Project Concept
+
+- Status: Accepted
+- Decision: Build a small-store inventory management application that uses historical sales data to forecast demand and provide restocking recommendations.
+- Context: The project should demonstrate both practical application development and the use of AI/ML libraries in Python.
+
+### DEC-003: Development Approach
+
+- Status: Accepted
+- Decision: The user is implementing the project individually.
+- Context: The original team-based plan changed to an individual implementation.
+
+### DEC-004: Project Scope Philosophy
+
+- Status: Accepted
+- Decision: Prioritize a functional, understandable core application over unnecessary advanced features.
+- Context: The project must remain achievable within the available time and hardware constraints.
+
+---
+
+## 4. Technology Decisions
+
+### DEC-005: Main Programming Language
+
+- Status: Accepted
+- Decision: Python is the main implementation language.
+- Context: The project belongs to an AI and Python course.
+
+### DEC-006: User Interface Framework
+
+- Status: Proposed
+- Decision: Use Streamlit for the initial web interface.
+- Context: Streamlit reduces frontend development effort and allows the project to focus on Python, data processing, and ML.
+- Confirmation Required: Verify against the final technology stack.
+
+### DEC-007: Data Processing Libraries
+
+- Status: Proposed
+- Decision: Use Pandas and NumPy for data processing.
+- Context: They provide suitable tools for tabular data and numerical operations.
+
+### DEC-008: Machine Learning Library
+
+- Status: Proposed
+- Decision: Use Scikit-learn for the initial forecasting implementation.
+- Context: It provides CPU-friendly regression models and evaluation utilities.
+
+### DEC-009: Database
+
+- Status: Proposed
+- Decision: Use SQLite for operational application data.
+- Context: SQLite is lightweight and does not require a separate database server.
+
+### DEC-010: Visualization
+
+- Status: Proposed
+- Decision: Use Plotly for interactive charts where appropriate.
+- Context: The application needs sales and forecasting visualizations.
+
+### DEC-011: Model Persistence
+
+- Status: Proposed
+- Decision: Use Joblib to save and load trained model artifacts.
+- Context: Normal application usage should not require retraining the model.
+
+### DEC-012: Testing Framework
+
+- Status: Proposed
+- Decision: Use pytest for automated tests.
+- Context: Business logic, data processing, and ML components should be tested independently.
+
+---
+
+## 5. Data Decisions
+
+### DEC-013: Historical Dataset
+
+- Status: Proposed
+- Decision: Use the Kaggle Store Item Demand Forecasting Competition dataset as the initial historical sales dataset.
+- Source: https://www.kaggle.com/competitions/demand-forecasting-kernels-only/data
+- Context: It contains historical daily sales for multiple stores and products.
+- Confirmation Required: Inspect the actual downloaded files and verify suitability.
+
+### DEC-014: Operational Data Separation
+
+- Status: Accepted
+- Decision: Historical training data and operational application data have separate responsibilities.
+- Context:
+  - Historical sales data supports demand forecasting.
+  - SQLite stores operational application data.
+  - The full historical dataset does not automatically need to be stored in SQLite.
+
+### DEC-015: Dataset-to-Product Mapping
+
+- Status: Accepted
+- Decision: Map dataset entities to application products by selecting exactly one store from the Kaggle dataset (store 1 by default) and treating each `item` value as one application product.
+- Context:
+  - The initial application follows a single-store workflow (DEC-041).
+  - Selecting one store provides approximately 45,600 daily records (1 store × 50 items × 5 years), which is sufficient for forecasting experiments and CPU-friendly.
+  - The `item` → product mapping must be documented in the data preparation documentation.
+- Important: This does not introduce multi-branch support. The `store` column is used only to filter the dataset during preprocessing, not kept as an operational concept.
+- Decided: 2026-11-04.
+
+### DEC-016: Historical Import and Current Stock
+
+- Status: Accepted
+- Decision: Historical sales imports must not automatically reduce current stock.
+- Context: Historical sales records describe past demand, not necessarily the current inventory position.
+- Exception: A separate stock-reconciliation workflow may be introduced if explicitly approved.
+
+---
+
+## 6. Machine Learning Decisions
+
+### DEC-017: Forecasting Problem
+
+- Status: Accepted
+- Decision: Treat demand forecasting as a supervised regression problem.
+- Context: The model predicts numerical future sales demand using historical observations.
+
+### DEC-018: Forecasting Granularity
+
+- Status: Proposed
+- Decision: Use daily demand forecasting per product.
+- Context: The proposed historical dataset contains daily sales records.
+- Confirmation Required: Confirm the final aggregation and entity mapping.
+
+### DEC-019: Baseline Models
+
+- Status: Proposed
+- Decision: Implement simple baselines before evaluating more complex ML models.
+- Candidates:
+  - Naive forecasting.
+  - Historical average.
+- Context: Baselines provide a reference for measuring whether ML adds value.
+
+### DEC-020: Candidate ML Models
+
+- Status: Proposed
+- Candidates:
+  - Linear Regression.
+  - RandomForestRegressor.
+- Decision Rule: Select the final model based on evaluation results rather than assuming one candidate is best.
+
+### DEC-021: Candidate Features
+
+- Status: Proposed
+- Features:
+  - Day of week.
+  - Month.
+  - Day of month.
+  - Lag 1.
+  - Lag 7.
+  - Rolling mean 7.
+  - Rolling mean 30.
+- Context: These features provide calendar and historical demand information.
+
+### DEC-022: Rolling Feature Leakage Prevention
+
+- Status: Accepted
+- Decision: Rolling features must use historical observations only and exclude the current target.
+- Context: Including the current target in a feature would introduce data leakage.
+
+### DEC-023: Evaluation Metrics
+
+- Status: Proposed
+- Decision: Use MAE and RMSE as the primary evaluation metrics.
+- Context: They provide understandable measures of prediction error.
+
+### DEC-024: Time-Aware Evaluation
+
+- Status: Accepted
+- Decision: Use chronological train, validation, and test splits for the primary forecasting evaluation.
+- Context: Random splitting can leak future information into training.
+
+### DEC-025: Recursive Multi-Step Forecasting
+
+- Status: Accepted
+- Decision: Use recursive multi-step forecasting as the inference strategy.
+- Context:
+  - A single one-step model is used: forecast day 1, append the predicted value to a temporary forecast history, recalculate lag and rolling features, forecast day 2, and repeat until the requested horizon is reached.
+  - This reuses one model artifact, avoids training one model per forecast day, and supports any allowed horizon (7, 14, 30 days per DEC-026).
+  - Known trade-off: prediction errors accumulate over longer horizons. This must remain documented as a limitation (LIM-008) and referenced in the interface.
+- Important: Appended predictions must exist only in temporary forecast history. They must never be written to operational sales records (consistent with DEC-029 and the prediction-logic documentation).
+- Decided: 2026-11-04.
+
+### DEC-026: Forecast Horizon
+
+- Status: Accepted
+- Decision: The forecast horizon is user-selectable among 7, 14, or 30 future days, with 7 days as the default.
+- Context:
+  - 7 days matches weekly demand patterns and carries the lowest accumulated error.
+  - 14 and 30 days accommodate longer supplier lead times, with explicitly higher uncertainty.
+  - The UI must display the forecast period clearly (consistent with BR-017).
+  - Evaluation should consider the multi-step behavior (DEC-025) when reporting metrics.
+- Decided: 2026-11-04.
+
+### DEC-027: Model Selection Criteria
+
+- Status: Accepted
+- Decision: Select the final forecasting model using the following rules, applied to measured validation results only:
+  1. Primary metric: validation MAE.
+  2. A candidate model must beat both baseline models (Naive Forecast and Historical Average) on validation MAE to be eligible for selection.
+  3. RMSE is used as a tie-breaker when MAE values are effectively equal.
+  4. If two candidates' validation MAE values are within 5% of each other, prefer the simpler, more understandable model.
+- Context:
+  - A model must never be selected solely because it is more complex (consistent with DEC-045 and the evaluation documentation).
+  - If no candidate meaningfully beats the baselines, the situation must be documented and investigated rather than forcing a selection.
+  - Actual selection still depends on measured evaluation results, which do not exist yet.
+- Decided: 2026-11-04.
+
+### DEC-028: Forecast Persistence
+
+- Status: Accepted
+- Decision: Forecasts are generated on demand and are not persisted in the initial application. The optional Forecast Results entity is not built in version 1.
+- Context:
+  - Generation on demand keeps the database schema and application simple while forecast history is not an approved requirement.
+  - Forecast-versus-actual visualization can be computed by comparing generated forecasts against actual recorded sales history.
+  - If forecast history, tracking, or reporting over time becomes an approved requirement later, a new decision must supersede this one and the Forecast Results entity may then be introduced.
+- Decided: 2026-11-04.
+
+---
+
+## 7. Business Logic Decisions
+
+### DEC-029: Forecasting and Inventory Separation
+
+- Status: Accepted
+- Decision: The forecasting model predicts demand but does not directly modify inventory.
+- Context: Forecasting and operational inventory management have separate responsibilities.
+
+### DEC-030: Restocking Recommendation Separation
+
+- Status: Accepted
+- Decision: Restocking calculations belong to a separate business logic component.
+- Context: The recommendation engine consumes forecast and inventory information.
+
+### DEC-031: Restocking Recommendations Are Advisory
+
+- Status: Accepted
+- Decision: Recommendations are informational and do not automatically purchase products or modify inventory.
+- Context: The initial application does not implement automated purchasing.
+
+### DEC-032: Reorder Point Formula
+
+- Status: Proposed
+- Formula:
+
+  `Reorder Point = Average Daily Demand * Lead Time + Safety Stock`
+
+- Context: This is a candidate formula for determining when restocking should be considered.
+- Input sources now defined: Average Daily Demand = mean of the product's daily sales over the most recent 30 available days (per DEC-038); Lead Time = manual per-product field (DEC-037); Safety Stock = manual per-product field (DEC-036).
+- Confirmation Required: Formula confirmation during implementation review (the calculation inputs are no longer open).
+
+### DEC-033: Recommended Order Quantity
+
+- Status: Proposed
+- Formula:
+
+  `Recommended Order Quantity = max(0, Target Stock - Inventory Position)`
+
+- Context: This is a candidate formula for estimating the quantity required to reach the target stock.
+- Inputs now defined: Target Stock per DEC-038; Inventory Position = current stock (no incoming-stock tracking in v1, consistent with DEC-031 and BR-022).
+- Confirmation Required: Formula confirmation during implementation review (the input definitions are no longer open).
+
+### DEC-034: Negative Stock Policy
+
+- Status: Accepted
+- Decision: Negative stock is prohibited. No operation (sale recording, stock adjustment, movement, or import) may drive a product's current stock below zero.
+- Context:
+  - Negative quantities create ambiguous, unreliable inventory data and complicate every downstream calculation.
+  - If insufficient stock is encountered during a sale, the insufficient-stock policy (DEC-035) applies.
+  - Validation and error handling must enforce this invariant consistently across all inventory-affecting operations.
+- Decided: 2026-11-04.
+
+### DEC-035: Insufficient Stock During Sales
+
+- Status: Accepted
+- Decision: A sale that would exceed available stock is rejected. The sale is not recorded and inventory is left unchanged.
+- Context:
+  - The user receives a clear validation message identifying the attempted quantity and the available quantity (for example: "insufficient stock: 3 available, 5 requested").
+  - This keeps recorded sales consistent with inventory and avoids silently representing unfulfilled demand as sold units (consistent with DEC-016 and the sales/demand distinction, BR-016).
+  - If the user later explicitly requires backorder support, a new decision must supersede this one.
+- Decided: 2026-11-04.
+
+### DEC-036: Safety Stock Calculation
+
+- Status: Accepted
+- Decision: Safety Stock is manually configured per product. It is an optional product field with a default of 0.
+- Context:
+  - A manual value is transparent and understandable for the user, and it works immediately regardless of how much sales history a product has.
+  - Statistical calculation from demand variability (for example, a z-score × standard deviation × √lead-time formula) requires substantial per-product history and more assumptions; it may be introduced later only if justified and explicitly re-decided.
+  - The product schema includes `safety_stock` as a nonnegative integer.
+- Decided: 2026-11-04.
+
+### DEC-037: Lead Time Source
+
+- Status: Accepted
+- Decision: Lead Time is a manually configured per-product field (`lead_time_days`, a nonnegative integer, optional with a default of 3 days).
+- Context:
+  - The historical dataset contains no supplier, purchasing, or lead-time information, so lead time cannot be derived from data.
+  - Per-product configuration matches real usage, since suppliers and delivery times commonly differ by product.
+  - The Restocking Recommendation Service reads this field directly; recommendations explain the lead time used.
+- Decided: 2026-11-04.
+
+### DEC-038: Target Stock Calculation
+
+- Status: Accepted
+- Decision: Target Stock is calculated using:
+
+  `Target Stock = Average Daily Demand × (Lead Time + 7 days) + Safety Stock`
+
+  where Average Daily Demand is the mean of the product's daily sales over the most recent 30 days of available history.
+- Context:
+  - The (Lead Time + 7 days) factor covers expected demand during replenishment plus a 7-day buffer after restock, replacing a separate review-period concept with something simple and explainable.
+  - Using historical average demand keeps restocking logic independent of the forecasting model, so recommendations can be explained and tested standalone (consistent with DEC-030).
+  - If the product lacks the minimum required history, the recommendation is unavailable with a clear explanation (consistent with LIM-010 and BR-019); the minimum requirement follows the approved minimum-history policy.
+  - Average Daily Demand is rounded up to a whole unit in the business logic layer, per the approved rounding policy.
+- Decided: 2026-11-04.
+
+---
+
+## 8. User Interface Decisions
+
+### DEC-039: Interface Style
+
+- Status: Proposed
+- Decision: Use a simple dashboard-style interface.
+- Context: The application should prioritize readability and ease of use.
+
+### DEC-040: Initial Navigation
+
+- Status: Proposed
+- Proposed pages:
+  - Dashboard.
+  - Products & Inventory.
+  - Sales Management.
+  - Sales Analytics.
+  - AI Forecasting.
+  - CSV Import.
+- Confirmation Required: Finalize navigation after reviewing implementation needs.
+
+### DEC-041: Initial Store Workflow
+
+- Status: Proposed
+- Decision: Prioritize a single-store workflow.
+- Context: The initial project should avoid unnecessary multi-branch complexity.
+
+---
+
+## 9. Development Workflow Decisions
+
+### DEC-042: AI Agent Execution Mode
+
+- Status: Accepted
+- Decision: Use Autonomous with Guardrails.
+- Context: The AI Agent should execute clearly defined implementation tasks independently while respecting project decisions and safety boundaries.
+
+### DEC-043: Documentation Detail
+
+- Status: Accepted
+- Decision: Maintain comprehensive project documentation.
+- Context: Documentation should be detailed enough to support implementation and future maintenance.
+
+### DEC-044: Development Workflow
+
+- Status: Accepted
+- Decision: Implement the project incrementally using small, testable tasks.
+- Context: Each meaningful implementation step should be verified before dependent work continues.
+
+### DEC-045: No Unsupported Claims
+
+- Status: Accepted
+- Decision: The AI Agent must not invent requirements, test results, dataset properties, or implementation status.
+- Context: Project documentation and progress reports must reflect actual evidence.
+
+### DEC-046: Destructive Operations
+
+- Status: Accepted
+- Decision: Destructive or difficult-to-reverse operations require explicit user approval.
+- Examples:
+  - Deleting operational data.
+  - Replacing important database contents.
+  - Removing significant project files.
+  - Performing irreversible migrations.
+
+---
+
+## 10. Open Decisions Summary
+
+All previously open decisions have been closed on 2026-11-04:
+
+| Decision ID | Topic | Resolved Decision |
+|---|---|---|
+| DEC-015 | Dataset-to-product mapping | One selected store; each `item` maps to one product |
+| DEC-025 | Multi-step forecasting strategy | Recursive forecasting |
+| DEC-026 | Forecast horizon | User-selectable: 7 (default), 14, or 30 days |
+| DEC-027 | Model selection criteria | Lowest validation MAE; must beat both baselines; RMSE tie-breaker; prefer simpler within 5% |
+| DEC-028 | Forecast persistence | Generate on demand; no persistence in v1 |
+| DEC-034 | Negative stock policy | Negative stock never allowed |
+| DEC-035 | Insufficient stock behavior | Sale rejected; inventory unchanged |
+| DEC-036 | Safety stock | Manually configured per product (optional, default 0) |
+| DEC-037 | Lead time source | Manual per-product field (optional, default 3 days) |
+| DEC-038 | Target stock | `Avg Daily Demand × (Lead Time + 7) + Safety Stock`, demand = 30-day mean |
+
+Other proposed decisions may also need confirmation before implementation.
+
+---
+
+## 11. Decision Management Rules
+
+When a new important decision is made:
+
+1. Assign a unique decision ID.
+2. Record the decision.
+3. Explain its context.
+4. Set its status.
+5. Identify affected documentation.
+6. Update related requirements or specifications.
+7. Mark replaced decisions as Superseded rather than silently deleting them.
+
+The AI Agent must not change an Accepted decision without explicit authorization.
+
+When a decision is unclear, record the question and continue with independent work where possible.

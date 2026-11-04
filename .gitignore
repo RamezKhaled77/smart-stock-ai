@@ -1,0 +1,122 @@
+
+```shell
+# ==============================
+# Python
+# ==============================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checking and linting
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# ==============================
+# Environment and secrets
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+.streamlit/secrets.toml
+
+# ==============================
+# IDE and editors
+# ==============================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==============================
+# Operating system
+# ==============================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Application runtime files
+# ==============================
+
+*.log
+logs/
+
+# SQLite runtime databases
+*.db
+*.sqlite
+*.sqlite3
+
+# ==============================
+# Machine learning artifacts
+# ==============================
+
+# Generated model files
+*.joblib
+*.pkl
+*.pickle
+
+# Model experiment outputs
+mlruns/
+mlartifacts/
+
+# ==============================
+# Data
+# ==============================
+
+# Ignore downloaded raw datasets by default.
+# Keep a small sample dataset when intentionally added to Git.
+
+data/raw/*
+!data/raw/.gitkeep
+
+# Ignore generated processed datasets.
+data/processed/*
+!data/processed/.gitkeep
+
+# Ignore temporary exports.
+exports/
+reports/generated/
+
+# ==============================
+# Streamlit
+# ==============================
+
+.streamlit/cache/
+
+# ==============================
+# Temporary files
+# ==============================
+
+tmp/
+temp/
+.cache/
+```
