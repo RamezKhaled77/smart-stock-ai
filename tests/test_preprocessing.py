@@ -12,6 +12,7 @@ import pytest
 from smartstock.ml.preprocessing import (
     DatasetError,
     load_historical_dataset,
+    validate_and_parse_dataset,
 )
 
 VALID_CSV = """date,store,item,sales
@@ -89,3 +90,75 @@ class TestLoadHistoricalDataset:
         with pytest.raises(DatasetError) as excinfo:
             load_historical_dataset(path)
         assert "any_file.csv" in str(excinfo.value)
+
+
+def _df_from_csv(text: str) -> pd.DataFrame:
+    """Build an in-memory DataFrame from raw CSV text."""
+    import io
+
+    return pd.read_csv(io.StringIO(text))
+
+
+class TestValidateAndParseDataset:
+    """Validation behavior: valid data accepted, invalid data rejected."""
+
+    def test_valid_data_is_accepted_and_typed(self) -> None:
+        df = _df_from_csv(VALID_CSV)
+        result = validate_and_parse_dataset(df)
+
+        assert str(result["date"].dtype).startswith("datetime64")
+        assert str(result["store"].dtype) == "int64"
+        assert str(result["item"].dtype) == "int64"
+        assert pd.api.types.is_numeric_dtype(result["sales"])
+
+    def test_missing_value_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,1,1,\n")
+        with pytest.raises(DatasetError, match="missing 'sales'"):
+            validate_and_parse_dataset(df)
+
+    def test_missing_identifier_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,,1,5\n")
+        with pytest.raises(DatasetError, match="missing 'store'"):
+            validate_and_parse_dataset(df)
+
+    def test_nonnumeric_sales_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,1,1,abc\n")
+        with pytest.raises(DatasetError, match="nonnumeric 'sales'"):
+            validate_and_parse_dataset(df)
+
+    def test_noninteger_identifier_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,1.5,1,5\n")
+        with pytest.raises(DatasetError, match="noninteger 'store'"):
+            validate_and_parse_dataset(df)
+
+    def test_invalid_date_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "not-a-date,1,1,5\n")
+        with pytest.raises(DatasetError, match="invalid 'date'"):
+            validate_and_parse_dataset(df)
+
+    def test_negative_sales_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,1,1,-4\n")
+        with pytest.raises(DatasetError, match="negative 'sales'"):
+            validate_and_parse_dataset(df)
+
+    def test_duplicate_key_is_rejected(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-02,1,1,9\n")
+        with pytest.raises(DatasetError, match="duplicate"):
+            validate_and_parse_dataset(df)
+
+    def test_positive_fractional_sales_is_accepted(self) -> None:
+        # Fractional sales are flagged in reports, not rejected outright.
+        df = _df_from_csv("date,store,item,sales\n2013-01-01,1,1,2.5\n")
+        result = validate_and_parse_dataset(df)
+        assert result.loc[0, "sales"] == 2.5
+
+    def test_input_frame_is_not_mutated(self) -> None:
+        df = _df_from_csv(VALID_CSV)
+        validate_and_parse_dataset(df)
+        # date stays unparsed (string) in the original frame
+        assert not pd.api.types.is_datetime64_any_dtype(df["date"])
+
+    def test_error_reports_source_name(self) -> None:
+        df = _df_from_csv(VALID_CSV + "2013-01-03,1,1,\n")
+        with pytest.raises(DatasetError, match="train.csv"):
+            validate_and_parse_dataset(df, source_name="train.csv")
