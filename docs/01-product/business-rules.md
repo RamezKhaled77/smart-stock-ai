@@ -46,17 +46,15 @@ A product must have a non-empty display name.
 
 A product's current stock represents the recorded quantity currently available in inventory.
 
-The system must define how stock changes after sales and adjustments.
+**Decided policy (DEC-047):** Current stock is stored directly as a maintained product field. Recorded sales and approved manual stock adjustments update it; no sales or operation is applied without updating this value. There is no transaction history in v1.
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## BR-004: Product Removal
 
-Deleting a product must not accidentally remove its historical sales information.
+**Decided policy (DEC-048):** Product removal uses soft delete. "Deleting" a product sets an `is_active` flag to 0 instead of removing the row. Historical sales information is preserved automatically, and the action is reversible. Inactive products are excluded from listings, counts, and recommendations unless explicitly requested (BR-026).
 
-A soft-delete or inactive-product approach may be considered.
-
-The final deletion policy is an Open Question.
+**Status:** Accepted
 
 ---
 
@@ -414,20 +412,23 @@ The UI must not contain duplicated business calculations.
 
 # 12. Open Questions
 
-The following decisions must be resolved before the affected rules are finalized:
+Most decisions have been resolved (see `../07-project-management/decisions.md`). Resolved answers:
 
-1. Should the initial application reject sales when stock is insufficient?
-2. Should inventory adjustments be stored as a transaction history?
-3. Should product deletion use soft deletion?
-4. Will incoming stock be supported?
-5. How will safety stock be calculated?
-6. How will target stock be calculated?
-7. What is the default forecast horizon?
-8. How will historical sales imports interact with existing records?
-9. How will duplicate imports be detected?
-10. How will product returns be handled?
-11. How will days with zero sales be represented?
-12. How will stockout periods be identified in historical data?
+1. Reject sales when stock is insufficient — **Yes (DEC-035)**.
+2. Store inventory adjustments as a transaction history — **No (DEC-047)**: direct stock column, no history in v1.
+3. Product deletion via soft deletion — **Yes (DEC-048)**.
+4. Incoming stock — **No in v1 (DEC-031)**; inventory position equals current stock (BR-022).
+5. Safety stock — manually configured per product, default 0 (DEC-036).
+6. Target stock — `Avg Daily Demand × (Lead Time + 7) + Safety Stock` (DEC-038).
+7. Default forecast horizon — 7 days, user-selectable (DEC-026).
+10. Product returns — not handled in v1 (DEC-049).
+
+Still open (needed during import/analysis implementation):
+
+8. How will historical sales imports interact with existing records? (Related: Database Schema §12)
+9. How will duplicate imports be detected? (Related: Database Schema §12)
+11. How will days with zero sales be represented? (Related: data preprocessing — observed policy recorded in `../03-data/data-preprocessing.md` §19)
+12. How will stockout periods be identified in historical data? (Related: ML evaluation phases)
 
 ---
 

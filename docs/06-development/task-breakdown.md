@@ -208,7 +208,7 @@ Completion record (2026-11-04): Implemented in `src/smartstock/ml/preprocessing.
 ### TASK-009: Confirm Initial Database Schema
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-001
 
 Description:
@@ -220,6 +220,8 @@ Evidence:
 - Initial schema documented.
 - Required entities and relationships identified.
 - Open decisions recorded.
+
+Completion record (2026-11-04): Three remaining schema decisions closed with the project owner and recorded as DEC-047 (direct `current_stock` column; Inventory Movements entity not built in v1), DEC-048 (soft delete via `is_active` flag), and DEC-049 (no returns in v1; recorded sales immutable). `database-schema.md` updated accordingly (§4 decision notes with exact column constraints incl. CHECK `current_stock >= 0`, §6 decided Option A, §8 v1 relationships Products→Sales only, §11 deletion policy, §14 open-decision table). `business-rules.md` BR-003/BR-004 updated to Accepted and §12 Open Questions updated. Only the CSV import duplicate-handling decision remains open, which is gated on the import feature (§12).
 
 ### TASK-010: Implement SQLite Initialization
 

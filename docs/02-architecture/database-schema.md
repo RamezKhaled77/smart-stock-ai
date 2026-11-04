@@ -66,16 +66,18 @@ Represents products managed by the application.
 | current_stock | INTEGER | Current available stock |
 | lead_time_days | INTEGER | Expected replenishment time |
 | safety_stock | INTEGER | Additional stock buffer |
+| is_active | INTEGER | Soft-delete flag (1 = active, 0 = deactivated) |
 | created_at | TEXT | Creation timestamp |
 | updated_at | TEXT | Last update timestamp |
 
-### Notes
+### Decisions Applied (2026-11-04)
 
-- `id` is the internal product identifier.
-- `sku` is proposed as a unique business identifier.
-- `current_stock` must follow the approved inventory policy.
-- Lead time and safety stock may be optional depending on the final business rules.
-- `current_stock` may be maintained directly or derived from inventory movements. This is an open design decision.
+- `current_stock` is maintained **directly** on the products table (DEC-047). Sales and approved manual adjustments update the column in a transaction; no movement entity exists in v1.
+- `lead_time_days` is a manual per-product field defaulting to `3` when omitted (DEC-037).
+- `safety_stock` is a manual per-product field defaulting to `0` when omitted (DEC-036).
+- `is_active` implements the soft-delete policy (DEC-048). Removal deactivates; rows are never deleted. Counts and listings exclude inactive products (BR-026).
+- Negative stock is forbidden (DEC-034): the column carries a `CHECK (current_stock >= 0)`.
+- Stock status derives from `current_stock` against the reorder point (BR-008).
 
 ---
 
@@ -101,73 +103,28 @@ Represents operational sales records.
 ### Notes
 
 - `product_id` references `products.id`.
-- Quantity must be validated.
-- Historical imported records must be distinguished from manually entered sales if required.
-- The effect of returns and cancelled sales is still an open decision.
+- Quantity must be validated (positive integer, and checked against available stock at recording time per DEC-035).
+- **Returns and cancelled sales are not supported in v1 (DEC-049).** Recorded sales rows are immutable; corrections happen through explicitly recorded manual stock adjustments only.
+- Historical imported records are distinguished from manually entered sales via the separate historical dataset files; the operational `sales` table receives only application-recorded sales in v1.
 
 ---
 
 ## 6. Inventory Movements
 
-**Status: Proposed / Requires Approval**
+**Status: Decided — not built in version 1 (DEC-047)**
 
-An inventory movement records a change in stock.
+Stock storage was evaluated against two models:
 
-Potential movement types:
+- **Option A: Store current stock directly** — a maintained `current_stock` column on the products table. Simple to implement and query; suitable for the small single-store v1 application.
+- **Option B: Inventory movements** — every stock change recorded as a movement row, current stock derived or cached. Better traceability, but more implementation complexity and sync handling.
 
-- Initial Stock.
-- Manual Stock Adjustment.
-- Sale.
-- Return.
-- Restock.
+**Decision: Option A (DEC-047).** Version 1 stores current stock directly on the products table, and the Inventory Movements entity is not created. Consequences:
 
-### Proposed Fields
+- Sales (validated against stock per DEC-035) and manual stock adjustments update `current_stock` directly in a transaction.
+- No stock-change history or audit trail exists in v1. If movement tracking is approved later, it requires a new entity, backfill logic, and a superseding decision.
+- Manual corrections to wrong data are explicit user operations on the stock value; the previous value may be overwritten and is not recoverable from the database (consistent with DEC-049's immutable-sales stance and DEC-046's approval requirement for destructive operations).
 
-| Field | Suggested Type | Description |
-|---|---|---|
-| id | INTEGER | Primary key |
-| product_id | INTEGER | Related product |
-| movement_type | TEXT | Type of stock movement |
-| quantity | INTEGER | Movement quantity |
-| movement_date | TEXT | Date of movement |
-| notes | TEXT | Optional explanation |
-| created_at | TEXT | Record creation timestamp |
-
-### Important Design Question
-
-There are two possible inventory models.
-
-**Option A: Store current stock directly**
-
-The products table stores the current stock quantity.
-
-Advantages:
-- Simple implementation.
-- Easy to query.
-- Suitable for a small initial application.
-
-Disadvantages:
-- Limited stock history.
-- Harder to audit stock changes.
-
-**Option B: Use inventory movements**
-
-Every stock change is recorded as a movement.
-
-Current stock can be calculated from the movement history or maintained as a cached value.
-
-Advantages:
-- Better traceability.
-- Easier auditing.
-- Clear history of stock changes.
-
-Disadvantages:
-- More implementation complexity.
-- Requires careful handling of movement consistency.
-
-**Decision Status:** Open.
-
-The final choice must follow the approved inventory requirements.
+For reference, the potential movement fields if the entity is ever approved: id (INTEGER PK), product_id (INTEGER FK), movement_type (TEXT), quantity (INTEGER), movement_date (TEXT), notes (TEXT), created_at (TEXT).
 
 ---
 
@@ -197,16 +154,10 @@ Products
    | 1
    |
    |------< Sales
-   |
-   |------< Inventory Movements
-   |
-   |------< Forecast Results (Optional)
 
 ```
 
-A product can have multiple sales records and multiple inventory movements.
-
-Forecast results are optional and depend on the approved implementation scope.
+A product can have multiple sales records. The Inventory Movements entity is not built in v1 (DEC-047), and Forecast Results are excluded per DEC-028.
 
 ## 9. Historical Dataset Mapping
 
@@ -271,20 +222,7 @@ Transactions should be used when multiple related database changes must succeed 
 
 ## 11. Deletion and Historical Records
 
-Deletion behavior is not fully approved.
-
-Potential policies:
-
-- Hard deletion.
-    
-- Soft deletion.
-    
-- Prevent deletion when historical records exist.
-    
-
-Historical sales and inventory records should not become inconsistent when a product is deleted.
-
-The final policy must be defined before implementing deletion operations.
+**Decided policy (DEC-048): soft delete.** Products carry an `is_active` flag (default 1). The removal action sets `is_active = 0`; database rows are never deleted, so sales and other related records can never become inconsistent. Listings, counts, and recommendations exclude inactive products unless explicitly requested (BR-026). Reactivation is possible.
 
 ## 12. CSV Import Considerations
 
@@ -326,14 +264,14 @@ Avoid deleting or recreating an existing database simply to apply a schema chang
 
 |Decision|Status|
 |---|---|
-|Store current stock directly or derive it from movements|Open|
-|Inventory movement history|Open|
+|Store current stock directly or derive it from movements|**Closed (DEC-047)** — direct `current_stock` column; movements entity not built in v1|
+|Inventory movement history|**Closed (DEC-047)** — no movement history in v1; may be approved later with a superseding decision|
 |Forecast result persistence|**Closed (DEC-028)** — generated on demand; Forecast Results entity not built in v1|
-|Soft deletion policy|Open|
-|Returns representation|Open|
-|Duplicate CSV import handling|Open|
+|Soft deletion policy|**Closed (DEC-048)** — soft delete via `is_active` flag|
+|Returns representation|**Closed (DEC-049)** — no returns support in v1; recorded sales immutable|
+|Duplicate CSV import handling|Open — to be resolved during CSV import implementation|
 |Historical dataset mapping|**Closed (DEC-015)** — one selected store; each `item` maps to one product|
-|Exact column constraints|Open|
+|Exact column constraints|**Closed (2026-11-04, TASK-009)** — defined in the approved SQL schema (`database/sql/schema.sql`): PKs, FKs with enforcement, unique `sku`, NOT NULL where applicable, `CHECK` constraints on stock and quantities, ISO date TEXT format|
 
 ## 15. Related Documentation
 

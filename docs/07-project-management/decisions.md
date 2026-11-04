@@ -428,9 +428,32 @@ A proposed decision must not be treated as accepted.
 
 ---
 
+### DEC-047: Inventory Stock Storage Model
+
+- Status: Accepted
+- Decision: Store current stock directly as a maintained column in the products table (Option A in Database Schema §6). The Inventory Movements entity is not built in version 1.
+- Context: The schema document presented two inventory models. Option A (direct column) fits the small single-store v1 application: sales and manual adjustments update the column atomically, stock checks for the DEC-035 insufficient-stock rule are a simple read, and no write path must keep a movement log in sync. No v1 requirement demands stock-change history or an audit trail. If movement tracking is approved later, it becomes a new entity plus reconciliation logic (a schema change requiring its own decision).
+- Method: Chosen with the project owner from documented options (2026-11-04).
+
+### DEC-048: Product Deletion Policy
+
+- Status: Accepted
+- Decision: Soft delete. Products receive an `is_active` flag; the "remove" action deactivates a product instead of deleting the row. Sales and other related records remain intact.
+- Context: Protects historical records per BR-004 and DEC-046, keeps the topology simple (no orphaned rows), and is reversible. Counts and listings exclude inactive products (BR-026). The status values follow BR-008 vocabulary.
+- Method: Chosen with the project owner from documented options (2026-11-04).
+
+### DEC-049: Sales Returns in Version 1
+
+- Status: Accepted
+- Decision: Returns (and cancelled sales) are not supported in version 1. Recorded sales are immutable in v1; corrections happen through explicitly recorded manual adjustments only.
+- Context: No v1 requirement demands returns. Deferring keeps the schema minimal (Products + Sales only, per DEC-047/DEC-028) and avoids complicating the negative-stock and insufficient-stock validation (DEC-034/DEC-035) with negative sale quantities. If returns become a requirement later, a return operation must be designed with its own stock and validation rules.
+- Method: Chosen with the project owner from documented options (2026-11-04).
+
+---
+
 ## 10. Open Decisions Summary
 
-All previously open decisions have been closed on 2026-11-04:
+All open decisions have been closed, most recently on 2026-11-04:
 
 | Decision ID | Topic | Resolved Decision |
 |---|---|---|
@@ -444,8 +467,9 @@ All previously open decisions have been closed on 2026-11-04:
 | DEC-036 | Safety stock | Manually configured per product (optional, default 0) |
 | DEC-037 | Lead time source | Manual per-product field (optional, default 3 days) |
 | DEC-038 | Target stock | `Avg Daily Demand × (Lead Time + 7) + Safety Stock`, demand = 30-day mean |
-
-Other proposed decisions may also need confirmation before implementation.
+| DEC-047 | Stock storage model | Direct `current_stock` column on products; movements entity not built in v1 |
+| DEC-048 | Product deletion | Soft delete via `is_active` flag |
+| DEC-049 | Returns | Not supported in v1; recorded sales immutable |
 
 ---
 
