@@ -271,7 +271,7 @@ Avoid deleting or recreating an existing database simply to apply a schema chang
 |Returns representation|**Closed (DEC-049)** — no returns support in v1; recorded sales immutable|
 |Duplicate CSV import handling|Open — to be resolved during CSV import implementation|
 |Historical dataset mapping|**Closed (DEC-015)** — one selected store; each `item` maps to one product|
-|Exact column constraints|**Closed (2026-11-04, TASK-009)** — defined in the approved SQL schema (`database/sql/schema.sql`): PKs, FKs with enforcement, unique `sku`, NOT NULL where applicable, `CHECK` constraints on stock and quantities, ISO date TEXT format|
+|Exact column constraints|**Closed (2026-11-04, TASK-009)** — defined in the approved SQL schema (`database/schema.sql`): PKs, FKs with enforcement, unique `sku`, NOT NULL where applicable, `CHECK` constraints on stock and quantities, ISO date TEXT format|
 
 ## 15. Related Documentation
 
