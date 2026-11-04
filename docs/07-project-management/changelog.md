@@ -273,6 +273,14 @@ It does not imply that the application itself has been implemented.
 - Documented platform-independent deployment requirements.
     
 
+### Changed
+
+- [TASK-001] Closed all 10 previously open decisions with the project owner (DEC-015, DEC-025, DEC-026, DEC-027, DEC-028, DEC-034, DEC-035, DEC-036, DEC-037, DEC-038) and updated the affected specifications (business rules, forecasting strategy, prediction logic, requirements, dataset overview, database schema, testing strategy).
+
+### Added
+
+- [TASK-002] Approved dependencies documented in `requirements.txt` (streamlit, pandas, numpy, scikit-learn, plotly, joblib, pytest) with minimum-version constraints.
+
 ### Technical
 
 - Established a documentation-first development workflow.
@@ -281,6 +289,10 @@ It does not imply that the application itself has been implemented.
     
 - Established initial development and verification guidelines.
     
+- [TASK-002] Development environment initialized: `.venv` on Python 3.12.3 with all approved libraries installed and import-verified.
+- [TASK-003] Project structure created per the approved `../02-architecture/project-structure.md` (`src/smartstock/` package layout, `data/`, `models/artifacts/`, `scripts/`, `tests/`); Kaggle dataset files relocated to git-ignored `data/raw/`.
+- [TASK-004] Git repository initialized on branch `main` with the approved `.gitignore`; checkpoint commits recorded.
+- [TASK-003] Minimal Streamlit entry point (`app.py`) and centralized configuration (`config.py`) added; verified by a headless smoke test (HTTP 200, no errors) and `py_compile`.
 
 ## 6. Future Entry Template
 

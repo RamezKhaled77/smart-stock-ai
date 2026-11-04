@@ -56,7 +56,7 @@ Do not skip verification by marking implemented code as complete.
 ### TASK-001: Review Project Documentation
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: None
 
 Description:
@@ -69,10 +69,12 @@ Evidence:
 - Blocking questions recorded.
 - Architecture and scope understood.
 
+Completion record (2026-11-04): All 38 documentation files reviewed. All 10 open decisions were closed with the project owner (DEC-015, DEC-025-028, DEC-034-038) and affected specifications updated. Identified conflict: task-breakdown.md uses an 8-status vocabulary while agent-workflow.md/progress.md use 5 statuses; not blocking (tracked as a minor documentation inconsistency).
+
 ### TASK-002: Initialize Development Environment
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-001
 
 Description:
@@ -85,10 +87,12 @@ Evidence:
 - Dependencies installed.
 - Basic application starts successfully.
 
+Completion record (2026-11-04): Python 3.12.3 (compatible with the approved 3.11 requirement), `.venv` validated, all 7 approved libraries installed (streamlit 1.66.1, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, plotly 7.1.0, joblib 1.6.0, pytest 9.2.0) and import-verified. The misnamed empty `requirments.txt` was replaced by `requirements.txt` with minimum-version constraints.
+
 ### TASK-003: Initialize Project Structure
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-001, TASK-002
 
 Description:
@@ -101,10 +105,12 @@ Evidence:
 - Imports work correctly.
 - No unnecessary files or abstractions are introduced.
 
+Completion record (2026-11-04): Directory layout created per `../02-architecture/project-structure.md` (`src/smartstock/*` subpackages with `__init__.py` files, `data/`, `models/artifacts/`, `scripts/`, `tests/`). Kaggle dataset files moved from the repository root into `data/raw/` (git-ignored) so large datasets are never committed. Empty leftover placeholder directories (`ml/`, `pages/`, `services/`, `utils/`) not present in the approved structure were removed. Minimal `app.py` and `config.py` created; verified by compile check and a headless Streamlit smoke test (HTTP 200, no errors).
+
 ### TASK-004: Configure Git and Ignore Rules
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-003
 
 Description:
@@ -115,6 +121,8 @@ Evidence:
 
 - Generated files and local environment files are excluded.
 - Source code and required documentation remain tracked.
+
+Completion record (2026-11-04): Git repository initialized on branch `main` with existing approved `.gitignore`. Verified by inspection: `.venv/`, `data/raw/*` datasets, local DB files, and model artifacts are excluded; docs, app, config, and project structure are tracked. Checkpoint commits made after each setup step.
 
 ---
 

@@ -87,7 +87,7 @@ Do not duplicate the full task list here.
 
 | Milestone | Description | Initial Status |
 |---|---|---|
-| M-001 | Documentation and environment setup | Not Started |
+| M-001 | Documentation and environment setup | Completed (2026-11-04) |
 | M-002 | Dataset exploration and preparation | Not Started |
 | M-003 | Database and persistence layer | Not Started |
 | M-004 | Product and inventory management | Not Started |
@@ -209,3 +209,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-015, DEC-025, DEC-026, DEC-027, DEC-028, DEC-034, DEC-035, DEC-036, DEC-037, DEC-038 accepted.
 - Blockers: None recorded.
 - Next Steps: Phase 0 — documentation review, environment setup, project structure, version control (TASK-001 … TASK-004).
+
+### Phase 0: Foundation and Setup Completed
+
+- Date: 2026-11-04.
+- Status: Phase 0 complete (TASK-001 … TASK-004). Implementation of application features has not started.
+- Work Completed:
+  - TASK-001: full documentation review; open decisions closed with the owner (see prior entry); one minor documentation inconsistency recorded (task status vocabulary).
+  - TASK-002: `.venv` validated on Python 3.12.3; approved dependencies installed and import-verified (streamlit 1.66.1, pandas 3.1.1, numpy 2.5.4, scikit-learn 1.9.1, plotly 7.1.0, joblib 1.6.0, pytest 9.2.0).
+  - TASK-003: directory layout created per the approved `../02-architecture/project-structure.md`; dataset files relocated to git-ignored `data/raw/`; misnamed empty `requirments.txt` replaced by `requirements.txt`; minimal `app.py` entry point and `config.py` created.
+  - TASK-004: Git repository initialized on `main` with the approved `.gitignore`; checkpoint commits after every setup step.
+- Tests Executed: module compile check (`py_compile`) for `app.py` and `config.py`; headless Streamlit smoke test on `http://localhost:8599` (HTTP 200, no errors in log); dependency import verification for all seven libraries.
+- Test Results: All checks passed.
+- Tasks Updated: TASK-001 → Verified, TASK-002 → Verified, TASK-003 → Verified, TASK-004 → Verified (see `../06-development/task-breakdown.md`).
+- Blockers: None recorded.
+- Next Steps: Phase 1 — obtain and inspect the dataset (TASK-005), then data loading and validation (TASK-006 … TASK-008).
