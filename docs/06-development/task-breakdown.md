@@ -226,7 +226,7 @@ Completion record (2026-11-04): Three remaining schema decisions closed with the
 ### TASK-010: Implement SQLite Initialization
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-009
 
 Description:
@@ -239,10 +239,12 @@ Evidence:
 - Required tables exist.
 - Initialization can be repeated safely.
 
+Completion record (2026-11-04): Approved schema lives in `database/schema.sql` (single authoritative DDL file): `products` (with `current_stock`, `lead_time_days` default 3, `safety_stock` default 0, `is_active` flag, CHECK constraints for DEC-034/DEC-048 and defaults for DEC-036/DEC-037) and `sales` (positive-quantity CHECK, product FK per DEC-035 context), plus an index on (product_id, sale_date); ISO 8601 TEXT dates/timestamps throughout. `src/smartstock/database/schema.py` declares required tables and expected columns as the verification source. `src/smartstock/database/initialization.py` provides `initialize_database()` (creates parent directories, applies schema with foreign keys enabled, commits) and `verify_tables()` (missing-file, missing-table, and missing-column checks with clear `DatabaseError` messages). Idempotent by construction (`CREATE TABLE IF NOT EXISTS`; repeated initialization preserves data). Tests: 11 in `tests/test_database.py` covering creation, idempotency, missing database, empty database, CHECK constraints (negative stock, bad `is_active`, negative lead time, duplicate SKU, nonpositive sale quantity) and FK enforcement — all passing. Smoke check: initialized the real configured path `data/smartstock.db` (git-ignored).
+
 ### TASK-011: Implement Database Connection Management
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-010
 
 Description:
@@ -255,10 +257,12 @@ Evidence:
 - Errors are handled appropriately.
 - Relevant tests pass.
 
+Completion record (2026-11-04): `src/smartstock/database/connection.py` provides `connect()` (opens with `PRAGMA foreign_keys = ON`, `sqlite3.Row` factory, auto-initializes a missing database file, wraps sqlite errors in a clear `DatabaseError`) and `session()` (context manager that commits on success, rolls back on exception, and always closes). Note: the PRAGMA is per-connection in SQLite, so every connection opened through these helpers is consistently configured; tests that open raw connections set the pragma themselves. Tests: 7 in `tests/test_connection.py` (row factory + pragma, auto-initialize, open-failure wrapping via monkeypatch, commit on success, rollback on error, close behavior) — all passing. Full suite at this point: 42 tests.
+
 ### TASK-012: Implement Repositories
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-011
 
 Description:
@@ -270,6 +274,8 @@ Evidence:
 - Required CRUD operations work.
 - SQL queries are parameterized.
 - Repository tests pass.
+
+Completion record (2026-11-04): Three repositories under `src/smartstock/repositories/`, all requiring a connection from the connection module and returning plain dictionaries via parameterized SQL only: `product_repository.py` (create with approved defaults; get by id/SKU; list with active-only filter per DEC-048/BR-026; partial-field update with refreshed `updated_at` where stock is intentionally excluded; `set_product_active()` for soft delete; SKU conflicts surface as clear `ValueError`s), `inventory_repository.py` (sole owner of stock changes per DEC-047: `get_current_stock`, `adjust_stock` with signed delta rejecting zero/non-integer changes and negative results per DEC-034, `set_stock_level` for explicit corrections only, `updated_at` refreshed on every change), and `sales_repository.py` (`record_sale` with positive-quantity and `YYYY-MM-DD` validation; `list_sales` with optional product/date-range filters; `get_daily_sales` per-day aggregation returning absent days as missing per the preprocessing policy; no update/delete — sales rows immutable per DEC-049). Shared helpers in `src/smartstock/utils/dates.py` (`utc_now_iso`). Tests: 23 in `tests/test_repositories.py` (create/read/update/list, SKU conflicts, soft-delete preservation, stock guards, sale filters and aggregation, error wrapping for unknown products) — all passing. End-to-end smoke against the real configured database succeeded (create product → adjust stock → record sale → read back). Full suite at this point: 65 tests.
 
 ---
 

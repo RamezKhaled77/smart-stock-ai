@@ -89,7 +89,7 @@ Do not duplicate the full task list here.
 |---|---|---|
 | M-001 | Documentation and environment setup | Completed (2026-11-04) |
 | M-002 | Dataset exploration and preparation | Completed (2026-11-04) |
-| M-003 | Database and persistence layer | Not Started |
+| M-003 | Database and persistence layer | Completed (2026-11-04) |
 | M-004 | Product and inventory management | Not Started |
 | M-005 | Sales management | Not Started |
 | M-006 | CSV import | Not Started |
@@ -240,3 +240,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: preprocessing rejection policies resolved by implementation (documented in data-preprocessing.md §19); split dates remain open pending the ML evaluation phase.
 - Blockers: None recorded.
 - Next Steps: Phase 2 — database schema and persistence layer (TASK-009 …).
+
+### Phase 2: Database and Persistence Layer Completed
+
+- Date: 2026-11-04.
+- Status: Phase 2 complete (TASK-009 … TASK-012). Domain/service/UI layers not started.
+- Work Completed:
+  - TASK-009: closed the three remaining schema decisions with the project owner — DEC-047 (direct `current_stock` column; no Inventory Movements entity in v1), DEC-048 (soft delete via `is_active`), DEC-049 (no returns in v1; sales rows immutable) — and updated `database-schema.md`, `business-rules.md`, and `decisions.md` accordingly.
+  - TASK-010: `database/schema.sql` (approved DDL with constraints), `smartstock/database/schema.py` + `initialization.py` (`initialize_database`, `verify_tables`; idempotent).
+  - TASK-011: `smartstock/database/connection.py` (`connect` with foreign keys + Row factory and clear error wrapping; `session` context manager: commit/rollback/close).
+  - TASK-012: `product_repository`, `inventory_repository` (sole owner of stock changes; rejects negative results per DEC-034), `sales_repository` (immutable sales per DEC-049; daily aggregation), plus `utils/dates.py`.
+- Tests Executed: `pytest` full suite.
+- Test Results: 65/65 passed (24 preprocessing + 11 database + 7 connection + 23 repositories). End-to-end smoke against the real configured `data/smartstock.db` succeeded (create → adjust stock → record sale → read back); the runtime DB file is git-ignored.
+- Tasks Updated: TASK-009 … TASK-012 → Verified; milestone M-003 → Completed.
+- Decisions Made: DEC-047, DEC-048, DEC-049 accepted with the project owner (2026-11-04); exact column constraints resolved in the approved schema (documented in `database-schema.md` §14). CSV import duplicate handling remains open until the import feature phase.
+- Blockers: None recorded.
+- Next Steps: Phase 3 — domain logic and services: product services (TASK-013), inventory services (TASK-014), sales services (TASK-015, combining repos under DEC-035).

@@ -1,0 +1,131 @@
+"""Inventory repository (TASK-012).
+
+Direct stock access per DEC-047: current stock is a maintained column,
+and this module owns every stock change so the approved policies apply
+in one place:
+
+- Stock never becomes negative (DEC-034): the database CHECK rejects
+  it and these functions reject it with a clear validation message
+  before SQL runs.
+- There is no movement history in v1 (DEC-047); corrections go through
+  ``set_stock_level`` and overwrite the stored value.
+"""
+
+import sqlite3
+
+from smartstock.database.connection import DatabaseError
+from smartstock.utils.dates import utc_now_iso
+
+
+def get_current_stock(
+    connection: sqlite3.Connection, product_id: int
+) -> int:
+    """Return the stored current stock for a product.
+
+    Raises:
+        ValueError: If the product does not exist.
+        DatabaseError: If the lookup fails at the database level.
+    """
+    try:
+        cursor = connection.execute(
+            "SELECT current_stock FROM products WHERE id = ?",
+            (product_id,),
+        )
+        row = cursor.fetchone()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not read stock for product {product_id}: {error}",
+            cause=error,
+        ) from error
+    if row is None:
+        raise ValueError(f"Product {product_id} does not exist.")
+    return int(row["current_stock"])
+
+
+def adjust_stock(
+    connection: sqlite3.Connection, product_id: int, change: int
+) -> int:
+    """Apply a signed manual stock adjustment and return the new stock.
+
+    Add stock with a positive ``change`` and remove stock with a
+    negative value. Zero-change adjustments are rejected because they
+    are always a caller mistake.
+
+    Raises:
+        ValueError: If the change is invalid, the product is unknown,
+            or the adjustment would make stock negative (DEC-034).
+        DatabaseError: If the update fails at the database level.
+    """
+    if isinstance(change, bool) or not isinstance(change, int):
+        raise ValueError(f"Stock change must be an integer, got {change!r}.")
+    if change == 0:
+        raise ValueError("Stock change must not be zero.")
+
+    current = get_current_stock(connection, product_id)
+    new_stock = current + change
+    if new_stock < 0:
+        raise ValueError(
+            f"Adjustment of {change} would take product {product_id} "
+            f"stock to {new_stock}, but negative stock is not allowed "
+            f"(current stock is {current})."
+        )
+
+    try:
+        cursor = connection.execute(
+            "UPDATE products SET current_stock = ?, updated_at = ? "
+            "WHERE id = ?",
+            (new_stock, utc_now_iso(), product_id),
+        )
+        if cursor.rowcount == 0:
+            raise ValueError(f"Product {product_id} does not exist.")
+        connection.commit()
+    except ValueError:
+        raise
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not adjust stock for product {product_id}: {error}",
+            cause=error,
+        ) from error
+    return new_stock
+
+
+def set_stock_level(
+    connection: sqlite3.Connection, product_id: int, stock: int
+) -> int:
+    """Set the stored stock to an explicit value (correction/reconciliation).
+
+    Unlike ``adjust_stock``, this overwrites the stored value. It is an
+    explicitly requested operation: use it for initial stock setup or
+    correcting wrong data, not for recording sales or ordinary changes.
+
+    Raises:
+        ValueError: If the value is not a nonnegative integer or the
+            product does not exist.
+        DatabaseError: If the update fails at the database level.
+    """
+    if isinstance(stock, bool) or not isinstance(stock, int) or stock < 0:
+        raise ValueError(
+            f"Stock level must be a nonnegative integer, got {stock!r}."
+        )
+    try:
+        cursor = connection.execute(
+            "UPDATE products SET current_stock = ?, updated_at = ? "
+            "WHERE id = ?",
+            (stock, utc_now_iso(), product_id),
+        )
+        if cursor.rowcount == 0:
+            raise ValueError(f"Product {product_id} does not exist.")
+        connection.commit()
+    except ValueError:
+        raise
+    except sqlite3.IntegrityError as error:
+        raise DatabaseError(
+            f"Could not set stock for product {product_id}: {error}",
+            cause=error,
+        ) from error
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not set stock for product {product_id}: {error}",
+            cause=error,
+        ) from error
+    return stock

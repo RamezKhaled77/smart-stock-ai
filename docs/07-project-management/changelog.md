@@ -283,6 +283,7 @@ It does not imply that the application itself has been implemented.
 - [TASK-005] Verified dataset characteristics recorded in `../03-data/dataset-overview.md` (913,000 rows, complete daily sequence, no quality issues).
 - [TASK-006] Dataset loader `load_historical_dataset()` with clear `DatasetError` reporting, plus preprocessing functions (`filter_store`, `sort_chronologically`, `detect_date_gaps`, `preprocess_dataset`) and `scripts/prepare_dataset.py` (TASK-008).
 - [TASK-007] Dataset validation (`validate_and_parse_dataset`) with rejection policies documented in `../03-data/data-preprocessing.md` section 19.
+- [TASK-009 - TASK-012] Database and persistence layer: approved `database/schema.sql` (Products + Sales only, DEC-047/DEC-048/DEC-049 applied), idempotent initialization (`initialize_database`, `verify_tables`), connection management (`connect`, `session` with commit/rollback/close), and three repositories (product, inventory, sales) with parameterized SQL and plain-dictionary returns.
 
 ### Technical
 
@@ -298,6 +299,10 @@ It does not imply that the application itself has been implemented.
 - [TASK-004] Git repository initialized on branch `main` with the approved `.gitignore`; checkpoint commits recorded.
 - [TASK-003] Minimal Streamlit entry point (`app.py`) and centralized configuration (`config.py`) added; verified by a headless smoke test (HTTP 200, no errors) and `py_compile`.
 - [TASK-006] Test suite started: `tests/test_preprocessing.py` covers loading, validation, and preprocessing (24 passing tests, TASK-006 … TASK-008).
+- [TASK-009] Schema decisions DEC-047 (direct stock column), DEC-048 (soft delete), DEC-049 (no returns in v1) recorded and applied across `database-schema.md` and `business-rules.md`.
+- [TASK-010] Database tests (`tests/test_database.py`): initialization idempotency, table/column verification, CHECK constraints, FK enforcement; real-path smoke test on `data/smartstock.db` (git-ignored).
+- [TASK-011] Connection tests (`tests/test_connection.py`): commit/rollback/close behavior of `session()`, consistent connection settings, error wrapping.
+- [TASK-012] Repository tests (`tests/test_repositories.py`): product CRUD and soft delete, stock adjustment guards (DEC-034), sales recording/filter/aggregation (DEC-049), error handling; full suite at 65 passing tests.
 
 ## 6. Future Entry Template
 
