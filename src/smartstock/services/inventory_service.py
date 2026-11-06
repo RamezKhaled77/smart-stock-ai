@@ -7,6 +7,8 @@ repository, which is the single owner of stock changes (DEC-047):
 - Manual stock adjustments (signed change; guarded by DEC-034 so stock
   never becomes negative).
 - Explicit stock level setting, for initial setup and corrections only.
+- Stock overview for listing pages: average demand (DEC-038), reorder
+  point (DEC-032), and stock status (BR-008) per active product.
 
 Per the approved rules, recorded sales also change stock — that
 transaction lives in the sales service (TASK-015), which combines this
@@ -16,9 +18,22 @@ insufficient-stock policy (DEC-035).
 
 from pathlib import Path
 
+import datetime as dt
+
 import config
 from smartstock.database.connection import ConnectionContext, session
-from smartstock.repositories import inventory_repository
+from smartstock.domain.inventory import (
+    DEMAND_WINDOW_DAYS,
+    calculate_average_daily_demand,
+    calculate_reorder_point,
+    classify_stock,
+)
+from smartstock.repositories import (
+    inventory_repository,
+    product_repository,
+    sales_repository,
+)
+from smartstock.utils.dates import utc_today_iso
 
 
 def _run(db_path: Path | None) -> ConnectionContext:
@@ -92,3 +107,59 @@ def set_stock_level(
         return inventory_repository.set_stock_level(
             connection, product_id, stock
         )
+
+
+def get_stock_overview(db_path: Path | None = None) -> list:
+    """Stock overview for one active product per row, ready for listing.
+
+    For every active product (BR-026), combines stored product data
+    with computed stock indicators:
+
+    - ``average_daily_demand``: mean demand over the most recent
+      ``DEMAND_WINDOW_DAYS`` (30) calendar days ending today (DEC-038);
+      days without sales count as zero.
+    - ``reorder_point``: per DEC-032 from the demand, the product's
+      lead time, and safety stock.
+    - ``stock_status``: In Stock / Low Stock / Out of Stock (BR-008).
+
+    Args:
+        db_path: Database to use; defaults to the configured path.
+
+    Returns:
+        List of product dictionaries with the three extra keys, ordered
+        by SKU. Empty list when there are no active products.
+    """
+    today = utc_today_iso()
+    window_start = (
+        dt.date.fromisoformat(today)
+        - dt.timedelta(days=DEMAND_WINDOW_DAYS - 1)
+    ).isoformat()
+
+    with _run(db_path) as connection:
+        products = product_repository.list_products(connection)
+        sales_by_product = sales_repository.get_daily_sales_by_product(
+            connection, window_start, today
+        )
+
+    overview = []
+    for product in products:
+        daily_totals = sales_by_product.get(product["id"], {})
+        demand = calculate_average_daily_demand(
+            daily_totals, DEMAND_WINDOW_DAYS, today
+        )
+        reorder_point = calculate_reorder_point(
+            demand,
+            product["lead_time_days"],
+            product["safety_stock"],
+        )
+        overview.append(
+            {
+                **product,
+                "average_daily_demand": round(demand, 4),
+                "reorder_point": reorder_point,
+                "stock_status": classify_stock(
+                    product["current_stock"], reorder_point
+                ),
+            }
+        )
+    return overview

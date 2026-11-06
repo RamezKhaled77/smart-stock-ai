@@ -305,6 +305,63 @@ class TestSalesService:
             == 10
         )
 
+class TestStockOverview:
+    """Listing overview: demand (DEC-038), reorder point (DEC-032),
+    status (BR-008) per active product."""
+
+    def test_new_product_without_sales(self, db_path: Path) -> None:
+        product_service.create_product(
+            name="New Item", sku="SKU-NEW", db_path=db_path
+        )
+        overview = inventory_service.get_stock_overview(db_path=db_path)
+        assert len(overview) == 1
+        row = overview[0]
+        assert row["average_daily_demand"] == 0.0
+        assert row["reorder_point"] == 0  # 0 demand, safety 0 by default
+        assert row["stock_status"] == "Out of Stock"  # stock 0
+
+    def test_status_uses_demand_lead_and_safety(
+        self, db_path: Path, product
+    ) -> None:
+        # Sale of 8 today in the window → demand 8/30 per day.
+        sales_service.record_sale(
+            product["id"], 8, utc_today_iso(), db_path=db_path
+        )
+        overview = inventory_service.get_stock_overview(db_path=db_path)
+        row = overview[0]
+        # Stock after the sale: 10 - 8 = 2.
+        assert row["current_stock"] == 2
+        assert row["average_daily_demand"] == pytest.approx(0.2667)
+        # reorder = ceil(0.2667 * 5) + 2 = 2 + 2 = 4 (DEC-032)
+        assert row["reorder_point"] == 4
+        assert row["stock_status"] == "Low Stock"  # 2 <= 4
+
+    def test_overview_excludes_inactive_products(
+        self, db_path: Path, product
+    ) -> None:
+        other = product_service.create_product(
+            name="Item B", sku="SKU-B", db_path=db_path
+        )
+        product_service.set_product_active(
+            product["id"], False, db_path=db_path
+        )
+        overview = inventory_service.get_stock_overview(db_path=db_path)
+        assert [row["id"] for row in overview] == [other["id"]]
+
+    def test_overview_skips_sales_older_than_the_window(
+        self, db_path: Path, product
+    ) -> None:
+        # Backdated sale far outside the 30-day window must not raise
+        # demand or the reorder point.
+        sales_service.record_sale(
+            product["id"], 5, "2026-01-01", db_path=db_path
+        )
+        overview = inventory_service.get_stock_overview(db_path=db_path)
+        row = overview[0]
+        assert row["average_daily_demand"] == 0.0
+        assert row["reorder_point"] == 2  # safety stock only
+        assert row["stock_status"] == "In Stock"  # 5 > 2
+
     def test_daily_sales_and_filters(self, db_path: Path, product) -> None:
         sales_service.record_sale(
             product["id"], 2, "2026-11-01", db_path=db_path

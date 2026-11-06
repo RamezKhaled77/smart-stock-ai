@@ -181,6 +181,54 @@ def get_daily_sales(
     return {row["sale_date"]: int(row["total"]) for row in rows}
 
 
+def get_daily_sales_by_product(
+    connection: sqlite3.Connection,
+    start_date: str,
+    end_date: str,
+) -> dict:
+    """Sum sold quantity per day for every product (inclusive bounds).
+
+    Same aggregation as :func:`get_daily_sales` for all products in one
+    query, so pages listing many products avoid one query per product.
+
+    Args:
+        connection: Open database connection.
+        start_date: Inclusive lower bound (``YYYY-MM-DD``).
+        end_date: Inclusive upper bound (``YYYY-MM-DD``).
+
+    Returns:
+        Dictionary mapping each ``product_id`` to its per-day totals
+        dictionary (same shape as ``get_daily_sales``). Products with
+        no sales in the window are absent.
+
+    Raises:
+        ValueError: If the dates are invalid.
+        DatabaseError: If the query fails.
+    """
+    for value in (start_date, end_date):
+        if not _is_iso_date(value):
+            raise ValueError(
+                f"Dates must be 'YYYY-MM-DD' strings, got {value!r}."
+            )
+    try:
+        cursor = connection.execute(
+            "SELECT product_id, sale_date, SUM(quantity) AS total "
+            "FROM sales WHERE sale_date >= ? AND sale_date <= ? "
+            "GROUP BY product_id, sale_date ORDER BY product_id, sale_date",
+            (start_date, end_date),
+        )
+        rows = cursor.fetchall()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not aggregate sales by product: {error}", cause=error
+        ) from error
+    totals_by_product: dict[int, dict] = {}
+    for row in rows:
+        product_totals = totals_by_product.setdefault(row["product_id"], {})
+        product_totals[row["sale_date"]] = int(row["total"])
+    return totals_by_product
+
+
 def _is_iso_date(value: str) -> bool:
     """Check that a string parses as an ISO calendar date."""
     try:

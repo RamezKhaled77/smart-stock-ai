@@ -302,3 +302,31 @@ class TestSalesRepository:
             )
         # Days without sales are absent (preprocessing policy).
         assert daily == {"2026-11-01": 3, "2026-11-03": 4}
+
+    def test_daily_sales_by_product_groups_all_products(
+        self, db_path: Path, product_a: dict
+    ) -> None:
+        with session(db_path) as conn:
+            product_b = product_repository.create_product(
+                conn, name="Item B", sku="SKU-B"
+            )
+            sales_repository.record_sale(conn, product_a["id"], 3, "2026-11-01")
+            sales_repository.record_sale(conn, product_a["id"], 1, "2026-11-02")
+            sales_repository.record_sale(conn, product_b["id"], 5, "2026-11-02")
+            totals = sales_repository.get_daily_sales_by_product(
+                conn, "2026-11-01", "2026-11-30"
+            )
+        assert totals == {
+            product_a["id"]: {"2026-11-01": 3, "2026-11-02": 1},
+            product_b["id"]: {"2026-11-02": 5},
+        }
+
+    def test_daily_sales_by_product_empty_window(
+        self, db_path: Path, product_a: dict
+    ) -> None:
+        with session(db_path) as conn:
+            sales_repository.record_sale(conn, product_a["id"], 1, "2026-11-01")
+            totals = sales_repository.get_daily_sales_by_product(
+                conn, "2026-12-01", "2026-12-31"
+            )
+        assert totals == {}
