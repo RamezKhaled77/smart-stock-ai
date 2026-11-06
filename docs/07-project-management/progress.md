@@ -302,3 +302,13 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new (page composition over approved services; removal = approved DEC-048 flow).
 - Blockers: None recorded.
 - Next Steps: TASK-020 sales entry, TASK-021 sales history, then TASK-019 wrap-up or next milestone per plan.
+
+### Phase 3 Continued: Low-Stock Indicators Completed (TASK-019, folded into Tasks 016/018)
+
+- Date: 2026-11-06.
+- Status: Low-stock indicators delivered by the approved rule chain (BR-008 → DEC-032 reorder point → listing markers, banner, and reorder-point column); products without thresholds (no sales, zero safety stock) are handled. The banner now names each product needing restocking (commit `14fad85` follow-up in the same phase).
+- Tests Executed: full pytest suite.
+- Test Results: 134/134 passed.
+- Tasks Updated: TASK-019 → Verified. Product & Inventory interface milestone tasks (016–019) are all complete.
+- Blockers: None recorded.
+- Next Steps: TASK-020 manual sales entry and TASK-021 sales history pages.

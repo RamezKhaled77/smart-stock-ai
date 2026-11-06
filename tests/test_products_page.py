@@ -515,6 +515,9 @@ class TestProductsPageListing:
         assert app_test.exception == []
         warnings = [warning.value for warning in app_test.warning]
         assert any("2 product(s)" in value for value in warnings)
+        # The indicator names the products needing attention.
+        banner = next(value for value in warnings if "2 product(s)" in value)
+        assert "SKU-TEA" in banner and "SKU-HON" in banner
 
     def test_overview_reflects_sales_services(
         self, app_db: Path, populated

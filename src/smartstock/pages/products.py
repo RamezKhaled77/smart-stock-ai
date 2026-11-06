@@ -175,9 +175,13 @@ def _render_product_table(overview: list) -> None:
         if product["stock_status"] != STATUS_IN_STOCK
     ]
     if low_stock:
+        names = ", ".join(
+            f"{product['sku']} ({product['name']})"
+            for product in low_stock
+        )
         st.warning(
             f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
-            "and may need restocking."
+            f"and may need restocking: {names}."
         )
 
 

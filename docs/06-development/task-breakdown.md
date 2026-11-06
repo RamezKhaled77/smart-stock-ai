@@ -396,7 +396,7 @@ Completion record (2026-11-06): Stock levels shown in the listing (TASK-016) and
 ### TASK-019: Implement Low-Stock Indicators
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-018
 
 Description:
@@ -407,6 +407,8 @@ Evidence:
 
 - Indicators follow the configured rules.
 - Missing thresholds are handled appropriately.
+
+Completion record (2026-11-06): Delivered with TASK-016/TASK-018 and finalized in the same phase. Rules: BR-008 classification (Out of Stock at zero; Low Stock at/below the DEC-032 reorder point; In Stock above), computed in `domain/inventory.py` and surfaced by `inventory_service.get_stock_overview()`. Indicators on the listing: per-row status marker (🟢/🟠/🔴 with status text), a reorder-point column, and a summary banner naming every non-In-Stock product's SKU and name. Missing thresholds handled: products with no sales and zero safety stock get a reorder point of 0 (zero stock → Out of Stock, any stock → In Stock) without errors, verified by domain and service tests. Suite: 134 tests.
 
 ---
 
