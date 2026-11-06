@@ -272,3 +272,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-050, DEC-051 accepted (agent implementation decisions within guardrails, applying documented BR-010/BR-011 intent).
 - Blockers: None recorded.
 - Next Steps: Phase 3 interface tasks — TASK-016 (product listing), then product add/edit, stock adjustment, and sales recording pages.
+
+### Phase 3 Continued: Product Listing Completed (TASK-016)
+
+- Date: 2026-11-06.
+- Status: First Streamlit page live. Remaining Phase 3 tasks: product forms (TASK-017), inventory adjustments (TASK-018), low-stock indicators (TASK-019, largely delivered by the listing status column), sales entry (TASK-020 …).
+- Work Completed:
+  - `src/smartstock/domain/inventory.py`: 30-day average daily demand (DEC-038), reorder point (DEC-032, applied as documented and now Accepted), BR-008 stock classification.
+  - `sales_repository.get_daily_sales_by_product` + `inventory_service.get_stock_overview()` feed the listing with computed indicators.
+  - Products & Inventory page (`src/smartstock/pages/products.py`): listing with search, category/status filters, low-stock banner, empty states; app.py now uses `st.navigation` with a Dashboard placeholder; reliable dev command documented (`streamlit run app.py`).
+- Tests Executed: full pytest suite (incl. 11 Streamlit AppTest page tests against a temporary database) and a headless app boot check (HTTP 200).
+- Test Results: 119/119 passed.
+- Tasks Updated: TASK-016 → Verified.
+- Decisions Made: DEC-032 status → Accepted (applied as documented); BR-008 → Accepted; open-decisions table unchanged otherwise.
+- Blockers: None recorded.
+- Next Steps: TASK-017 product forms, TASK-018 stock adjustments (both reuse the existing services), then TASK-020/021 sales pages.

@@ -279,7 +279,7 @@ from smartstock.repositories.product_repository import ProductRepository
 
 The exact execution configuration may need adjustment depending on how Streamlit is launched.
 
-The project should document one reliable development command.
+The reliable development command is `streamlit run app.py` from the repository root (app.py adds `src/` to `sys.path` itself, so no manual environment variable is needed).
 
 ## 7. Structure Evolution Rules
 

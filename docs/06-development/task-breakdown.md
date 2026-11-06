@@ -342,7 +342,7 @@ Completion record (2026-11-04): `src/smartstock/services/sales_service.py` — `
 ### TASK-016: Implement Product Listing
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-013
 
 Description:
@@ -354,6 +354,8 @@ Evidence:
 - Products are loaded from the database.
 - Empty states are handled.
 - Displayed values are correct.
+
+Completion record (2026-11-06): Two commits. Groundwork (`85942a8`): `src/smartstock/domain/inventory.py` — pure calculations for the 30-day average daily demand (DEC-038; missing days count as zero), reorder point `demand × lead time + safety stock` rounded up (DEC-032, applied as documented), and the BR-008 classification (Out of Stock at zero, Low Stock at/below the reorder point, In Stock above); `sales_repository.get_daily_sales_by_product` (single grouped query to avoid a query per product); `inventory_service.get_stock_overview()` returning each active product plus `average_daily_demand`, `reorder_point`, and `stock_status`. Page (`src/smartstock/pages/products.py`): title, product table (name, SKU, category, stock, lead time, safety stock, reorder point, average demand, status with color markers), search by name/SKU (case-insensitive), category and status filters, count caption, low-stock summary banner, and both empty states (no products; no matches). `app.py` converted to `st.navigation` with a Dashboard placeholder ("use Products & Inventory today") and the Products & Inventory page; documented reliable dev command `streamlit run app.py` (app.py adds `src/` to `sys.path`). Tests: 23 new — domain parameter tests (window edges, ceiling, classifications), repo bulk-aggregation tests, service overview tests (new product, real sale effects, window exclusion of old sales, inactive exclusion), plus 11 Streamlit AppTest page tests (empty state, all displayed values per product, search, filters, no-match warning, low-stock banner, live stock updates) and app startup tests. Not excluded: BR-008 classification and DEC-032 formula applied as documented; both noted in business rules/decisions. Full suite: 119 tests passing.
 
 ### TASK-017: Implement Product Forms
 

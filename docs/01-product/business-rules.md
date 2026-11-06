@@ -104,7 +104,9 @@ Suggested initial classification:
 - Low Stock: Current Stock is greater than zero and less than or equal to Reorder Point.
 - In Stock: Current Stock is greater than Reorder Point.
 
-This classification is subject to approval.
+This classification was applied as documented (TASK-016) and is **Accepted**; the reorder point follows DEC-032.
+
+**Status:** Accepted
 
 ---
 

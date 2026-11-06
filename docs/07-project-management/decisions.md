@@ -285,14 +285,14 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-032: Reorder Point Formula
 
-- Status: Proposed
+- Status: Accepted
 - Formula:
 
   `Reorder Point = Average Daily Demand * Lead Time + Safety Stock`
 
 - Context: This is a candidate formula for determining when restocking should be considered.
 - Input sources now defined: Average Daily Demand = mean of the product's daily sales over the most recent 30 available days (per DEC-038); Lead Time = manual per-product field (DEC-037); Safety Stock = manual per-product field (DEC-036).
-- Confirmation Required: Formula confirmation during implementation review (the calculation inputs are no longer open).
+- Method: Applied as documented during TASK-016 (2026-11-06) — the inputs were all closed previously and the formula was already referenced by the stock-status rule (BR-008). Implemented in `src/smartstock/domain/inventory.py` with upward rounding to whole units so rounding can never hide a shortage. If the project owner revises the formula later, the change is isolated to the domain module.
 
 ### DEC-033: Recommended Order Quantity
 
