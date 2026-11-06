@@ -360,7 +360,7 @@ Completion record (2026-11-06): Two commits. Groundwork (`85942a8`): `src/smarts
 ### TASK-017: Implement Product Forms
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-016
 
 Description:
@@ -373,10 +373,12 @@ Evidence:
 - Invalid input is rejected.
 - Updated values appear correctly.
 
+Completion record (2026-11-06): Add and edit forms on the Products & Inventory page (tabs "Add product" and "Edit product"), both submitting through the product service (no page-side SQL or duplication). Add form: name/SKU required, category optional, initial stock (≥0), lead time (default 3, DEC-037), safety stock (default 0, DEC-036). Edit form prefills the selected product (widget keys include the product id so switching selection resets state), updates exactly the editable fields, and never touches stock. Removal implemented as approved soft delete: deactivation behind an explicit confirmation checkbox (DEC-048), plus reactivation for inactive products; the inactive product disappears from the listing (BR-026) is verified in tests. Validation errors from the services (`ValueError`: empty name, duplicate SKU) and the database layer (`DatabaseError`) are surfaced inline via st.error without changes; successes route through a session-state "flash" message that survives the post-action rerun. Tests: Streamlit AppTest — creation persists with defaults and appears in the listing, duplicate-SKU and empty-name rejections with no partial writes, prefill, field updates (stock untouched), SKU conflict, deactivate confirmation gating, deactivate + listing exclusion, reactivate.
+
 ### TASK-018: Implement Inventory Display and Adjustments
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-014, TASK-016
 
 Description:
@@ -388,6 +390,8 @@ Evidence:
 - Stock levels match persisted data.
 - Adjustment behavior follows business rules.
 - Relevant tests pass.
+
+Completion record (2026-11-06): Stock levels shown in the listing (TASK-016) and in the "Adjust stock" tab with a `st.metric` current-stock display for the selected product. Two approved operations, exactly per DEC-047 ownership: "Add or remove units" (signed adjustment through `inventory_service.adjust_stock`; DEC-034 rejections — zero change, non-integer, negative result — surface as clear inline errors and leave stock unchanged) and "Set exact stock (correction)" with a warning that corrections overwrite the stored value (uses `set_stock_level`, documented for corrections only). The listing table in the same run reflects the new stock immediately. Tests: AppTest — add/remove units persist and display, over-removal rejected with the negative-stock message and unchanged stock, zero change rejected, exact-level correction works, metric shows current stock. See TASK-017/018 commit `14fad85`; full suite: 134 tests.
 
 ### TASK-019: Implement Low-Stock Indicators
 

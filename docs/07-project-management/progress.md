@@ -287,3 +287,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-032 status → Accepted (applied as documented); BR-008 → Accepted; open-decisions table unchanged otherwise.
 - Blockers: None recorded.
 - Next Steps: TASK-017 product forms, TASK-018 stock adjustments (both reuse the existing services), then TASK-020/021 sales pages.
+
+### Phase 3 Continued: Product Forms and Stock Adjustments Completed (TASK-017…018)
+
+- Date: 2026-11-06.
+- Status: Products & Inventory page is functionally complete for products and stock (listing, add, edit, soft delete, adjustments). Low-stock indicator presentation (TASK-019) already largely provided by the status column + banner. Remaining Phase 3 tasks: sales entry/history (TASK-020/021), CSV import (TASK-022 …).
+- Work Completed (commit `14fad85`):
+  - Add/edit product forms through the product service; duplicate-SKU and empty-name errors inline; soft delete with confirmation; reactivation.
+  - Stock panel: signed unit adjustments with DEC-034 rejections shown unchanged, exact-level corrections with overwrite warning; `st.metric` current-stock display.
+  - Session-state flash messages so success feedback survives the action rerun.
+- Tests Executed: full pytest suite (Streamlit AppTest flows for forms, validation, adjustments).
+- Test Results: 134/134 passed.
+- Tasks Updated: TASK-017, TASK-018 → Verified.
+- Decisions Made: none new (page composition over approved services; removal = approved DEC-048 flow).
+- Blockers: None recorded.
+- Next Steps: TASK-020 sales entry, TASK-021 sales history, then TASK-019 wrap-up or next milestone per plan.

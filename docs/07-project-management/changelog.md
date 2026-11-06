@@ -305,6 +305,7 @@ It does not imply that the application itself has been implemented.
 - [TASK-012] Repository tests (`tests/test_repositories.py`): product CRUD and soft delete, stock adjustment guards (DEC-034), sales recording/filter/aggregation (DEC-049), error handling; full suite at 65 passing tests.
 - [TASK-013 - TASK-015] Application services (`product_service`, `inventory_service`, `sales_service`) with the atomic DEC-035/BR-012 sale transaction; sales-service tests (`tests/test_services.py`) prove rejected sales leave inventory untouched; suite at 84 passing tests.
 - [TASK-016] First Streamlit page: Products & Inventory listing with search/filters and BR-008 stock status backed by the new `domain/inventory.py` calculations (DEC-032 reordered point rendered); `app.py` navigation; documented `streamlit run app.py`; suite at 119 passing tests.
+- [TASK-017 - TASK-018] Product add/edit forms with soft-delete removal (confirmation + reactivation) and stock adjustment/correction panel with clear DEC-034 rejections; session-flash feedback; suite at 134 passing tests.
 
 ## 6. Future Entry Template
 
