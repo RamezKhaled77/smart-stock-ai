@@ -449,6 +449,20 @@ A proposed decision must not be treated as accepted.
 - Context: No v1 requirement demands returns. Deferring keeps the schema minimal (Products + Sales only, per DEC-047/DEC-028) and avoids complicating the negative-stock and insufficient-stock validation (DEC-034/DEC-035) with negative sale quantities. If returns become a requirement later, a return operation must be designed with its own stock and validation rules.
 - Method: Chosen with the project owner from documented options (2026-11-04).
 
+### DEC-050: Sales on Inactive Products
+
+- Status: Accepted
+- Decision: Recording a sale for a deactivated (soft-deleted) product is rejected. New sales target only existing, active products; historical sales of deactivated products remain intact.
+- Context: Finalizes BR-010 ("sales must reference a valid product") together with the DEC-048 soft-delete semantics: an inactive product is removed from operations, so accepting new sales for it would contradict BR-026's exclusion of inactive products from operational counts.
+- Method: Agent implementation decision within guardrails (2026-11-04, TASK-015), applying documented rules; reversible if the project owner prefers sellable-inactive behavior.
+
+### DEC-051: Future Sale Dates
+
+- Status: Accepted
+- Decision: Sale dates must be valid `YYYY-MM-DD` dates and must not be in the future. Backdated entries (e.g., recording yesterday's counter sales) are allowed; dates are still validated against current stock at recording time.
+- Context: Finalizes BR-011, whose documented intent is to reject future dates unless the application explicitly supports scheduled transactions — which it does not.
+- Method: Agent implementation decision within guardrails (2026-11-04, TASK-015), applying documented rules.
+
 ---
 
 ## 10. Open Decisions Summary
@@ -470,6 +484,8 @@ All open decisions have been closed, most recently on 2026-11-04:
 | DEC-047 | Stock storage model | Direct `current_stock` column on products; movements entity not built in v1 |
 | DEC-048 | Product deletion | Soft delete via `is_active` flag |
 | DEC-049 | Returns | Not supported in v1; recorded sales immutable |
+| DEC-050 | Sales on inactive products | Rejected; sales target existing, active products only |
+| DEC-051 | Future sale dates | Rejected; backdated entries allowed |
 
 ---
 

@@ -284,7 +284,7 @@ Completion record (2026-11-04): Three repositories under `src/smartstock/reposit
 ### TASK-013: Implement Product Services
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-012
 
 Description:
@@ -297,10 +297,12 @@ Evidence:
 - Validation is enforced.
 - Unit tests pass.
 
+Completion record (2026-11-04): `src/smartstock/services/product_service.py` — Streamlit-independent functions that open managed sessions against `config.DATABASE_PATH` (overridable via `db_path` for tests): `create_product` (initial stock written with the product row so a product never exists without defined stock; defaults per DEC-036/037/048), `get_product`, `get_product_by_sku`, `list_products` (active-only per BR-026), `update_product` (editable fields only; explicitly rejects `current_stock` with a pointer to the inventory service), and `set_product_active` (soft delete/reactivation per DEC-048). Data-layer `ValueError`/`DatabaseError` messages propagate unchanged for the UI to display. Tests: covered by `tests/test_services.py` (9 product-service tests: defaults, duplicate SKU, retrieval, list exclusion, field updates, stock-change rejection, soft delete round trip).
+
 ### TASK-014: Implement Inventory Services
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-012, TASK-013
 
 Description:
@@ -313,10 +315,12 @@ Evidence:
 - Invalid adjustments are handled.
 - Relevant tests pass.
 
+Completion record (2026-11-04): `src/smartstock/services/inventory_service.py` — `get_current_stock`, `adjust_stock` (signed change; zero/non-integer rejected; negative results rejected per DEC-034 with current stock in the message), and `set_stock_level` (explicit corrections only, documented as not for sales). Integer arithmetic verified; all adjustment interactions tested including the rejected paths (6 inventory-service tests).
+
 ### TASK-015: Implement Sales Services
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-012, TASK-013, TASK-014
 
 Description:
@@ -328,6 +332,8 @@ Evidence:
 - Sales are stored correctly.
 - Approved inventory interactions work.
 - Relevant tests pass.
+
+Completion record (2026-11-04): `src/smartstock/services/sales_service.py` — `record_sale` realizes DEC-035 + BR-012 atomically: one session/transaction performs stock validation, sale insert, and stock decrement (repositories gained an optional `commit` flag so the caller's session manager commits once; any failure rolls the whole transaction back). Rejects insufficient stock with a dedicated `InsufficientStockError(ValueError)` carrying `requested`/`available` for a clear UI message; verified that a rejected sale records no row and leaves stock unchanged. Additional validations finalized as DEC-050 (sales on inactive products rejected) and DEC-051 (future sale dates rejected; backdated allowed) — recorded in `decisions.md`, business rules BR-009…BR-013 statuses updated to Accepted. Read paths delegate to the repository: `list_sales` (filters) and `get_daily_sales` (per-day aggregation). Tests: 10 sales-service tests including an atomicity suite and a no-write smoke check against the real configured database (rejection leaves stock and rows untouched). Full suite at this point: 84 tests.
 
 ---
 

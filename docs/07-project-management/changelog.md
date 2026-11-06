@@ -303,6 +303,7 @@ It does not imply that the application itself has been implemented.
 - [TASK-010] Database tests (`tests/test_database.py`): initialization idempotency, table/column verification, CHECK constraints, FK enforcement; real-path smoke test on `data/smartstock.db` (git-ignored).
 - [TASK-011] Connection tests (`tests/test_connection.py`): commit/rollback/close behavior of `session()`, consistent connection settings, error wrapping.
 - [TASK-012] Repository tests (`tests/test_repositories.py`): product CRUD and soft delete, stock adjustment guards (DEC-034), sales recording/filter/aggregation (DEC-049), error handling; full suite at 65 passing tests.
+- [TASK-013 - TASK-015] Application services (`product_service`, `inventory_service`, `sales_service`) with the atomic DEC-035/BR-012 sale transaction; sales-service tests (`tests/test_services.py`) prove rejected sales leave inventory untouched; suite at 84 passing tests.
 
 ## 6. Future Entry Template
 

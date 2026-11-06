@@ -23,6 +23,7 @@ def record_sale(
     product_id: int,
     quantity: int,
     sale_date: str,
+    commit: bool = True,
 ) -> dict:
     """Insert a sales record and return it as a dictionary.
 
@@ -31,6 +32,9 @@ def record_sale(
         product_id: Existing product (foreign key enforced).
         quantity: Units sold (positive integer).
         sale_date: Sale date as an ISO ``YYYY-MM-DD`` string.
+        commit: Commit immediately (default). Pass False when composing
+            several writes in one transaction; the caller's session
+            manager commits instead.
 
     Returns:
         The stored sale as ``{"id", "product_id", "quantity",
@@ -57,7 +61,8 @@ def record_sale(
             "created_at) VALUES (?, ?, ?, ?)",
             (product_id, quantity, sale_date, now),
         )
-        connection.commit()
+        if commit:
+            connection.commit()
     except sqlite3.IntegrityError as error:
         raise DatabaseError(
             f"Could not record sale: product {product_id} does not exist.",

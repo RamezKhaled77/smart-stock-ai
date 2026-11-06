@@ -43,13 +43,25 @@ def get_current_stock(
 
 
 def adjust_stock(
-    connection: sqlite3.Connection, product_id: int, change: int
+    connection: sqlite3.Connection,
+    product_id: int,
+    change: int,
+    commit: bool = True,
 ) -> int:
     """Apply a signed manual stock adjustment and return the new stock.
 
     Add stock with a positive ``change`` and remove stock with a
     negative value. Zero-change adjustments are rejected because they
     are always a caller mistake.
+
+    Args:
+        connection: Open database connection.
+        product_id: Product whose stock changes.
+        change: Signed integer quantity (positive adds, negative
+            removes).
+        commit: Commit immediately (default). Pass False when composing
+            several writes in one transaction; the caller's session
+            manager commits instead.
 
     Raises:
         ValueError: If the change is invalid, the product is unknown,
@@ -78,7 +90,8 @@ def adjust_stock(
         )
         if cursor.rowcount == 0:
             raise ValueError(f"Product {product_id} does not exist.")
-        connection.commit()
+        if commit:
+            connection.commit()
     except ValueError:
         raise
     except sqlite3.Error as error:

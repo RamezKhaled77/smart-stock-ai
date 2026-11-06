@@ -256,3 +256,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-047, DEC-048, DEC-049 accepted with the project owner (2026-11-04); exact column constraints resolved in the approved schema (documented in `database-schema.md` §14). CSV import duplicate handling remains open until the import feature phase.
 - Blockers: None recorded.
 - Next Steps: Phase 3 — domain logic and services: product services (TASK-013), inventory services (TASK-014), sales services (TASK-015, combining repos under DEC-035).
+
+### Phase 3 In Progress: Domain Logic and Services — Core Completed
+
+- Date: 2026-11-04.
+- Status: Service layer complete (TASK-013 … TASK-015). Phase 3 continues with the Streamlit interface tasks (TASK-016 …).
+- Work Completed:
+  - `src/smartstock/services/product_service.py`: product CRUD + soft delete/activation, coordinated through product repository; `update_product` explicitly rejects stock changes.
+  - `src/smartstock/services/inventory_service.py`: stock read, signed adjustments (DEC-034 guards), explicit level setting (corrections only).
+  - `src/smartstock/services/sales_service.py`: `record_sale` executes validate → insert → decrement in one transaction, realizing DEC-035 and BR-012 atomically; `InsufficientStockError` carries requested/available counts for the UI. Repositories gained an optional `commit` flag to support multi-step transactions through the session manager.
+  - Validations finalized autonomously and recorded: DEC-050 (sales on inactive products rejected), DEC-051 (future sale dates rejected; backdated allowed). BR-009 … BR-013 statuses updated to Accepted.
+- Tests Executed: `pytest` full suite; no-write smoke test against the real configured `data/smartstock.db` (insufficient-stock rejection leaves stock and rows untouched).
+- Test Results: 84/84 passed (65 previous + 19 service tests in `tests/test_services.py`).
+- Tasks Updated: TASK-013 … TASK-015 → Verified.
+- Decisions Made: DEC-050, DEC-051 accepted (agent implementation decisions within guardrails, applying documented BR-010/BR-011 intent).
+- Blockers: None recorded.
+- Next Steps: Phase 3 interface tasks — TASK-016 (product listing), then product add/edit, stock adjustment, and sales recording pages.

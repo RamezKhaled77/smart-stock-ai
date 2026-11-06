@@ -116,7 +116,7 @@ A recorded sales quantity must be a positive numeric value.
 
 Zero and negative quantities must not be accepted as normal sales.
 
-**Status:** Proposed
+**Status:** Accepted — enforced in the sales service and repository (values must be positive integers; `2.5`, `0`, and negatives are rejected).
 
 ## BR-010: Sales Product Reference
 
@@ -124,7 +124,7 @@ Every sales record must reference a valid product.
 
 Historical records for inactive products may still be retained.
 
-**Status:** Proposed
+**Status:** Accepted — new sales only target existing, active products; recording a sale for a deactivated product is rejected (DEC-050). Historical sales of deactivated products are preserved (DEC-048).
 
 ## BR-011: Sales Date
 
@@ -132,7 +132,7 @@ A sales record must contain a valid date.
 
 Future sales dates should be rejected unless the application explicitly supports scheduled transactions.
 
-**Status:** Proposed
+**Status:** Accepted — dates must be valid `YYYY-MM-DD`; future dates are rejected because the application does not support scheduled transactions (DEC-051). Backdated entries are allowed.
 
 ## BR-012: Inventory Deduction
 
@@ -140,7 +140,7 @@ When a sale is recorded, inventory should be reduced by the sold quantity.
 
 The operation must be handled consistently so that a failed sale does not leave inventory incorrectly updated.
 
-**Status:** Proposed
+**Status:** Accepted — implemented as one transaction in the sales service (TASK-015): stock validation, sale insert, and stock decrement commit together or roll back together.
 
 ## BR-013: Insufficient Stock
 
@@ -149,6 +149,8 @@ If the requested sales quantity exceeds current stock, the system must not silen
 **Decided policy (DEC-035):** Reject the sale when stock is insufficient. The sale is not recorded, inventory is left unchanged, and the user receives a clear validation message identifying the requested quantity and the available quantity.
 
 If the user later explicitly requires backorder support, a new decision must supersede DEC-035.
+
+**Status:** Accepted — implemented via `InsufficientStockError` in the sales service with the requested and available quantities in the message; delivered in one transaction (BR-012).
 
 ## BR-014: Historical Sales Import
 
