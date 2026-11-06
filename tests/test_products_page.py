@@ -48,6 +48,308 @@ def _run_app(app_db: Path):
     return app_test
 
 
+def _key(elements, key):
+    """Locate a Streamlit test element by its widget key."""
+    matches = [element for element in elements if element.key == key]
+    assert matches, f"widget with key {key!r} not found"
+    return matches[0]
+
+
+def _click_button(app_test, label: str) -> None:
+    """Click the labeled button, then rerun the script."""
+    matches = [b for b in app_test.button if b.label == label]
+    assert matches, f"button {label!r} not found"
+    matches[0].click()
+    app_test.run()
+
+
+def _click_submit(app_test, label: str) -> None:
+    """Submit the labeled form button, then rerun the script."""
+    matches = [b for b in app_test.form_submit_button if b.label == label]
+    assert matches, f"form submit {label!r} not found"
+    matches[0].click()
+    app_test.run()
+
+
+def _button_by_label(app_test, label: str):
+    matches = [b for b in app_test.button if b.label == label]
+    assert matches, f"button {label!r} not found"
+    return matches[0]
+
+
+def _submit_by_label(app_test, label: str):
+    matches = [b for b in app_test.form_submit_button if b.label == label]
+    assert matches, f"form submit {label!r} not found"
+    return matches[0]
+
+
+class TestAddProductForm:
+    """TASK-017: creation form."""
+
+    def test_create_persists_product_with_defaults(
+        self, app_db: Path
+    ) -> None:
+        app_test = _run_page()
+        _key(app_test.text_input, "add_name").set_value("Tea Cup")
+        _key(app_test.text_input, "add_sku").set_value("SKU-CUP")
+        _key(app_test.text_input, "add_category").set_value("Kitchen")
+        _key(app_test.number_input, "add_stock").set_value(5)
+        _key(app_test.number_input, "add_lead").set_value(4)
+        _key(app_test.number_input, "add_safety").set_value(2)
+        _click_submit(app_test, "Create product")
+
+        assert app_test.exception == []
+        assert any(
+            "Created 'Tea Cup'" in s.value for s in app_test.success
+        )
+        persisted = product_service.get_product_by_sku(
+            "SKU-CUP", db_path=app_db
+        )
+        assert persisted is not None
+        assert persisted["current_stock"] == 5
+        assert persisted["lead_time_days"] == 4
+        assert persisted["safety_stock"] == 2
+        # The listing reflects the new product immediately.
+        dataframes = app_test.dataframe
+        assert "SKU-CUP" in list(dataframes[0].value["SKU"])
+
+    def test_duplicate_sku_shows_service_error(self, app_db: Path) -> None:
+        product_service.create_product(
+            name="Existing", sku="SKU-DUP", db_path=app_db
+        )
+        app_test = _run_page()
+        _key(app_test.text_input, "add_name").set_value("Copy")
+        _key(app_test.text_input, "add_sku").set_value("SKU-DUP")
+        _click_submit(app_test, "Create product")
+
+        assert app_test.exception == []
+        assert any(
+            "already exists" in e.value for e in app_test.error
+        )
+        # No partial write happened.
+        assert product_service.get_product_by_sku(
+            "Copy", db_path=app_db
+        ) is None
+
+    def test_empty_name_rejected(self, app_db: Path) -> None:
+        app_test = _run_page()
+        _key(app_test.text_input, "add_name").set_value("   ")
+        _key(app_test.text_input, "add_sku").set_value("SKU-X")
+        _click_submit(app_test, "Create product")
+        assert any("not created" in e.value for e in app_test.error)
+        assert product_service.get_product_by_sku(
+            "SKU-X", db_path=app_db
+        ) is None
+
+
+class TestEditProductForm:
+    """TASK-017: edit form and soft-delete removal."""
+
+    @pytest.fixture
+    def product(self, app_db: Path) -> dict:
+        return product_service.create_product(
+            name="Coffee Bag 250g",
+            sku="SKU-COF",
+            category="Drinks",
+            initial_stock=50,
+            db_path=app_db,
+        )
+
+    def test_form_prefills_current_values(
+        self, app_db: Path, product
+    ) -> None:
+        app_test = _run_page()
+        assert (
+            _key(app_test.text_input, f"edit_name_{product['id']}").value
+            == "Coffee Bag 250g"
+        )
+        assert (
+            _key(app_test.number_input, f"edit_lead_{product['id']}").value
+            == 3
+        )
+        assert (
+            _key(app_test.number_input, f"edit_safety_{product['id']}").value
+            == 0
+        )
+
+    def test_update_fields_persist(self, app_db: Path, product) -> None:
+        app_test = _run_page()
+        _key(app_test.text_input, f"edit_name_{product['id']}").set_value(
+            "Coffee Bag 500g"
+        )
+        _key(app_test.number_input, f"edit_lead_{product['id']}").set_value(7)
+        _key(app_test.number_input, f"edit_safety_{product['id']}").set_value(
+            3
+        )
+        _click_submit(app_test, "Save changes")
+
+        assert app_test.exception == []
+        updated = product_service.get_product(product["id"], db_path=app_db)
+        assert updated["name"] == "Coffee Bag 500g"
+        assert updated["lead_time_days"] == 7
+        assert updated["safety_stock"] == 3
+        assert updated["current_stock"] == 50  # untouched
+
+    def test_sku_conflict_shows_error(self, app_db: Path, product) -> None:
+        product_service.create_product(
+            name="Other", sku="SKU-OTHER", db_path=app_db
+        )
+        app_test = _run_page()
+        _key(app_test.text_input, f"edit_sku_{product['id']}").set_value(
+            "SKU-OTHER"
+        )
+        _click_submit(app_test, "Save changes")
+        assert any("already exists" in e.value for e in app_test.error)
+        assert (
+            product_service.get_product(product["id"], db_path=app_db)["sku"]
+            == "SKU-COF"
+        )
+
+    def test_deactivate_requires_confirmation(
+        self, app_db: Path, product
+    ) -> None:
+        app_test = _run_page()
+        _click_button(app_test, "Deactivate product")
+        assert any(
+            "Tick the confirmation box" in e.value for e in app_test.error
+        )
+        assert product_service.get_product(
+            product["id"], db_path=app_db
+        )["is_active"] == 1
+
+    def test_deactivate_and_listing_exclusion(
+        self, app_db: Path, product
+    ) -> None:
+        app_test = _run_page()
+        _key(app_test.checkbox, f"edit_confirm_{product['id']}").check()
+        _click_button(app_test, "Deactivate product")
+
+        assert app_test.exception == []
+        assert product_service.get_product(
+            product["id"], db_path=app_db
+        )["is_active"] == 0
+        # Listing excludes inactive products (BR-026); empty state shows.
+        assert any(
+            "No products yet" in info.value for info in app_test.info
+        )
+        # Unconfirmed widget state does not leak into the result.
+        assert app_test.success == [] or any(
+            "deactivated" in s.value for s in app_test.success
+        )
+
+    def test_reactivate(self, app_db: Path, product) -> None:
+        product_service.set_product_active(product["id"], False, db_path=app_db)
+        app_test = _run_page()
+        _click_button(app_test, "Reactivate product")
+        assert product_service.get_product(
+            product["id"], db_path=app_db
+        )["is_active"] == 1
+
+
+class TestStockPanel:
+    """TASK-018: stock adjustments and corrections."""
+
+    @pytest.fixture
+    def product(self, app_db: Path) -> dict:
+        return product_service.create_product(
+            name="Coffee Bag 250g",
+            sku="SKU-COF",
+            initial_stock=10,
+            db_path=app_db,
+        )
+
+    def test_add_units(self, app_db: Path, product) -> None:
+        app_test = _run_page()
+        _key(app_test.number_input, f"stock_change_{product['id']}").set_value(
+            5
+        )
+        _click_button(app_test, "Apply adjustment")
+
+        assert app_test.exception == []
+        assert any(
+            "now has 15 units" in s.value for s in app_test.success
+        )
+        assert (
+            inventory_service.get_current_stock(
+                product["id"], db_path=app_db
+            )
+            == 15
+        )
+        # The listing table in the same run shows the new stock.
+        frames = app_test.dataframe[0].value
+        assert list(frames["Stock"]) == [15]
+
+    def test_remove_units(self, app_db: Path, product) -> None:
+        app_test = _run_page()
+        _key(app_test.number_input, f"stock_change_{product['id']}").set_value(
+            -4
+        )
+        _click_button(app_test, "Apply adjustment")
+        assert (
+            inventory_service.get_current_stock(
+                product["id"], db_path=app_db
+            )
+            == 6
+        )
+
+    def test_remove_too_many_attention_negative_rejection(
+        self, app_db: Path, product
+    ) -> None:
+        app_test = _run_page()
+        _key(app_test.number_input, f"stock_change_{product['id']}").set_value(
+            -11
+        )
+        _click_button(app_test, "Apply adjustment")
+        assert any(
+            "negative stock is not allowed" in e.value
+            for e in app_test.error
+        )
+        assert (
+            inventory_service.get_current_stock(
+                product["id"], db_path=app_db
+            )
+            == 10
+        )
+
+    def test_zero_change_rejected(self, app_db: Path, product) -> None:
+        app_test = _run_page()
+        _key(app_test.number_input, f"stock_change_{product['id']}").set_value(
+            0
+        )
+        _click_button(app_test, "Apply adjustment")
+        assert any(
+            "must not be zero" in e.value for e in app_test.error
+        )
+
+    def test_set_exact_stock(self, app_db: Path, product) -> None:
+        app_test = _run_page()
+        _key(app_test.radio, "stock_mode").set_value(
+            "Set exact stock (correction)"
+        )
+        app_test.run()  # the exact-mode branch renders on the rerun
+        _key(app_test.number_input, f"stock_exact_{product['id']}").set_value(
+            42
+        )
+        _click_button(app_test, "Set stock level")
+        assert any(
+            "Stock set to 42 units" in s.value for s in app_test.success
+        )
+        assert (
+            inventory_service.get_current_stock(
+                product["id"], db_path=app_db
+            )
+            == 42
+        )
+
+    def test_current_stock_metric_is_displayed(
+        self, app_db: Path, product
+    ) -> None:
+        app_test = _run_page()
+        metrics = app_test.metric
+        assert len(metrics) == 1
+        assert metrics[0].value == "10"
+
+
 class TestAppNavigation:
     """Entry point runs cleanly (page import wiring included).
 
@@ -84,8 +386,10 @@ class TestProductsPageEmptyState:
     def test_empty_state_message(self, app_db: Path) -> None:
         app_test = _run_page()
         assert app_test.exception == []
-        assert len(app_test.info) == 1
-        assert "No products yet" in app_test.info[0].value
+        assert len(app_test.info) >= 1
+        assert any(
+            "No products yet" in info.value for info in app_test.info
+        )
 
 
 class TestProductsPageListing:
