@@ -457,7 +457,7 @@ Completion record (2026-11-07): "Sales history" tab on the same page: table of p
 ### TASK-022: Implement CSV File Validation
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-006, TASK-007
 
 Description:
@@ -469,6 +469,8 @@ Evidence:
 - Valid files are accepted.
 - Invalid files produce clear errors.
 - Validation tests pass.
+
+Completion record (2026-11-07): `src/smartstock/domain/csv_import.py` — pure validation logic, no DB or UI dependencies. `read_csv_file` parses with string dtypes so malformed values become explicit row-level problems (file-level errors: empty data, unreadable text, malformed CSV → `CsvFileError`); `validate_file_structure` requires exactly the `date,store,item,sales` columns (missing or extra columns → `CsvStructureError`, so file meaning is never guessed). `analyze_rows` produces a `RowAnalysis` report: rejected rows with per-row reasons (invalid/impossible dates via strict `%Y-%m-%d`, non-integer or negative stores/items, fractional/negative sales, missing values), out-of-scope rows for other stores counted per DEC-015 (skipped, not errors), within-file duplicate `(item, date)` pairs skipped keeping first occurrence, zero sales accepted (dataset's real observation), accepted rows normalized to storage types with date range. Row-level problems are a report rather than exceptions because DEC-054 validates the whole file before any write. Verified on real dataset rows: 5,000-row slice classified correctly (stores 2–3 out of scope, 1,826 valid store-1 rows, full 2013–2017 range); suite 171 tests.
 
 ### TASK-023: Implement CSV Preview
 
