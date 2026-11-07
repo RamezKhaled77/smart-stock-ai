@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 import streamlit as st
 
 from smartstock.pages.products import render as products_render
+from smartstock.pages.sales import render as sales_render
 
 st.set_page_config(
     page_title="SmartStock AI",
@@ -46,6 +47,15 @@ page = st.navigation(
                 products_render,
                 title="Products & Inventory",
                 icon="🏷️",
+                url_path="products-and-inventory",
+            ),
+        ],
+        "Sales": [
+            st.Page(
+                sales_render,
+                title="Sales Management",
+                icon="🧾",
+                url_path="sales-management",
             ),
         ],
     }

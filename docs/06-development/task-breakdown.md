@@ -417,7 +417,7 @@ Completion record (2026-11-06): Delivered with TASK-016/TASK-018 and finalized i
 ### TASK-020: Implement Manual Sales Entry
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-015
 
 Description:
@@ -430,10 +430,12 @@ Evidence:
 - Invalid quantities and product references are rejected.
 - Approved inventory behavior is applied.
 
+Completion record (2026-11-07): "Record sale" tab in the new `src/smartstock/pages/sales.py` (registered in `app.py` navigation as Sales Management; shared UI helpers extracted to `src/smartstock/pages/ui.py` — the session-flash pattern used by both pages). Form: active-product selectbox with live stock in labels (DEC-050), current-stock `st.metric`, quantity (min 1), and a sale-date input defaulting to UTC today so defaults always pass DEC-051 (test discovered Streamlit's date widget clamps beyond ~+10 years; the service rejection is exercised with a near-future date). Submission routes through `sales_service.record_sale` — the atomic DEC-035/BR-012 transaction: success flash states quantities and remaining stock; `InsufficientStockError` surfaces the requested/available message inline with no sale row and unchanged stock (verified at UI level); `ValueError`/`DatabaseError` show unchanged. Backdated entries flow through the service as approved. Tests: AppTest — empty state, valid sale persists + stock reduces + history row appears, insufficient stock rejected atomically, future date rejected, inactive product unsellable, backdated allowed.
+
 ### TASK-021: Implement Sales History
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-020
 
 Description:
@@ -445,6 +447,8 @@ Evidence:
 - Sales records are displayed correctly.
 - Empty states are supported.
 - Relevant filters work if included in the approved specification.
+
+Completion record (2026-11-07): "Sales history" tab on the same page: table of product label (name + SKU), quantity, sale date, and record creation time; totals caption (sales count and units). Filters per the approved spec: product filter (includes deactivated products so preserved records stay reviewable — DEC-048) and date-range filter with an "All time" default toggle; an out-of-order range warns and aborts. Empty states differentiate "nothing recorded yet" versus "no matches for current filters". Tests: AppTest — all-time display with labels and totals, product filter, date-window filter, no-match state, deactivated product remains visible in history. Full suite: 147 tests.
 
 ---
 

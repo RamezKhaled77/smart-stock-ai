@@ -18,6 +18,7 @@ from smartstock.domain.inventory import (
     STATUS_LOW_STOCK,
     STATUS_OUT_OF_STOCK,
 )
+from smartstock.pages.ui import flash, show_flash
 from smartstock.services import inventory_service, product_service
 
 # Marker chosen for quick visual scanning next to the status text.
@@ -41,13 +42,7 @@ def render() -> None:
 
     # Feedback messages survive the st.rerun() a successful action
     # triggers; inline st.error stays used for validation failures.
-    flash = st.session_state.pop("flash", None)
-    if flash is not None:
-        kind, message = flash
-        if kind == "error":
-            st.error(message)
-        else:
-            st.success(message)
+    show_flash()
 
     tab_list, tab_add, tab_edit, tab_stock = st.tabs(
         ["📋 Product list", "➕ Add product", "✏️ Edit product",
@@ -61,11 +56,6 @@ def render() -> None:
         _render_edit_form()
     with tab_stock:
         _render_stock_panel()
-
-
-def _flash(kind: str, message: str) -> None:
-    """Queue a feedback message shown after the next rerun."""
-    st.session_state["flash"] = (kind, message)
 
 
 # ---------------------------------------------------------------------------
@@ -160,7 +150,7 @@ def _render_product_table(overview: list) -> None:
     st.dataframe(
         pd.DataFrame(rows),
         hide_index=True,
-        use_container_width=True,
+        width="stretch",
         column_config={
             "Name": st.column_config.TextColumn("Name", width="medium"),
             "Stock": st.column_config.NumberColumn("Stock"),
@@ -227,7 +217,7 @@ def _render_add_form() -> None:
     except (ValueError, DatabaseError) as error:
         st.error(f"Product not created: {error}")
         return
-    _flash(
+    flash(
         "success",
         f"Created '{product['name']}' ({product['sku']}) with "
         f"{product['current_stock']} units in stock.",
@@ -298,7 +288,7 @@ def _render_edit_form() -> None:
                 product_service.set_product_active(
                     product["id"], False,
                 )
-                _flash(
+                flash(
                     "success",
                     f"'{product['name']}' deactivated. Its sales history "
                     "is preserved; reactivation is possible.",
@@ -315,7 +305,7 @@ def _render_edit_form() -> None:
             product_service.set_product_active(
                 product["id"], True,
             )
-            _flash(
+            flash(
                 "success", f"'{product['name']}' reactivated."
             )
             st.rerun()
@@ -334,7 +324,7 @@ def _render_edit_form() -> None:
     except (ValueError, DatabaseError) as error:
         st.error(f"Changes not saved: {error}")
         return
-    _flash(
+    flash(
         "success", f"Updated '{updated['name']}' ({updated['sku']})."
     )
     st.rerun()
@@ -414,7 +404,7 @@ def _render_adjust_by_change(product: dict) -> None:
             # Includes the DEC-034 negative-stock rejection.
             st.error(f"Adjustment rejected: {error}")
             return
-        _flash(
+        flash(
             "success",
             f"Stock adjusted. '{product['name']}' now has "
             f"{new_stock} units.",
@@ -444,7 +434,7 @@ def _render_adjust_by_exact_level(product: dict) -> None:
         except (ValueError, DatabaseError) as error:
             st.error(f"Correction rejected: {error}")
             return
-        _flash(
+        flash(
             "success",
             f"Stock set to {new_stock} units for '{product['name']}'.",
         )
