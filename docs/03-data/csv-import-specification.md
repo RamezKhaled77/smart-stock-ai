@@ -339,14 +339,14 @@ If data is later exported to CSV, consider spreadsheet formula injection risks.
 
 |Decision|Status|
 |---|---|
-|Historical import format|Proposed|
-|Operational import format|Proposed|
-|Duplicate detection strategy|Open|
-|Partial import support|Open|
-|Import rollback behavior|Open|
-|Insufficient stock policy|Open|
-|Import history storage|Open|
-|Stock reconciliation workflow|Open|
+|Historical import format|**Accepted (2026-11-07, DEC-052)** — `date,store,item,sales`; store-filtered per DEC-015, stored in `historical_sales`|
+|Operational import format|**Accepted (2026-11-07, DEC-055)** — not built in v1; historical import only|
+|Duplicate detection strategy|**Accepted (2026-11-07, DEC-053)** — SHA-256 file fingerprint rejection + unique (`item`, `sale_date`) constraint|
+|Partial import support|**Accepted (2026-11-07, DEC-054)** — no partial imports; all-or-nothing|
+|Import rollback behavior|**Accepted (2026-11-07, DEC-054)** — single transaction; full rollback on failure|
+|Import history storage|**Accepted (2026-11-07, DEC-052)** — `import_batches` metadata table per run|
+|Insufficient stock policy|**Deferred with DEC-055** — applies only to an operational import, which is not built in v1|
+|Stock reconciliation workflow|**Deferred** — remains a separate future operation, never part of import|
 
 ## 17. Related Documentation
 

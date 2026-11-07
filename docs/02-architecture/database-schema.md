@@ -226,20 +226,23 @@ Transactions should be used when multiple related database changes must succeed 
 
 ## 12. CSV Import Considerations
 
-Historical CSV imports must not automatically modify current inventory.
+Historical CSV imports must not automatically modify current inventory (DEC-016).
 
-The import process should distinguish between:
+The import process distinguishes between:
 
-- Historical sales data used for forecasting.
+- Historical sales data used for forecasting (imported into the dedicated `historical_sales` table — DEC-052).
     
-- Operational sales entered into the application.
+- Operational sales entered into the application (the `sales` table; no operational CSV import in v1 — DEC-055).
     
-- Explicit stock reconciliation operations.
-    
+- Explicit stock reconciliation operations (separate from imports if ever approved).
 
-Duplicate detection and import rollback behavior are still open decisions.
+**Decided policies (2026-11-07):**
 
-The import process must validate records before saving them.
+- **Storage (DEC-052):** `historical_sales` stores `(item, sale_date, quantity, import_batch_id)` keyed by the dataset's `item` number; no implicit product creation; operational `sales` untouched.
+- **Duplicate handling (DEC-053):** SHA-256 file fingerprint recorded per import batch in `import_batches`; an exact re-upload is rejected upfront; a unique (`item`, `sale_date`) constraint on `historical_sales` guarantees overlapping records are skipped and counted, never silently re-imported.
+- **Atomicity (DEC-054):** the whole file is validated first; accepted records are written in one transaction — all-or-nothing, no partial imports.
+
+The import process validates records before saving them.
 
 ## 13. Database Initialization
 
@@ -269,8 +272,11 @@ Avoid deleting or recreating an existing database simply to apply a schema chang
 |Forecast result persistence|**Closed (DEC-028)** — generated on demand; Forecast Results entity not built in v1|
 |Soft deletion policy|**Closed (DEC-048)** — soft delete via `is_active` flag|
 |Returns representation|**Closed (DEC-049)** — no returns support in v1; recorded sales immutable|
-|Duplicate CSV import handling|Open — to be resolved during CSV import implementation|
+|Duplicate CSV import handling|**Closed (2026-11-07, DEC-053)** — SHA-256 file fingerprint rejection + unique (`item`, `sale_date`) constraint; duplicates skipped and counted|
 |Historical dataset mapping|**Closed (DEC-015)** — one selected store; each `item` maps to one product|
+|Historical import storage|**Closed (2026-11-07, DEC-052)** — dedicated `historical_sales` + `import_batches` tables|
+|Import atomicity / rollback|**Closed (2026-11-07, DEC-054)** — all-or-nothing single transaction|
+|Operational sales import|**Closed (2026-11-07, DEC-055)** — not built in v1; historical import only|
 |Exact column constraints|**Closed (2026-11-04, TASK-009)** — defined in the approved SQL schema (`database/schema.sql`): PKs, FKs with enforcement, unique `sku`, NOT NULL where applicable, `CHECK` constraints on stock and quantities, ISO date TEXT format|
 
 ## 15. Related Documentation

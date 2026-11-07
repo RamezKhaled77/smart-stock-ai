@@ -425,12 +425,9 @@ Most decisions have been resolved (see `../07-project-management/decisions.md`).
 5. Safety stock — manually configured per product, default 0 (DEC-036).
 6. Target stock — `Avg Daily Demand × (Lead Time + 7) + Safety Stock` (DEC-038).
 7. Default forecast horizon — 7 days, user-selectable (DEC-026).
+8. Historical sales imports interact with existing records through a dedicated `historical_sales` table keyed by the dataset's `item` number — no implicit product creation and no operational `sales`/stock changes (DEC-052).
+9. Duplicate imports: SHA-256 file fingerprint rejects exact re-uploads; a unique (`item`, `sale_date`) constraint guarantees overlapping rows are skipped and counted (DEC-053).
 10. Product returns — not handled in v1 (DEC-049).
-
-Still open (needed during import/analysis implementation):
-
-8. How will historical sales imports interact with existing records? (Related: Database Schema §12)
-9. How will duplicate imports be detected? (Related: Database Schema §12)
 11. How will days with zero sales be represented? (Related: data preprocessing — observed policy recorded in `../03-data/data-preprocessing.md` §19)
 12. How will stockout periods be identified in historical data? (Related: ML evaluation phases)
 

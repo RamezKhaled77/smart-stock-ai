@@ -150,6 +150,34 @@ A proposed decision must not be treated as accepted.
 - Context: Historical sales records describe past demand, not necessarily the current inventory position.
 - Exception: A separate stock-reconciliation workflow may be introduced if explicitly approved.
 
+### DEC-052: Historical Import Storage
+
+- Status: Accepted
+- Decision: Imported historical sales are stored in a dedicated `historical_sales` table in the operational SQLite database, keyed by the dataset's `item` number — not by `product_id`. No products are created implicitly by an import. A separate `import_batches` table stores one metadata row per import run (source filename, SHA-256 fingerprint, row counts). The operational `sales` table continues to receive only application-recorded sales.
+- Context: Closes business rules §12 open questions 8–9 and Database Schema §14 "historical import storage". DEC-015 maps each `item` value to one product conceptually, but operational products are created by users; forcing dataset items into the product catalog (and its `CHECK quantity > 0`/stock semantics) would either require implicit product creation — forbidden by the CSV Import Specification §4 — or mix source semantics into operational data. A separate table preserves the dataset's meaning (including the single zero-sales observation) and keeps the operational `sales` → `products` FK domain clean. 91,300 store-1 rows are well within SQLite's comfort zone.
+- Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
+
+### DEC-053: Duplicate Import Handling
+
+- Status: Accepted
+- Decision: Every import records a SHA-256 fingerprint of the uploaded file in `import_batches`. Re-uploading a file whose fingerprint is already recorded is rejected outright with a clear message. As the hard database-level guarantee, `historical_sales` carries a unique constraint on (`item`, `sale_date`); overlapping-but-not-identical files are imported with already-present rows skipped and counted, never silently re-imported.
+- Context: Closes business rules §12 open question 9 and Database Schema §14 "duplicate CSV import handling". The fingerprint gives a friendly, cheap exact-match rejection (CSV Import Specification §12 lists "file fingerprint" and "store import metadata" among candidate approaches; a filename comparison alone was explicitly deemed insufficient, hence content hashing). The row-level unique constraint covers the case a fingerprint cannot — two different files sharing rows.
+- Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
+
+### DEC-054: Import Atomicity
+
+- Status: Accepted
+- Decision: Imports are all-or-nothing. The complete file is validated before any write; accepted records are then inserted in a single transaction that commits only if every insertion succeeds. No partial imports are stored, and no manual rollback feature is built.
+- Context: Closes CSV Import Specification §16 "partial import support" and "import rollback behavior", following §11's preferred approach ("validate the complete file before writing records"). The transaction pattern mirrors the DEC-035 sale transaction already in the codebase. With DEC-053's per-row duplicate skipping, a run's outcome is deterministic: accepted rows commit as one unit or not at all.
+- Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
+
+### DEC-055: Import Scope in Version 1
+
+- Status: Accepted
+- Decision: The v1 CSV import covers the historical dataset format only (`date,store,item,sales`). The operational sales import (`sale_date,sku,quantity` creating stock-reducing sales) is not built in v1.
+- Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
+- Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
+
 ---
 
 ## 6. Machine Learning Decisions
@@ -467,7 +495,7 @@ A proposed decision must not be treated as accepted.
 
 ## 10. Open Decisions Summary
 
-All open decisions have been closed, most recently on 2026-11-04:
+All open decisions have been closed, most recently on 2026-11-07 (CSV import phase):
 
 | Decision ID | Topic | Resolved Decision |
 |---|---|---|
@@ -486,6 +514,10 @@ All open decisions have been closed, most recently on 2026-11-04:
 | DEC-049 | Returns | Not supported in v1; recorded sales immutable |
 | DEC-050 | Sales on inactive products | Rejected; sales target existing, active products only |
 | DEC-051 | Future sale dates | Rejected; backdated entries allowed |
+| DEC-052 | Historical import storage | Dedicated `historical_sales` table keyed by dataset `item`; `import_batches` metadata; operational `sales` untouched |
+| DEC-053 | Duplicate import handling | SHA-256 file fingerprint rejection + unique (`item`, `sale_date`) constraint; duplicates skipped and counted |
+| DEC-054 | Import atomicity | All-or-nothing; full-file validation then single transaction; no partial imports or manual rollback |
+| DEC-055 | Import scope in v1 | Historical dataset import only; operational sales import not built in v1 |
 
 ---
 
