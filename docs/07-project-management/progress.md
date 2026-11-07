@@ -343,3 +343,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-052…DEC-055 accepted with the project owner.
 - Blockers: None recorded.
 - Next Steps: TASK-024 persistence (schema tables, historical repository, one-transaction import with fingerprint rejection), then TASK-025 import summary.
+
+### CSV Import Persistence Completed (TASK-024)
+
+- Date: 2026-11-07.
+- Status: Historical imports persist end-to-end (upload → preview → confirm → one-transaction storage with duplicate rejection). Remaining import work: TASK-025 result summary display.
+- Work Completed (commits `5112f7d`…):
+  - `database/schema.sql` + `schema.py`: `import_batches` (UNIQUE `file_sha256`, audit counts) and `historical_sales` (UNIQUE (`item`, `sale_date`), `quantity` ≥ 0, item-keyed per DEC-052); documented in `database-schema.md` §12.
+  - `repositories/historical_repository.py`: all-or-nothing batch creation with fingerprint rejection and database-level duplicate skipping; batch listing and historical row count.
+  - `services/import_service.py`: `execute_import` re-validates current file bytes before writing, upgrades pre-DEC-052 databases idempotently, returns `ImportResult`; `DuplicateImportError` re-exported for pages.
+  - `pages/imports.py`: confirm button with per-run count, success flash with batch id, DEC-053 duplicate message, all-or-nothing failure message.
+- Tests Executed: full pytest suite; headless boot check (HTTP 200, zero errors); manual in-place re-initialization of the real `data/smartstock.db` (new tables created, existing data preserved).
+- Test Results: 199/199 passed.
+- Tasks Updated: TASK-024 → Verified.
+- Decisions Made: none new (DEC-052…055 applied as approved).
+- Blockers: None recorded.
+- Next Steps: TASK-025 import summary display, then the CSV import milestone (M-006) wraps with status updates.

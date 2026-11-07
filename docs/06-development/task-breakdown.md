@@ -492,7 +492,7 @@ Completion record (2026-11-07): service `src/smartstock/services/import_service.
 ### TASK-024: Implement CSV Import Persistence
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-012, TASK-022, TASK-023
 
 Description:
@@ -504,6 +504,8 @@ Evidence:
 - Accepted records are stored correctly.
 - Duplicate behavior follows the approved policy.
 - Historical imports do not unexpectedly modify current stock.
+
+Completion record (2026-11-07): schema adds two tables to `database/schema.sql` (+ `schema.py` verification lists): `import_batches` (per-run metadata with UNIQUE `file_sha256`, row-count audit fields, accepted date range) and `historical_sales` (dataset-keyed `item` > 0, `sale_date`, `quantity` CHECK ≥ 0 accepting the dataset's zero-sales observations, FK `import_batches`, UNIQUE (`item`, `sale_date`) — DEC-052/053). New `src/smartstock/repositories/historical_repository.py`: `create_import_batch` runs fingerprint check → skip rows already stored by other batches (counted) → batch insert → bulk row insert, one transaction, `commit` flag like the other repos; `DuplicateImportError(ValueError)` carries the original batch's id/filename/timestamp; plus `find_batch_by_fingerprint`, `get_import_batches`, `count_historical_rows`. Service `execute_import` re-parses and re-validates the file's current bytes right before writing (a stale preview can never be imported), calls `initialize_database` idempotently so pre-DEC-052 databases gain the tables in place, rejects zero-importable files (`ImportRejectedError`), and returns a spec §14-backed `ImportResult`. Page: labeled confirm button ("Import N record(s)") → success flash with batch id; duplicate upload surfaces the DEC-053 message; `DatabaseError` shows "failed and nothing was stored". Inventory and operational sales are never touched by import code paths (BR-014/DEC-016 — tests assert `count_historical_rows` but no sales/stock mutations exist in the module). Tests: 12 persistence tests — batch/rows stored, fingerprint rejection unchanged-DB, overlapping-file merge with skip counting, CHECK-violation rollback leaves zero rows, legacy-schema DB upgrade, service counts, page confirm/re-duplicate/no-button flows; suite 199 tests. Real `data/smartstock.db` re-initialized on boot: tables added, products data preserved (verified manually).
 
 ### TASK-025: Implement Import Summary
 

@@ -1,4 +1,4 @@
-"""Data Import page (TASK-023 preview; persistence arrives in TASK-024).
+"""Data Import page (TASK-023 preview; TASK-024 persistence).
 
 Historical dataset import per DEC-052/DEC-055: uploads are validated
 and previewed before anything is stored, and historical imports never
@@ -8,9 +8,14 @@ business rules and no SQL.
 
 import streamlit as st
 
+from smartstock.database.connection import DatabaseError
 from smartstock.domain.csv_import import CsvFileError, CsvStructureError
-from smartstock.pages.ui import show_flash
+from smartstock.pages.ui import flash, show_flash
 from smartstock.services import import_service
+from smartstock.services.import_service import (
+    DuplicateImportError,
+    ImportRejectedError,
+)
 
 
 def render() -> None:
@@ -43,10 +48,10 @@ def render() -> None:
         st.error(f"The file cannot be imported: {error}")
         return
 
-    _render_preview(preview)
+    _render_preview(uploaded, preview)
 
 
-def _render_preview(preview) -> None:
+def _render_preview(uploaded, preview) -> None:
     """Render the validation summary for one uploaded file (spec §8)."""
     st.subheader("📋 Preview")
     st.caption(
@@ -94,7 +99,40 @@ def _render_preview(preview) -> None:
             width="stretch",
         )
 
-    #TASK-024 will add the confirmation step and the import result here.
+    # TASK-025 adds the detailed import summary display.
+    _render_confirm_import(uploaded, preview)
+
+
+def _render_confirm_import(uploaded, preview) -> None:
+    """Confirm step: persist the accepted rows (DEC-054)."""
+    if st.button(
+        f"Import {preview.valid_row_count:,} record(s)",
+        key="import_confirm",
+        type="primary",
+        help="Validated rows are stored in one transaction. Historical "
+        "records never change current stock.",
+    ):
+        try:
+            result = import_service.execute_import(uploaded)
+        except import_service.DuplicateImportError as error:
+            # DEC-053: the exact same file is already recorded.
+            st.error(str(error))
+            return
+        except ImportRejectedError as error:
+            st.error(f"Nothing was imported: {error}")
+            return
+        except DatabaseError as error:
+            # DEC-054: a failed import leaves no partial data behind.
+            st.error(f"The import failed and nothing was stored: {error}")
+            return
+        added = f"{result.imported_rows:,}"
+        flash(
+            "success",
+            f"Imported {added} historical record(s) from "
+            f"'{result.filename}' into import #{result.batch_id}. "
+            "Current stock was not changed.",
+        )
+        st.rerun()
 
 
 def _render_validation_examples(preview) -> None:

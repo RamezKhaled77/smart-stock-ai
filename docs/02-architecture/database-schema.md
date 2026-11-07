@@ -244,6 +244,15 @@ The import process distinguishes between:
 
 The import process validates records before saving them.
 
+### Import Tables (implemented 2026-11-07, TASK-024)
+
+Defined in `database/schema.sql`:
+
+- `import_batches` — one row per import run: `id`, `source_filename`, `file_sha256` (UNIQUE — the DEC-053 fingerprint-level rejection is also an enforced constraint), `store`, row-count audit fields (`total_rows`, `out_of_store_rows`, `rejected_rows`, `duplicate_rows`, `imported_rows`), accepted-record `first_date`/`last_date` (nullable — files with no store-1 rows store no batch at all), and `created_at`.
+- `historical_sales` — accepted observations: `id`, `item` (CHECK > 0; the dataset's item number per DEC-015, not a `products.id` foreign key), `sale_date` (TEXT `YYYY-MM-DD`), `quantity` (CHECK ≥ 0 — zero sales are real observations here, unlike operational `sales`), `import_batch_id` (FK to `import_batches`), **UNIQUE (item, sale_date)** across all batches (the DEC-053 hard guarantee), indexed by batch.
+
+Initialization is unchanged in mechanics: both tables use `CREATE TABLE IF NOT EXISTS`, so running `initialize_database` on an existing database (created before DEC-052) adds the tables in place without touching existing data.
+
 ## 13. Database Initialization
 
 The database initialization process should:
