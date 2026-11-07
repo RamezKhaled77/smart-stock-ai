@@ -316,15 +316,30 @@ It does not claim that the documentation has been created as local files or that
 ### Phase 3 Continued: Sales Management Pages Completed (TASK-020…021) and Repository Pushed
 
 - Date: 2026-11-07.
-- Status: Sales Management page live (record sale + history). All Phase 3 P0 tasks complete. Remaining Phase 3 work: CSV import (TASK-022 …), which opens the last open decision (duplicate import handling).
+- Status: Sales Management page live (record sale + history). All Phase 3 P0 tasks except CSV import are done.
 - Work Completed:
-  - `src/smartstock/pages/sales.py`: record-sale form (active products only per DEC-050, live stock metric, UTC-today date default) and sales history (product + date filters, totals caption, both empty states, deactivated products remain reviewable per DEC-048).
+  - `src/smartstock/pages/sales.py`: record-sale form (active products only per DEC-050, live stock metric, UTC-today date default applying DEC-051) and sales history (product + date filters, totals caption, both empty states; deactivated products remain reviewable per DEC-048).
   - Shared page helpers extracted to `src/smartstock/pages/ui.py` (flash message queue).
   - `app.py` navigation gained the Sales Management page with unique URL paths.
-- Tests Executed: full pytest suite; headless app boot check (HTTP 200, zero errors).
+- Tests Executed: full pytest suite; headless app boot check (HTTP 200, zero errors in log).
 - Test Results: 147/147 passed.
 - Tasks Updated: TASK-020, TASK-021 → Verified.
-- Decisions Made: none new (page composition over approved services; DEC-051 applied to the default date).
+- Decisions Made: none new (page composition over approved services).
 - Infrastructure: local repository connected to the GitHub remote (`https://github.com/RamezKhaled77/smart-stock-ai.git`); full history pushed and `main` set to track `origin/main`.
 - Blockers: None recorded.
-- Next Steps: CSV import phase (TASK-022 …) — the duplicate-import decision (Database Schema §12) must be resolved there with the project owner.
+- Next Steps: CSV import phase (TASK-022…); the duplicate-import decision must be resolved there with the project owner.
+
+### CSV Import Phase Started: Decisions Closed, Validation and Preview Completed (TASK-022…023)
+
+- Date: 2026-11-07.
+- Status: Historical CSV import validation (TASK-022) and preview (TASK-023) live; persistence (TASK-024) and import summary page wiring (TASK-025) next.
+- Work Completed:
+  - Open questions 8–9 (business rules §12) and Database Schema §14 duplicate-handling row closed with the project owner → DEC-052 (dedicated `historical_sales` table keyed by dataset `item`, `import_batches` metadata, no implicit products), DEC-053 (SHA-256 fingerprint rejection + unique (`item`, `sale_date`) constraint), DEC-054 (all-or-nothing imports), DEC-055 (historical import only in v1; operational import deferred). Docs updated: decisions.md, database-schema.md §12/§14, business-rules.md §12, csv-import-specification.md §16.
+  - `src/smartstock/domain/csv_import.py` (TASK-022): strict structure check, row-level validation with per-row reasons, DEC-015 store filter (out-of-scope rows counted, not errors), within-file duplicate skipping, zero sales accepted, accepted rows normalized with date range; verified against real dataset rows.
+  - `src/smartstock/services/import_service.py` + `src/smartstock/pages/imports.py` (TASK-023): preview summary (metrics, date range, capped examples with full counts, sample rows, SHA-256 fingerprint), Data Import page registered in navigation.
+- Tests Executed: full pytest suite; headless boot check (HTTP 200, zero errors).
+- Test Results: 187/187 passed.
+- Tasks Updated: TASK-022, TASK-023 → Verified.
+- Decisions Made: DEC-052…DEC-055 accepted with the project owner.
+- Blockers: None recorded.
+- Next Steps: TASK-024 persistence (schema tables, historical repository, one-transaction import with fingerprint rejection), then TASK-025 import summary.

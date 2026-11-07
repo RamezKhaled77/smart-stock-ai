@@ -475,7 +475,7 @@ Completion record (2026-11-07): `src/smartstock/domain/csv_import.py` — pure v
 ### TASK-023: Implement CSV Preview
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-022
 
 Description:
@@ -486,6 +486,8 @@ Evidence:
 
 - Preview data matches the uploaded file.
 - Invalid rows are identifiable.
+
+Completion record (2026-11-07): service `src/smartstock/services/import_service.py` (`preview_import`) builds a spec §8 preview: filename, byte size, and the SHA-256 fingerprint that persistence will verify (computed over raw bytes, so a renamed identical file has the same fingerprint — DEC-053); row-count metrics (total, valid for store 1, rejected invalid, other stores per DEC-015, in-scope), full rejected/duplicate totals with at most 5 example reasons each (spec §13 "summarize, don't dump everything" — truncation flagged), accepted-rows date range, and up to 5 sample rows. Uploaded streams are seek()-reset after reading so persistence can re-read the same file. Page `src/smartstock/pages/imports.py` (registered in `app.py` → Data → Data Import, unique `url_path`): file uploader restricted to `.csv`, metric row for the counts, date-range/duplicates caption, capped example expanders for rejected rows and within-file duplicates, sample table, and explicit empty states ("nothing to import" when no valid store-1 rows; file-level/column-level errors from TASK-022 surface as `st.error` without partial previews). Import confirmation and results arrive with TASK-024/025. Tests: service tests (summary fields, fingerprint determinism across renamed copies, example capping with full counts, stream re-readability) and AppTest page tests (empty state, metrics + sample, rejection reasons, both error layers, no-scope warning, fingerprint caption); suite 187 tests.
 
 ### TASK-024: Implement CSV Import Persistence
 

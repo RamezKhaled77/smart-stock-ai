@@ -308,6 +308,8 @@ It does not imply that the application itself has been implemented.
 - [TASK-017 - TASK-018] Product add/edit forms with soft-delete removal (confirmation + reactivation) and stock adjustment/correction panel with clear DEC-034 rejections; session-flash feedback; suite at 134 passing tests.
 - [TASK-019] Low-stock indicators: per-product status markers, reorder-point column, and a restocking banner naming affected SKUs (BR-008 + DEC-032 rules); suites unchanged at 134 passing tests.
 - [TASK-020 - TASK-021] Sales Management page: manual record-sale form exercising the atomic DEC-035/BR-012 transaction (insufficient-stock rejections proven at UI level), sales history with product/date filters and both empty states; suite at 147 passing tests.
+- [DEC-052..055] CSV import decisions closed with the project owner: dedicated `historical_sales`/`import_batches` tables keyed by dataset `item`, SHA-256 fingerprint + `UNIQUE (item, sale_date)` duplicate handling, all-or-nothing imports, historical-only scope in v1.
+- [TASK-022 - TASK-023] Historical CSV import validation and preview: strict structure/row validation with per-row reasons, DEC-015 store filter, within-file duplicate skipping; preview service + Data Import page with metrics, date range, capped examples, sample rows, and fingerprint caption; suite at 187 passing tests.
 
 ## 6. Future Entry Template
 
