@@ -179,6 +179,33 @@ def execute_import(file, db_path: Path | None = None) -> ImportResult:
     return _store_import(preview, analysis, db_path)
 
 
+def get_import_summary(db_path: Path | None = None) -> dict:
+    """Summarize all recorded import batches (TASK-025 display data).
+
+    Args:
+        db_path: Database to read (default ``config.DATABASE_PATH``).
+
+    Returns:
+        Dictionary with ``batches`` (newest-first batch dicts from the
+        repository) and ``total_records`` (stored historical rows).
+
+    Raises:
+        DatabaseError: If the database cannot be read.
+    """
+    if db_path is None:
+        db_path = Path(config.DATABASE_PATH)
+    # Idempotent so a database created before DEC-052 gains the import
+    # tables before this summary reads them.
+    initialize_database(db_path)
+    with session(db_path) as connection:
+        return {
+            "batches": historical_repository.get_import_batches(connection),
+            "total_records": historical_repository.count_historical_rows(
+                connection
+            ),
+        }
+
+
 def _parse_import_file(file) -> tuple:
     """Read, structurally validate, and row-analyze one CSV file."""
     raw = _read_file_bytes(file)

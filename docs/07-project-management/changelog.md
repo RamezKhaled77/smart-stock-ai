@@ -311,6 +311,7 @@ It does not imply that the application itself has been implemented.
 - [DEC-052..055] CSV import decisions closed with the project owner: dedicated `historical_sales`/`import_batches` tables keyed by dataset `item`, SHA-256 fingerprint + `UNIQUE (item, sale_date)` duplicate handling, all-or-nothing imports, historical-only scope in v1.
 - [TASK-022 - TASK-023] Historical CSV import validation and preview: strict structure/row validation with per-row reasons, DEC-015 store filter, within-file duplicate skipping; preview service + Data Import page with metrics, date range, capped examples, sample rows, and fingerprint caption; suite at 187 passing tests.
 - [TASK-024] Historical import persistence: `import_batches`/`historical_sales` schema (DEC-052/053), all-or-nothing one-transaction repository with fingerprint rejection and existing-row skipping, service `execute_import` re-validating current bytes and upgrading legacy databases, page confirm flow; suite at 199 passing tests.
+- [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template
 

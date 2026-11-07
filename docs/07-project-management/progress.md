@@ -19,9 +19,9 @@ It must never be used to claim that planned work has already been completed.
 | Project Name | SmartStock AI |
 | Project Type | AI and Python College Project |
 | Development Mode | Individual |
-| Current Overall Status | Documentation Preparation |
-| Implementation Status | Not Started |
-| Current Phase | Documentation and Planning |
+| Current Overall Status | Implementation In Progress |
+| Implementation Status | M-001…M-006 Completed (documentation, dataset, database, product/inventory UI, sales UI, CSV import); forecasting/ML phase next |
+| Current Phase | Machine Learning and Forecasting (TASK-026…) — not started |
 | Execution Workflow | Autonomous with Guardrails |
 
 The values in this table must be updated as the project progresses.
@@ -90,9 +90,9 @@ Do not duplicate the full task list here.
 | M-001 | Documentation and environment setup | Completed (2026-11-04) |
 | M-002 | Dataset exploration and preparation | Completed (2026-11-04) |
 | M-003 | Database and persistence layer | Completed (2026-11-04) |
-| M-004 | Product and inventory management | Not Started |
-| M-005 | Sales management | Not Started |
-| M-006 | CSV import | Not Started |
+| M-004 | Product and inventory management | Completed (2026-11-07; TASK-016…019) |
+| M-005 | Sales management | Completed (2026-11-07; TASK-020/021) |
+| M-006 | CSV import | Completed (2026-11-07; TASK-022…025) |
 | M-007 | Baseline forecasting | Not Started |
 | M-008 | Feature engineering and model evaluation | Not Started |
 | M-009 | Forecast inference | Not Started |
@@ -359,3 +359,17 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new (DEC-052…055 applied as approved).
 - Blockers: None recorded.
 - Next Steps: TASK-025 import summary display, then the CSV import milestone (M-006) wraps with status updates.
+
+### CSV Import Phase Completed (TASK-025) — M-006 Done
+
+- Date: 2026-11-07.
+- Status: Historical CSV import is complete end-to-end (validate → preview → confirm → all-or-nothing storage → result summary + import history). The implementation phase is now ready to move to the machine-learning phase (TASK-026 …).
+- Work Completed:
+  - `pages/imports.py`: spec §14 result panel (success banner with batch id/timestamp, outcome metrics, stock-unchanged caption), confirm step replaced for the imported file, "Previous imports" batch history with totals and empty state.
+  - `services/get_import_summary`: batch listing + stored-record count for the history display.
+- Tests Executed: full pytest suite; headless boot check (HTTP 200, zero errors).
+- Test Results: 205/205 passed.
+- Tasks Updated: TASK-025 → Verified. CSV import section (TASK-022…025) complete.
+- Decisions Made: none new.
+- Blockers: None recorded.
+- Next Steps: Milestone statuses (M-004, M-005, M-006) may be marked Completed in §6 of this document; then the forecasting/ML phase begins with TASK-026 data exploration, where the train/validation/test split dates (currently open) will be decided.

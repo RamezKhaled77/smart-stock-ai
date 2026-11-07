@@ -304,30 +304,40 @@ class TestImportPagePersistence:
                 historical_repository.count_historical_rows(connection) == 3
             )
 
-    def test_reimporting_same_file_shows_duplicate_message(
+    def test_fresh_session_reimporting_same_file_rejected(
         self, app_db: Path
     ) -> None:
+        # Same-session re-imports are blocked by the result panel
+        # (TASK-025); the DEC-053 UI-level rejection matters for a
+        # fresh session uploading the identical bytes.
         from streamlit.testing.v1 import AppTest
 
-        app_test = AppTest.from_string(
+        first = AppTest.from_string(
             "from smartstock.pages.imports import render\nrender()",
             default_timeout=60,
         )
-        app_test.run()
-        app_test.file_uploader[0].set_value(
+        first.run()
+        first.file_uploader[0].set_value(
             ("train.csv", VALID_CSV.encode(), "text/csv")
         )
-        app_test.run()
-        app_test.button[0].click()  # first import succeeds
-        app_test.run()
+        first.run()
+        first.button[0].click()  # first import succeeds
+        first.run()
 
-        # The uploader keeps the same file; clicking again must hit the
-        # DEC-053 fingerprint rejection, with no second batch stored.
-        app_test.button[0].click()
-        app_test.run()
-        assert app_test.exception == []
+        fresh = AppTest.from_string(
+            "from smartstock.pages.imports import render\nrender()",
+            default_timeout=60,
+        )
+        fresh.run()
+        fresh.file_uploader[0].set_value(
+            ("renamed.csv", VALID_CSV.encode(), "text/csv")
+        )
+        fresh.run()
+        fresh.button[0].click()
+        fresh.run()
+        assert fresh.exception == []
         assert any(
-            "already imported" in error.value for error in app_test.error
+            "already imported" in error.value for error in fresh.error
         )
         with import_service.session(app_db) as connection:
             assert (
@@ -357,3 +367,153 @@ class TestImportPagePersistence:
             for warning in app_test.warning
         )
         assert app_test.button == []
+
+
+class TestImportSummaryDisplay:
+    """TASK-025: post-import result and import history (spec §14)."""
+
+    @pytest.fixture
+    def app_db(self, tmp_path: Path, monkeypatch) -> Path:
+        import config
+
+        db_path = tmp_path / "app_summary_test.db"
+        initialize_database(db_path)
+        monkeypatch.setattr(config, "DATABASE_PATH", db_path)
+        return db_path
+
+    def _run(self) -> "AppTest":
+        from streamlit.testing.v1 import AppTest
+
+        app_test = AppTest.from_string(
+            "from smartstock.pages.imports import render\nrender()",
+            default_timeout=60,
+        )
+        app_test.run()
+        return app_test
+
+    def test_result_panel_replaces_button_after_import(
+        self, app_db: Path
+    ) -> None:
+        app_test = self._run()
+        app_test.file_uploader[0].set_value(
+            ("train.csv", VALID_CSV.encode(), "text/csv")
+        )
+        app_test.run()
+        app_test.button[0].click()
+        app_test.run()
+
+        assert app_test.exception == []
+        # Success banner + spec §14 metrics replace the confirm step.
+        assert any(
+            "Import completed — batch #1" in success.value
+            for success in app_test.success
+        )
+        metric_values = {
+            metric.label: metric.value for metric in app_test.metric
+        }
+        assert metric_values["Accepted and stored"] == "3"
+        assert metric_values["Rejected (invalid)"] == "0"
+        assert metric_values["Duplicates skipped"] == "0"
+        assert metric_values["Other stores"] == "1"
+        assert not [
+            button for button in app_test.button if "Import " in button.label
+        ], "an identical file must not offer a second import run"
+
+    def test_result_panel_notes_timestamp_and_range(
+        self, app_db: Path
+    ) -> None:
+        app_test = self._run()
+        app_test.file_uploader[0].set_value(
+            ("train.csv", VALID_CSV.encode(), "text/csv")
+        )
+        app_test.run()
+        app_test.button[0].click()
+        app_test.run()
+        captions = [c.value for c in app_test.caption]
+        assert any(
+            "Historical dataset import, store 1" in value
+            and "2013-01-01 → 2013-01-03" in value
+            for value in captions
+        )
+        # The §14 timestamp is part of the success banner.
+        assert any(
+            "batch #1 (" in success.value for success in app_test.success
+        )
+
+    def test_import_history_lists_batches_and_totals(
+        self, app_db: Path
+    ) -> None:
+        app_test = self._run()
+        app_test.file_uploader[0].set_value(
+            ("train.csv", VALID_CSV.encode(), "text/csv")
+        )
+        app_test.run()
+        app_test.button[0].click()
+        app_test.run()
+
+        labels = [expander.label for expander in app_test.expander]
+        assert any("Previous imports" in label for label in labels)
+
+        # Newest-first batch table with accurate counts.
+        batch_frames = [
+            frame for frame in app_test.dataframe if "Batch" in frame.value.columns
+        ]
+        assert len(batch_frames) == 1
+        records = batch_frames[0].value.to_dict(orient="records")
+        assert records[0]["File"] == "train.csv"
+        assert records[0]["Imported"] == 3
+        assert records[0]["Batch"] == 1
+
+        # The stored-records caption.
+        assert any(
+            "historical record(s) stored in total" in c.value
+            for c in app_test.caption
+        )
+
+    def test_new_file_reopens_confirm_step(self, app_db: Path) -> None:
+        app_test = self._run()
+        app_test.file_uploader[0].set_value(
+            ("train.csv", VALID_CSV.encode(), "text/csv")
+        )
+        app_test.run()
+        app_test.button[0].click()
+        app_test.run()
+        assert not [
+            b for b in app_test.button if "Import " in b.label
+        ]
+
+        # A different file (different fingerprint) restarts the flow.
+        app_test.file_uploader[0].set_value(
+            (
+                "more.csv",
+                (
+                    "date,store,item,sales\n"
+                    "2013-02-01,1,1,20\n"
+                    "2013-02-02,1,1,22\n"
+                ).encode(),
+                "text/csv",
+            )
+        )
+        app_test.run()
+        assert app_test.exception == []
+        buttons = [
+            button for button in app_test.button if "Import " in button.label
+        ]
+        assert len(buttons) == 1
+        assert buttons[0].label == "Import 2 record(s)"
+
+    def test_history_before_any_import(self, app_db: Path) -> None:
+        app_test = self._run()
+        assert any(
+            "No imports recorded yet" in info.value
+            for info in app_test.info
+        )
+
+    def test_service_summary_counts(self, app_db: Path) -> None:
+        import_service.execute_import(
+            _named_stream(VALID_CSV), db_path=app_db
+        )
+        summary = import_service.get_import_summary(db_path=app_db)
+        assert summary["total_records"] == 3
+        assert len(summary["batches"]) == 1
+        assert summary["batches"][0]["imported_rows"] == 3

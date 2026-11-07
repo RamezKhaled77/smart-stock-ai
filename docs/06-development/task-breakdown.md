@@ -510,7 +510,7 @@ Completion record (2026-11-07): schema adds two tables to `database/schema.sql` 
 ### TASK-025: Implement Import Summary
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-024
 
 Description:
@@ -521,6 +521,8 @@ Evidence:
 
 - Imported and rejected record counts are accurate.
 - Errors are understandable.
+
+Completion record (2026-11-07): `pages/imports.py` result panel per CSV Import Specification §14 — after the file's batch commits, it shows a success banner with batch id and UTC timestamp, outcome metrics ("Accepted and stored", "Rejected (invalid)", "Duplicates skipped", "Other stores"), and a caption with import type (historical, store), filename, total rows processed, accepted date range, and the stock-unchanged note; the confirm button is replaced for that file (same-session re-imports are impossible — uploading a different file restarts the flow; a fresh session re-uploading the same bytes hits the DEC-053 fingerprint rejection with the original-batch message, tested). "Previous imports" expander lists every batch newest-first (file, imported/duplicate/rejected/out-of-scope counts, date range, UTC timestamp) with the total stored-records caption and an empty state; service `get_import_summary` wraps the repository read (idempotent initialization first so pre-import databases don't break the page). Success reporting reflects actual database outcome only (spec: "must not claim records were imported if the transaction failed" — failures render the `DatabaseError` message instead). Tests: 6 summary tests (panel replaces button, timestamp/range notes, history table accuracy, new-file restart, empty history, service counts); suite 205 tests.
 
 ---
 
