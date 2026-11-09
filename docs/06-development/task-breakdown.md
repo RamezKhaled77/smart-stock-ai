@@ -548,7 +548,7 @@ Completion record (2026-11-09): `src/smartstock/ml/exploration.py` — pure pand
 ### TASK-027: Implement Baseline Forecasting
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-008, TASK-026
 
 Description:
@@ -560,6 +560,8 @@ Evidence:
 - Baseline predictions are generated.
 - Chronological validation is used.
 - Results are documented.
+
+Completion record (2026-11-09): `src/smartstock/ml/baselines.py` — `naive_forecast` (§3.1 repeat-latest) and `moving_average_forecast` (§3.2 trailing-window mean, forgiving of short histories), plus `_evaluate_one_step_ahead`: a leak-free walk-forward evaluator that for each (item, day) in the validation window predicts from actuals available strictly before that day, refuses incomplete day coverage or reversed windows or history-less items, and reports pooled MAE/RMSE + prediction count (`BaselineReport`). Chronological split fixed as **DEC-056** with the project owner (Train 2013–2015, Validation 2016, Test 2017 — test never touched in this task). Measured results (`docs/04-machine-learning/baseline-evaluation.md`, 2016 window, 18,300 predictions): naive MAE 10.270/RMSE 13.761; trailing-7 mean MAE **8.077**/RMSE 10.556 — beating the 30-day mean (8.298/10.915), which resolves the §3.2 window question in favor of 7 days, consistent with the lag-7 exploration finding. These are the DEC-027 floors for supervised candidates. Tests: 17 baseline tests (hand-computed ramp/flat errors, window-1-convenience equivalence-to-naive, explicit no-future-leakage spy, coverage/gap/history guards, multi-item pooling, real-window numbers pinned); suite 239.
 
 ### TASK-028: Implement Feature Engineering
 

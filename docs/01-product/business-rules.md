@@ -430,6 +430,7 @@ Most decisions have been resolved (see `../07-project-management/decisions.md`).
 10. Product returns — not handled in v1 (DEC-049).
 11. How will days with zero sales be represented? (Related: data preprocessing — observed policy recorded in `../03-data/data-preprocessing.md` §19)
 12. How will stockout periods be identified in historical data? (Related: ML evaluation phases)
+13. Chronological train/validation/test split — Train 2013–2015, Validation 2016, Test 2017; test touched once at final model selection (DEC-056).
 
 ---
 

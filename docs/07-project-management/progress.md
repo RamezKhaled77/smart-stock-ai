@@ -387,3 +387,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new (split dates deferred to TASK-029/030 checkpoint, as planned).
 - Blockers: None recorded.
 - Next Steps: TASK-027 baseline forecasting (naive + historical average, chronological validation), then TASK-028 feature engineering.
+
+### Baselines Completed and Split Decision Closed (TASK-027)
+
+- Date: 2026-11-09.
+- Status: Baseline floor measured on the DEC-056 validation window; supervised candidates (TASK-028/030) must beat MAE 8.077 per DEC-027.
+- Work Completed:
+  - DEC-056 accepted with the project owner: chronological Train 2013–2015 / Validation 2016 / Test 2017 (calendar years; test touched once at TASK-031). Forecasting-strategy §8/§13, business-rules §12, decisions.md updated.
+  - `src/smartstock/ml/baselines.py`: naive + trailing-window average baselines; leak-free one-step-ahead walk-forward evaluator with coverage/gap/history guards.
+  - `docs/04-machine-learning/baseline-evaluation.md`: measured results — naive MAE 10.270, trailing-7 average MAE 8.077 (beats 30-day 8.298 → window = 7 days, matching the lag-7 exploration finding).
+- Tests Executed: full pytest suite (17 new baseline tests, real-window numbers pinned).
+- Test Results: 239/239 passed.
+- Tasks Updated: TASK-027 → Verified.
+- Decisions Made: DEC-056 (accepted by the project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-028 feature engineering, TASK-029 chronological splitting helper, then TASK-030 candidate model training.

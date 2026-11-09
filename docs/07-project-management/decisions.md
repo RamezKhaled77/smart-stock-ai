@@ -178,6 +178,13 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-056: Chronological Train/Validation/Test Split
+
+- Status: Accepted
+- Decision: The historical store-1 series (2013-01-01 → 2017-12-31) is split by calendar year: **Training 2013-01-01 → 2015-12-31** (3 full years, ≈60% of days), **Validation 2016-01-01 → 2016-12-31** (full year, ≈20%), **Test 2017-01-01 → 2017-12-31** (full year, ≈20%). All model selection uses validation MAE only (DEC-027); the test window is evaluated once, at final model selection (TASK-031), and never used to tune candidates.
+- Context: Finalizes the "final chronological split dates" open item from forecasting-strategy §8/§13, gated on TASK-026 exploration evidence. Complete calendar-year windows give every bucket a full seasonal cycle (leap-year day included in 2016), avoiding partial-season bias; test is the most recent year, which best mirrors forecasting the then-unseen 2018+. Chosen over 2017-quarter splits (training richer but validation windows incomplete) and rolling weekly folds (more robust but higher compute/complexity — acceptable alternative if evaluation shows unlucky windows, would require a superseding decision).
+- Method: Chosen with the project owner from documented options (2026-11-09, baseline phase unblocked by TASK-026).
+
 ---
 
 ## 6. Machine Learning Decisions
@@ -518,6 +525,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-053 | Duplicate import handling | SHA-256 file fingerprint rejection + unique (`item`, `sale_date`) constraint; duplicates skipped and counted |
 | DEC-054 | Import atomicity | All-or-nothing; full-file validation then single transaction; no partial imports or manual rollback |
 | DEC-055 | Import scope in v1 | Historical dataset import only; operational sales import not built in v1 |
+| DEC-056 | Chronological split | Train 2013–2015, Validation 2016, Test 2017; test touched once (DEC-027) |
 
 ---
 

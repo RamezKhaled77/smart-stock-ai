@@ -187,22 +187,18 @@ The selected model should also:
 
 The dataset must be split chronologically.
 
-Example:
+**Decided split (DEC-056, 2026-11-09):**
 
 ```text
-Historical Timeline
------------------------------------------------->
+Historical Timeline ------------------------------------->
 
-|--------- Training ---------|-- Validation --|-- Test --|
+|==== 2013 2014 2015 ====|===== 2016 =====|===== 2017 =====|
+        Training              Validation         Test
 ```
 
-The exact split dates must be selected after inspecting the dataset.
-
-Training data must come before validation data.
-
-Test data must represent a later period that is not used for model selection.
-
-Random splitting is not appropriate for the primary forecasting evaluation.
+- Training 2013-01-01 → 2015-12-31; Validation 2016 (full calendar year); Test 2017 (full calendar year).
+- Model selection uses validation MAE only (DEC-027); the test window is evaluated once at final model selection (TASK-031).
+- Random splitting is not appropriate for the primary forecasting evaluation.
 
 ## 9. Forecast Output
 
@@ -297,7 +293,7 @@ Still to be resolved based on measured evidence or later approval:
 
 - Final forecasting model (DEC-020: candidates evaluated; selection per DEC-027).
 - Minimum historical observations.
-- Final chronological split dates.
+- ~~Final chronological split dates~~ → DEC-056 (Train 2013–2015, Validation 2016, Test 2017).
 - Prediction rounding policy.
 - Handling new products with no sales history.
     
