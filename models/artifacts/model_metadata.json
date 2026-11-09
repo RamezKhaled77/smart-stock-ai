@@ -1,0 +1,56 @@
+{
+  "dataset_reference": "data/raw/train.csv (Kaggle store-sales history), store 1, DEC-056 window use",
+  "evaluation_metrics": {
+    "baselines_for_reference": {
+      "moving_average_7_validation": 8.077,
+      "naive_validation": 10.27
+    },
+    "selection_rules": "DEC-027",
+    "test_window": {
+      "end": "2017-12-31",
+      "mae": 6.088,
+      "predictions": 18250,
+      "rmse": 7.91,
+      "start": "2017-01-01"
+    },
+    "validation_window": {
+      "end": "2016-12-31",
+      "mae": 6.033,
+      "predictions": 18300,
+      "rmse": 7.785,
+      "start": "2016-01-01"
+    }
+  },
+  "feature_names": [
+    "day_of_week",
+    "month",
+    "day_of_month",
+    "lag_1",
+    "lag_7",
+    "rolling_mean_7",
+    "rolling_mean_30"
+  ],
+  "forecasting_granularity": {
+    "default_horizon_days": 7,
+    "horizons_supported": [
+      7,
+      14,
+      30
+    ],
+    "recursive_forecasting": true,
+    "unit": "product (store 1), daily quantity"
+  },
+  "model_name": "random_forest",
+  "model_version": "1.0.0",
+  "training_configuration": {
+    "model_parameters": {
+      "min_samples_leaf": 5,
+      "n_estimators": 200,
+      "n_jobs": -1,
+      "random_state": 2026
+    },
+    "training_row_count": 89800,
+    "training_window": "full observed history (DEC-057 artifact)"
+  },
+  "training_timestamp_utc": "2026-11-09T06:03:38Z"
+}

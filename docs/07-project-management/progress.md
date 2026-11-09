@@ -458,3 +458,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-057 (autonomous application of the pre-approved DEC-027 rule set — no user checkpoint triggered since no within-5% tie and no baseline failure occurred; recorded for review).
 - Blockers: None recorded.
 - Next Steps: TASK-032 — save the selected model artifact (models/artifacts: demand_model.joblib + model_metadata.json per model-training §11) with a training script; then TASK-033 inference/prediction logic (recursive horizon per DEC-025, rounding policy, minimum-history and no-history-product rules presented to the user).
+
+### Model Artifact Pipeline Completed (TASK-032)
+
+- Date: 2026-11-09.
+- Status: The selected model is savable/loadable via a verified atomic pipeline; the production artifact exists locally with pinned metadata.
+- Work Completed:
+  - `src/smartstock/ml/model_artifacts.py`: §11 metadata contract + atomic save (temp → verify reload → replace) + validated load with clear ArtifactError guidance.
+  - `scripts/train_model.py`: full documented training workflow (preprocess → candidate evaluation → one-time test confirmation → fit production model on all complete observed rows → save).
+  - `models/artifacts/model_metadata.json` committed (small text); `demand_model.joblib` (250 MB) stays git-ignored per the existing `*.joblib` rule.
+- Tests Executed: full pytest suite (16 artifact tests incl. failure-handling under model-training §14, plus 2 real-artifact pins).
+- Test Results: 314/314 passed.
+- Tasks Updated: TASK-032 → Verified.
+- Decisions Made: artifact fit scope decided autonomously — production model fits on ALL observed history (89,800 complete rows; inference forecasts the unobserved future), while selection metrics come from the DEC-056 protocol runs; documented in metadata and task record.
+- Blockers: None recorded.
+- Next Steps: TASK-033 — forecast inference service (recursive multi-step per DEC-025, horizons 7/14/30; user checkpoint for prediction rounding policy and minimum/no-history product rules).
