@@ -178,6 +178,19 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-057: Final Forecasting Model Selection
+
+- Status: Accepted
+- Decision: The **Random Forest Regressor** (n_estimators=200, min_samples_leaf=5, random_state=2026) is the selected demand-forecasting model, using `FEATURE_COLUMNS = [day_of_week, month, day_of_month, lag_1, lag_7, rolling_mean_7, rolling_mean_30]`. Linear Regression is retained in documentation as the runners-up evidence trail, not the production model.
+- Evidence (measured, per DEC-027 rules applied to validation 2016 — `model-evaluation.md` §17/§18):
+  - Rule 2 (beat both baselines): both candidates pass — Random Forest MAE 6.033 and Linear Regression 6.482 vs. MA-7 8.077 and Naive 10.270.
+  - Rule 1 (primary metric, lowest validation MAE): Random Forest 6.033 < Linear Regression 6.482.
+  - Rule 4 (prefer simpler if within 5%): **not triggered** — Linear Regression is ≈7.4% worse; the gap is outside the band.
+  - Rule 3 (RMSE tie-breaker): not needed (MAE is decisive), RMSE agrees (7.785 vs 8.387).
+  - One-time test-window confirmation (2017, DEC-056 single touch): Random Forest MAE 6.088/RMSE 7.910 — beats both test baselines (MA-7 8.378) and stays ahead of Linear Regression (6.637/8.611).
+- Context: The candidates were defined at DEC-020/forecasting-strategy §3.3–3.4 and the selection rules pre-accepted at DEC-027; applying them required no new methodology decision, so the selection was made autonomously per the project's guardrails (a user checkpoint was only reserved for a within-5% tie or a baseline failure, neither of which occurred). Interpretability trade-off acknowledged: the forest is less transparent than a linear fit; its configuration (5 conservative parameters, fixed seed) and feature importances are documented at TASK-032/033. The validation protocol used features built from strictly past actuals (no leakage), so the margin reflects real one-step-ahead advantage.
+- Method: decided by the agent autonomously applying DEC-027 to measured TASK-030 results (2026-11-09), recorded for review.
+
 ### DEC-056: Chronological Train/Validation/Test Split
 
 - Status: Accepted
@@ -526,6 +539,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-054 | Import atomicity | All-or-nothing; full-file validation then single transaction; no partial imports or manual rollback |
 | DEC-055 | Import scope in v1 | Historical dataset import only; operational sales import not built in v1 |
 | DEC-056 | Chronological split | Train 2013–2015, Validation 2016, Test 2017; test touched once (DEC-027) |
+| DEC-057 | Final model | Random Forest (seed 2026); RULES: lowest validation MAE 6.033, LR ≈7.4% worse → 5% band not triggered |
 
 ---
 

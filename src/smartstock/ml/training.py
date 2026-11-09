@@ -224,6 +224,101 @@ def evaluate_candidates(
     )
 
 
+def evaluate_on_test(
+    frame: pd.DataFrame,
+    candidates: list[Candidate] | None = None,
+    *,
+    train_start: str = split_pipeline.TRAIN_START,
+    train_end: str = split_pipeline.TRAIN_END,
+    validation_start: str = split_pipeline.VALIDATION_START,
+    validation_end: str = split_pipeline.VALIDATION_END,
+    test_start: str = split_pipeline.TEST_START,
+    test_end: str = split_pipeline.TEST_END,
+) -> CandidateComparison:
+    """Final-confirmation scoring on the TEST window (TASK-031).
+
+    DEC-056 policy: the test window is evaluated **once**, at final
+    model selection, after the candidate is chosen on validation
+    evidence — never as a tuning loop. Both approved candidates are
+    scored for transparent reporting; the baseline reports are
+    recomputed on the test window for reference only (baselines were
+    never part of test-based selection).
+
+    Uses the same protocol as :func:`evaluate_candidates` (features on
+    the shared chronology; each date's features use only strictly
+    earlier actuals), so the numbers are comparable across all windows.
+    """
+    if candidates is None:
+        candidates = default_candidates()
+    if not candidates:
+        raise ValueError("No candidates supplied for evaluation.")
+
+    boundaries = [
+        train_start, train_end, validation_start,
+        validation_end, test_start, test_end,
+    ]
+    as_dates = pd.to_datetime(pd.Series(boundaries))
+    if not as_dates.is_monotonic_increasing:
+        raise ValueError(
+            f"Window bounds must strictly increase, got {boundaries}."
+        )
+
+    all_rows = feature_pipeline.build_features(frame)
+    train_from = pd.Timestamp(train_start)
+    train_to = pd.Timestamp(train_end)
+    validation_from = pd.Timestamp(validation_start)
+    validation_to = pd.Timestamp(validation_end)
+    test_from = pd.Timestamp(test_start)
+    test_to = pd.Timestamp(test_end)
+
+    outside = all_rows[
+        (all_rows["date"] < train_from) | (all_rows["date"] > test_to)
+    ]
+    if not outside.empty:
+        first = outside.iloc[0]
+        raise ValueError(
+            f"Row with date {first['date'].date()} falls outside the "
+            f"split windows ({train_start} → {test_end}); refusing to "
+            "silently drop it from candidate evaluation."
+        )
+
+    # Fit on train + validation actuals (the honest pre-test-history
+    # state: everything before the test window is observed).
+    history_complete = feature_pipeline.drop_rows_without_features(
+        all_rows[all_rows["date"] < test_from]
+    )
+    test_complete = feature_pipeline.drop_rows_without_features(
+        all_rows[
+            (all_rows["date"] >= test_from)
+            & (all_rows["date"] <= test_to)
+        ]
+    )
+
+    history_X = history_complete[feature_pipeline.FEATURE_COLUMNS]
+    history_y = history_complete["sales"]
+    test_X = test_complete[feature_pipeline.FEATURE_COLUMNS]
+    test_y = test_complete["sales"]
+    test_items = test_complete["item"].to_numpy()
+
+    reports = {}
+    for candidate in candidates:
+        model = candidate.instantiate()
+        model.fit(history_X, history_y)
+        predicted = model.predict(test_X)
+        reports[candidate.name] = _score(
+            candidate, predicted, test_y.to_numpy(), test_items
+        )
+
+    from smartstock.ml import baselines
+
+    baseline_reports = baselines.evaluate_baselines(
+        frame, start=test_start, end=test_end
+    )
+    return CandidateComparison(
+        baselines=baseline_reports, candidates=reports
+    )
+
+
 def _score(
     candidate: Candidate,
     predicted,

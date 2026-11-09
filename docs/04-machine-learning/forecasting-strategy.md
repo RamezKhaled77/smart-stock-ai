@@ -291,11 +291,11 @@ Resolved on 2026-11-04 (see `../07-project-management/decisions.md`):
 
 Still to be resolved based on measured evidence or later approval:
 
-- Final forecasting model (DEC-020: candidates evaluated; selection per DEC-027).
-- Minimum historical observations.
+- ~~Final forecasting model~~ → DEC-057 (Random Forest, selected by DEC-027 rules at TASK-031).
+- ~~Minimum historical observations~~ → measured at TASK-028 (feature set needs 31 observations; inference-time policy decided at TASK-033).
 - ~~Final chronological split dates~~ → DEC-056 (Train 2013–2015, Validation 2016, Test 2017).
-- Prediction rounding policy.
-- Handling new products with no sales history.
+- Prediction rounding policy (TASK-033).
+- Handling new products with no sales history (TASK-033).
     
 
 ## 14. Related Documentation

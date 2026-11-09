@@ -388,3 +388,34 @@ fixed `random_state=2026` up to parallel float summation order
 (≈1e-15); the seed is recorded in each candidate report. The test
 window (2017) remains untouched — it is evaluated once at final model
 selection (TASK-031).
+
+---
+
+## 18. One-Time Test-Window Confirmation (TASK-031, 2026-11-09)
+
+Per DEC-056 the 2017 window was touched exactly once, after selection,
+to confirm the validation-based decision. Protocol identical, except
+fitting uses **all actuals before 2017** (train + validation history —
+the honest decision-time state) and scoring covers 18,250 item-days
+(50 × 365).
+
+Measured results — Test 2017:
+
+| Model | MAE | RMSE |
+|---|---|---|
+| Naive Forecast (reference) | 10.512 | 14.130 |
+| Historical Average 7-day (reference) | 8.378 | 10.922 |
+| Historical Average 30-day (reference) | 8.638 | 11.300 |
+| Linear Regression | 6.637 | 8.611 |
+| Random Forest | **6.088** | **7.910** |
+
+The validation-selected model (Random Forest, DEC-057) confirms its
+margin on test: best MAE and RMSE, ≈8% better than Linear Regression,
+and well below both reference baselines. Test evidence changed nothing
+about the selection — it verified it, exactly the DEC-056 intent.
+
+Worst item on test is **28** for both candidates (LR 9.971 MAE,
+RF 8.964) — again a highest-mean-demand item, consistent with the
+validation picture.
+
+Pinned by `tests/test_ml_training.py::TestRealTestWindow`.

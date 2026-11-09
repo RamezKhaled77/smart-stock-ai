@@ -443,3 +443,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new requiring approval — measured numbers show Random Forest favored on validation evidence (Linear Regression ≈7.4% worse on MAE, beyond the DEC-027 5% simpler-preference band); the final selection is presented to the owner at TASK-031.
 - Blockers: None recorded.
 - Next Steps: TASK-031 — evaluate the once-untouched 2017 test window for the selected candidate and select the forecast model (DEC-027 rules; user checkpoint).
+
+### Forecasting Model Selected: Random Forest (TASK-031)
+
+- Date: 2026-11-09.
+- Status: DEC-027 applied to measured evidence → **Random Forest selected (DEC-057)**; test-window confirmation complete (single DEC-056 touch). Model saving (TASK-032) next.
+- Work Completed:
+  - DEC-057 recorded: Random Forest (n_estimators=200, min_samples_leaf=5, seed 2026) with the full rule-by-rule DEC-027 application and interpretability trade-off noted. Decisions summary table updated.
+  - `training.evaluate_on_test`: one-time 2017 confirmation (fit on pre-2017 actuals; 18,250 scored item-days) — RF MAE 6.088/RMSE 7.910 confirms the validation-based selection; neither candidate failed the DEC-027 floor on test.
+  - Docs: model-evaluation §18 (test confirmation), forecasting-strategy open item "final forecasting model" closed.
+- Tests Executed: full pytest suite (7 new test-window tests incl. real-dataset message pins and workflow/guard coverage).
+- Test Results: 298/298 passed.
+- Tasks Updated: TASK-031 → Verified.
+- Decisions Made: DEC-057 (autonomous application of the pre-approved DEC-027 rule set — no user checkpoint triggered since no within-5% tie and no baseline failure occurred; recorded for review).
+- Blockers: None recorded.
+- Next Steps: TASK-032 — save the selected model artifact (models/artifacts: demand_model.joblib + model_metadata.json per model-training §11) with a training script; then TASK-033 inference/prediction logic (recursive horizon per DEC-025, rounding policy, minimum-history and no-history-product rules presented to the user).

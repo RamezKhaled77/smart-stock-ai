@@ -317,6 +317,8 @@ It does not imply that the application itself has been implemented.
 - [TASK-028] Feature engineering pipeline: calendar + per-series lag + shifted rolling-mean features with fixed FEATURE_COLUMNS order, explicit NaN-preserving row dropping, and (X, y) split helper; leakage-verified on the real dataset (89,800 complete training rows; 31-observation minimum history); suite at 262 passing tests.
 - [TASK-029] Chronological splitting helper: DEC-056 calendar-year constants as executable code with strict boundary/coverage guards; real-dataset pins (train 54,750 / validation 18,300 / test 18,250); suite at 275 passing tests.
 - [TASK-030] Candidate model training/evaluation: Linear Regression (MAE 6.482) and Random Forest (MAE 6.033) both beat both baselines (MA-7 8.077, naive 10.270) on validation 2016 in a like-for-like one-step-ahead protocol; measured results in model-evaluation §17; suite at 291 passing tests.
+- [DEC-057] Final forecasting model selected: Random Forest (validation MAE 6.033; Linear Regression ≈7.4% worse → DEC-027 5% band not triggered).
+- [TASK-031] Model selection completed: one-time test-window confirmation (2017: RF MAE 6.088, beats MA-7 reference 8.378); model-evaluation §18; suite at 298 passing tests.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template

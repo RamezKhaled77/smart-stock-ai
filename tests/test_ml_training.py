@@ -135,6 +135,40 @@ class TestEvaluationGuards:
         with pytest.raises(ValueError, match="outside the split windows"):
             training.evaluate_candidates(frame)
 
+    def test_test_window_evaluation_workflow(self) -> None:
+        # Fit on everything before the 28-day test window, score once.
+        dates = pd.date_range("2023-01-01", periods=120, freq="D")
+        frame = feature_series_frame(
+            [d.strftime("%Y-%m-%d") for d in dates]
+        )
+        comparison = training.evaluate_on_test(
+            frame,
+            train_start="2023-01-01",
+            train_end="2023-02-28",
+            validation_start="2023-03-01",
+            validation_end="2023-04-02",
+            test_start="2023-04-03",
+            test_end="2023-04-30",
+        )
+        for report in comparison.candidates.values():
+            assert report.predictions == 28  # 28 test days × 1 item
+
+    def test_test_window_reversed_bounds_rejected(self) -> None:
+        dates = pd.date_range("2023-01-01", periods=20, freq="D")
+        frame = feature_series_frame(
+            [d.strftime("%Y-%m-%d") for d in dates]
+        )
+        with pytest.raises(ValueError, match="strictly increase"):
+            training.evaluate_on_test(
+                frame,
+                train_start="2023-01-01",
+                train_end="2023-01-05",
+                validation_start="2023-01-06",
+                validation_end="2023-01-15",
+                test_start="2023-01-14",
+                test_end="2023-01-20",
+            )
+
 
 class TestReproducibility:
     def test_random_forest_repeats_with_fixed_seed(self) -> None:
@@ -173,6 +207,63 @@ def store1():
 def comparison(store1) -> training.CandidateComparison:
     """Candidate evaluation over the real DEC-056 validation window."""
     return training.evaluate_candidates(store1)
+
+
+@pytest.fixture(scope="class")
+def test_comparison(store1) -> training.CandidateComparison:
+    """The one-time DEC-056 test-window evaluation (TASK-031)."""
+    return training.evaluate_on_test(store1)
+
+
+class TestRealTestWindow:
+    """One-time test-2017 confirmation numbers (doc: model-evaluation §18)."""
+
+    def test_prediction_counts(self, test_comparison) -> None:
+        # 50 items × 365 days of 2017; matches the test baselines.
+        for report in test_comparison.candidates.values():
+            assert report.predictions == 18_250
+        assert all(
+            baseline.predictions == 18_250
+            for baseline in test_comparison.baselines.values()
+        )
+
+    def test_reference_baseline_numbers(self, test_comparison) -> None:
+        assert test_comparison.baselines["naive"].to_dict() == {
+            "name": "naive", "mae": 10.512, "rmse": 14.13,
+            "predictions": 18_250,
+        }
+        assert test_comparison.baselines["moving_average_7"].to_dict() == {
+            "name": "moving_average_7", "mae": 8.378, "rmse": 10.922,
+            "predictions": 18_250,
+        }
+
+    def test_linear_regression_measured_result(
+        self, test_comparison
+    ) -> None:
+        report = test_comparison.candidates["linear_regression"].to_dict()
+        assert report["mae"] == pytest.approx(6.637, abs=0.002)
+        assert report["rmse"] == pytest.approx(8.611, abs=0.002)
+        assert report["worst_item"] == 28
+
+    def test_random_forest_measured_result(self, test_comparison) -> None:
+        report = test_comparison.candidates["random_forest"].to_dict()
+        assert report["mae"] == pytest.approx(6.088, abs=0.002)
+        assert report["rmse"] == pytest.approx(7.910, abs=0.002)
+        assert report["worst_item"] == 28
+
+    def test_selection_confirmed_on_test(self, test_comparison) -> None:
+        # The validation-selected winner (Random Forest) also wins MAE
+        # and RMSE on the one-time test window and beats both test
+        # baselines — the DEC-056 single-touch confirmation.
+        checks = test_comparison.candidates_beat_baselines()
+        assert checks == {
+            "linear_regression": True,
+            "random_forest": True,
+        }
+        assert (
+            test_comparison.candidates["random_forest"].mae
+            < test_comparison.candidates["linear_regression"].mae
+        )
 
 
 class TestRealValidationResults:

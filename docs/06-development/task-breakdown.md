@@ -619,7 +619,7 @@ Completion record (2026-11-09): `src/smartstock/ml/training.py` — `default_can
 ### TASK-031: Evaluate and Select the Forecasting Model
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-030
 
 Description:
@@ -631,6 +631,8 @@ Evidence:
 - Evaluation results are recorded.
 - Model selection has supporting evidence.
 - Limitations are documented.
+
+Completion record (2026-11-09): selection made by applying the pre-accepted DEC-027 rules to the measured TASK-030 evidence — **Random Forest selected as the final demand-forecasting model (DEC-057)**: lowest validation MAE (6.033 vs LR 6.482), both candidates beat both baselines (rule 2), RMSE agrees as tie-breaker would (rule 3 not needed), and rule 4's 5% simpler-preference band is NOT triggered (LR ≈7.4% worse). The once-untouched test window (2017) was then evaluated exactly once per DEC-056 — new `training.evaluate_on_test` fitting on all pre-2017 actuals and scoring 18,250 item-days: Random Forest MAE 6.088/RMSE 7.910 (LR 6.637/8.611; reference baselines naive 10.512, MA-7 8.378) — confirming the selection, changing nothing. Recorded: DEC-057 + summary table row; `model-evaluation.md` §18 (test confirmation, limitations cross-referenced: no-leakage protocol, single store, untested multi-step behavior — recursive-horizon error accumulation under DEC-025 is measured at TASK-033); forecasting-strategy open item "final forecasting model" closed (rounding policy and no-history handling remain, resolved at TASK-033 with user options). Interpretability trade-off documented: feature importances to be surfaced at TASK-032/033 for educational transparency. Tests: expanded training suite with `TestRealTestWindow` pins (23 training tests); suite 298. No decision requiring user approval: DEC-027 application was autonomous by design (user checkpoint reserved for a within-5% tie or baseline failure; neither occurred).
 
 ### TASK-032: Save Model and Metadata
 
