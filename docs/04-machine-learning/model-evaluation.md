@@ -345,3 +345,46 @@ The application should communicate predictions as estimates.
 - [Feature Engineering](https://feature-engineering.md?utm_source=chatgpt.com)
     
 - [Prediction Logic](https://prediction-logic.md?utm_source=chatgpt.com)
+
+---
+
+## 17. Implementation Status — Candidate Evaluation Results (TASK-030, 2026-11-09)
+
+Implemented in `src/smartstock/ml/training.py`, tested by
+`tests/test_ml_training.py` (16 tests). Workflow per model-training §7:
+DEC-056 windows, features built on the shared chronology (per-row
+transforms only — no leakage path from validation into fitting), each
+candidate fit **only** on training rows, validation scored one step
+ahead exactly like the baselines so the DEC-027 comparison is
+like-for-like (18,300 predictions each).
+
+Measured results — Validation 2016, store 1, pooled MAE/RMSE:
+
+| Model | MAE | RMSE | Beats naive (10.270)? | Beats MA-7 (8.077)? |
+|---|---|---|---|---|
+| Naive Forecast | 10.270 | 13.761 | — | — |
+| Historical Average (7-day) | 8.077 | 10.556 | — | — |
+| Historical Average (30-day) | 8.298 | 10.915 | — | — |
+| Linear Regression | **6.482** | **8.387** | Yes | Yes |
+| Random Forest (200 trees, min_samples_leaf 5, seed 2026) | 6.033 | 7.785 | Yes | Yes |
+
+Both supervised candidates **pass the DEC-027 floor** (beat every
+baseline on validation MAE). Random Forest edges Linear Regression by
+0.449 MAE (Linear Regression is ≈7.4% worse) and also wins RMSE — the
+gap **exceeds** DEC-027's 5% "prefer simpler" band, so on validation
+evidence alone the Random Forest is the stronger candidate. The final
+selection (TASK-031) is made with the project owner, weighing this
+margin against interpretability and recursive-multi-step stability
+(DEC-025).
+
+Per-product mean errors (§6 of this doc): the worst item is **15** for
+both candidates (Linear Regression 9.914 MAE, Random Forest 9.349) —
+item 15 is also the highest-mean-demand item (79.7/day, see the data
+exploration doc), so its absolute errors are naturally larger;
+proportional difficulty appears roughly even.
+
+Random-seed reproducibility (model-training §9): results repeat under
+fixed `random_state=2026` up to parallel float summation order
+(≈1e-15); the seed is recorded in each candidate report. The test
+window (2017) remains untouched — it is evaluated once at final model
+selection (TASK-031).

@@ -429,3 +429,17 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new (split window itself was already DEC-056).
 - Blockers: None recorded.
 - Next Steps: TASK-030 — train candidate models (LinearRegression, RandomForest per forecasting-strategy §3.3/§3.4) on the splitter's frames and compare against the baseline floor (MA-7 MAE 8.077) on validation 2016 using DEC-027 rules.
+
+### Candidate Models Trained and Beating Baselines (TASK-030)
+
+- Date: 2026-11-09.
+- Status: Both supervised candidates pass the DEC-027 floor on validation 2016; final selection (TASK-031) is ready to be made with the project owner.
+- Work Completed:
+  - `src/smartstock/ml/training.py`: conservative Linear Regression and Random Forest candidates, leak-free evaluation on DEC-056 windows, like-for-like baseline recomputation, per-item worst-error reporting.
+  - Documentation: `docs/04-machine-learning/model-evaluation.md` §17 with the measured comparison table and interpretation.
+- Tests Executed: full pytest suite (16 new training tests incl. real-dataset measured-number pins and seed reproducibility).
+- Test Results: 291/291 passed.
+- Tasks Updated: TASK-030 → Verified.
+- Decisions Made: none new requiring approval — measured numbers show Random Forest favored on validation evidence (Linear Regression ≈7.4% worse on MAE, beyond the DEC-027 5% simpler-preference band); the final selection is presented to the owner at TASK-031.
+- Blockers: None recorded.
+- Next Steps: TASK-031 — evaluate the once-untouched 2017 test window for the selected candidate and select the forecast model (DEC-027 rules; user checkpoint).

@@ -601,7 +601,7 @@ Completion record (2026-11-09): `src/smartstock/ml/splits.py` turns DEC-056 into
 ### TASK-030: Train Candidate Models
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-027, TASK-028, TASK-029
 
 Description:
@@ -613,6 +613,8 @@ Evidence:
 - Candidate models train successfully.
 - Training configuration is documented.
 - Results are reproducible.
+
+Completion record (2026-11-09): `src/smartstock/ml/training.py` — `default_candidates()` (Linear Regression; Random Forest n_estimators=200, min_samples_leaf=5, n_jobs=-1, random_state=2026 — conservative, no hyperparameter search per model-training §7/§8), `Candidate`/`CandidateReport`/`CandidateComparison` (to_dict reports, `candidates_beat_baselines()` DEC-027 gate), and `evaluate_candidates(frame)` with DEC-056 window defaults (custom bounds only for tests). **Protocol fix found and corrected during this task**: a first version built features inside each split part, which silently dropped January 2016 (rolling_mean_30 needs 30 past observations *within the part*) and scored only 16,800 predictions — unlike-for-like against the baselines' 18,300. Corrected to build features on the full chronology (per-row deterministic transforms, no fitted state → no leakage path; fitting uses training rows only; leakage protocol documented in the module and pinned by real-data tests). Measured results on validation 2016 (`docs/04-machine-learning/model-evaluation.md` §17): Linear Regression MAE 6.482/RMSE 8.387; Random Forest MAE 6.033/RMSE 7.785 — **both beat both baselines** (naive 10.270, MA-7 8.077). Worst item is 15 for both (9.914 / 9.349 MAE — the highest-mean-demand item). RF edges LR by ≈7.4% — beyond DEC-027's 5% simpler-preference band → RF favored on validation evidence; final selection (TASK-031) with the owner, weighing interpretability and DEC-025 recursive stability. Reproducibility pinned (fixed seed; parallel float summation ≈1e-15 tolerance). Tests: 16 training tests (synthetic learnable-series workflow, like-for-like baseline window counts, custom bound guards, no-candidates/outside-window rejection, seed reproducibility; real-dataset measured-number pins); suite 291.
 
 ### TASK-031: Evaluate and Select the Forecasting Model
 
