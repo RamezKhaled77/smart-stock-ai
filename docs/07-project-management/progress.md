@@ -372,4 +372,18 @@ It does not claim that the documentation has been created as local files or that
 - Tasks Updated: TASK-025 → Verified. CSV import section (TASK-022…025) complete.
 - Decisions Made: none new.
 - Blockers: None recorded.
-- Next Steps: Milestone statuses (M-004, M-005, M-006) may be marked Completed in §6 of this document; then the forecasting/ML phase begins with TASK-026 data exploration, where the train/validation/test split dates (currently open) will be decided.
+- Next Steps: Milestone statuses (M-004, M-005, M-006) marked Completed in §6 of this document; forecasting/ML phase begins with TASK-026 data exploration, where the train/validation/test split dates (currently open) will be decided.
+
+### Machine Learning Phase Started: Sales Data Exploration Completed (TASK-026)
+
+- Date: 2026-11-09.
+- Status: M-007 begins. Exploration complete; baselines (TASK-027) and features (TASK-028) next, with the chronological split dates to be decided at the modeling checkpoint.
+- Work Completed:
+  - `src/smartstock/ml/exploration.py`: tested exploration views over the preprocessed store-1 frame (coverage, distribution, calendar patterns, yearly trend, within-item lag correlations, per-item summary).
+  - `docs/04-machine-learning/data-exploration.md`: measured findings + limitations + implications for features, baselines, and split dates. All numbers code-generated and pinned by tests.
+- Tests Executed: full pytest suite (17 new exploration tests incl. real-dataset reproducibility assertions).
+- Test Results: 222/222 passed.
+- Tasks Updated: TASK-026 → Verified.
+- Decisions Made: none new (split dates deferred to TASK-029/030 checkpoint, as planned).
+- Blockers: None recorded.
+- Next Steps: TASK-027 baseline forecasting (naive + historical average, chronological validation), then TASK-028 feature engineering.

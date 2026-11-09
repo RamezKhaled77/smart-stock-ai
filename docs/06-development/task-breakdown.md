@@ -531,7 +531,7 @@ Completion record (2026-11-07): `pages/imports.py` result panel per CSV Import S
 ### TASK-026: Perform Sales Data Exploration
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-005, TASK-008
 
 Description:
@@ -542,6 +542,8 @@ Evidence:
 
 - Relevant patterns are documented.
 - Data limitations are identified.
+
+Completion record (2026-11-09): `src/smartstock/ml/exploration.py` — pure pandas view functions (overview, distribution, weekday/monthly patterns, yearly totals, per-item lag correlations, item summary) returning JSON-serializable values, plus `summarize_series` composing the full report. Correlation lags shift within each item's series (no cross-item row-neighbor leakage). Findings recorded in the new `docs/04-machine-learning/data-exploration.md` with **measured** store-1 facts: complete coverage (50 items × 1,826 days, zero missing, zero zero-sales days — the dataset's single zero-sale row is in another store), pooled mean 47.27/std 24.01 with a right tail to 155, strong weekday ramp (Mon 37.47 → Sun 56.27, ≈ +50%), July peak / January trough (μ ≈ 89% spread), steady year-over-year growth (+15.2%, +4.2%, +8.5%, +3.9% in daily means; 2013→2017 +35%), and lag-7 dominance in correlations (0.908 vs. lag-1 0.852, lag-30 0.793). Limitations documented: no zero-demand days (stockouts invisible), no covariates (price/promos/holidays), competition-source regularity, single store per DEC-015. Implications for next tasks: lag-7/weekday/rolling-7 features carry the signal, trend-aware baselines needed (a five-year mean under-forecasts), chronological splits must live in later years. Tests: 17 exploration tests — synthetic frames with hand-computed expectations + `TestRealDataset` pinning every documented number to code (suite 222).
 
 ### TASK-027: Implement Baseline Forecasting
 
