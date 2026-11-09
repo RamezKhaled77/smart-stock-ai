@@ -416,3 +416,16 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: none new (feature-set open items ride with model selection at TASK-031; inference minimum history deferred to TASK-033).
 - Blockers: None recorded.
 - Next Steps: TASK-029 chronological splitting helper (DEC-056 constants), then TASK-030 candidate model training/evaluation.
+
+### Chronological Splitting Helper Completed (TASK-029)
+
+- Date: 2026-11-09.
+- Status: DEC-056 is now executable code; candidate training (TASK-030) consumes the shared splitter.
+- Work Completed:
+  - `src/smartstock/ml/splits.py`: `chronological_split` with DEC-056 calendar constants as defaults, strict-boundary/coverage guards, and chronological ordering built in.
+- Tests Executed: full pytest suite (13 new split tests incl. real-dataset DEC-056 row counts and edge dates).
+- Test Results: 275/275 passed.
+- Tasks Updated: TASK-029 → Verified.
+- Decisions Made: none new (split window itself was already DEC-056).
+- Blockers: None recorded.
+- Next Steps: TASK-030 — train candidate models (LinearRegression, RandomForest per forecasting-strategy §3.3/§3.4) on the splitter's frames and compare against the baseline floor (MA-7 MAE 8.077) on validation 2016 using DEC-027 rules.

@@ -584,7 +584,7 @@ Completion record (2026-11-09): `src/smartstock/ml/features.py` per feature-engi
 ### TASK-029: Implement Chronological Data Splitting
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-026, TASK-028
 
 Description:
@@ -595,6 +595,8 @@ Evidence:
 
 - Training data precedes validation and test data.
 - No future observations leak into training features.
+
+Completion record (2026-11-09): `src/smartstock/ml/splits.py` turns DEC-056 into reusable code — `chronological_split(frame)` with the calendar constants as module defaults (`TRAIN_*` 2013-01-01→2015-12-31, `VALIDATION_*` 2016, `TEST_*` 2017, inclusive bounds), returning chronologically sorted (train, validation, test) frames with fresh indexes while leaving the input untouched. Guards (`SplitError`): empty frames and missing columns; boundary tuples that do not strictly increase (so windows can never overlap or reverse); windows selecting no rows; and rows falling outside every window are refused rather than silently dropped. The chronological non-leakage property (train.max < validation.min < test bounds) is asserted inside the function and by tests on the real data. Real-dataset pins: train 54,750 rows (50 × 1,095 days), validation 18,300 (leap year), test 18,250, all 50 items present in each window, exact window edge dates (2015-12-31 / 2016-01-01 → 2016-12-31 / 2017-01-01 → 2017-12-31). Tests: 13 split tests (synthetic window selection incl. multi-item counts, fresh index/sorting, input-untouched check, and every guard; real DEC-056 row/window assertions); suite 275. TASK-030 candidates will consume these three frames — features built per frame (TASK-028) keep training-time transformations inside the training window only.
 
 ### TASK-030: Train Candidate Models
 

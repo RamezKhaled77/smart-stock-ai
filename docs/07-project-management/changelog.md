@@ -315,6 +315,7 @@ It does not imply that the application itself has been implemented.
 - [DEC-056] Chronological split accepted: Train 2013–2015, Validation 2016, Test 2017 (calendar years).
 - [TASK-027] Baseline forecasting: naive + trailing-window averages over the DEC-056 validation window with leak-free walk-forward evaluation; measured naive MAE 10.270, trailing-7 MAE 8.077 (window question resolved to 7 days); suite at 239 passing tests.
 - [TASK-028] Feature engineering pipeline: calendar + per-series lag + shifted rolling-mean features with fixed FEATURE_COLUMNS order, explicit NaN-preserving row dropping, and (X, y) split helper; leakage-verified on the real dataset (89,800 complete training rows; 31-observation minimum history); suite at 262 passing tests.
+- [TASK-029] Chronological splitting helper: DEC-056 calendar-year constants as executable code with strict boundary/coverage guards; real-dataset pins (train 54,750 / validation 18,300 / test 18,250); suite at 275 passing tests.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template
