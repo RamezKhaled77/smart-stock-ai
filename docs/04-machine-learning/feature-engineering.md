@@ -298,3 +298,40 @@ Tests should use small datasets with manually verifiable expected values.
 - [Model Training](https://model-training.md?utm_source=chatgpt.com)
     
 - [Model Evaluation](https://model-evaluation.md?utm_source=chatgpt.com)
+
+---
+
+## 16. Implementation Status — Completed (TASK-028, 2026-11-09)
+
+Implemented in `src/smartstock/ml/features.py`, tested by
+`tests/test_ml_features.py` (23 tests), following §2–§13:
+
+- `build_features(frame)` — calendar features (§4: `day_of_week`
+  0=Monday, `month`, `day_of_month`), lags within each (store, item)
+  series (§5), rolling means on `sales.shift(1)` with
+  `min_periods = window` (§6). Series are sorted chronologically before
+  lagging (§13 sorting requirement).
+- `FEATURE_COLUMNS` — the §9 fixed order: `day_of_week`, `month`,
+  `day_of_month`, `lag_1`, `lag_7`, `rolling_mean_7`,
+  `rolling_mean_30`. The target is never in the feature matrix.
+- `drop_rows_without_features(frame)` — §8 strategy "remove rows
+  without sufficient history": early observations keep NaN (never
+  filled arbitrarily); training drops them explicitly.
+- `feature_matrix(frame)` — consistent (X, y) split for training.
+
+Measured facts on the real store-1 dataset: 91,300 input rows →
+89,800 complete training rows (50 items × 1,796; each series needs 31
+observed days before its first fully-featured row — the §14
+"minimum history" question is answered for the feature set as **31
+observations**).
+
+Leakage verification (§10, tested): 2016-12-31's `lag_1` equals every
+item's 2016-12-30 actual sales, and an outlier-target test proves the
+current day's value never enters its own rolling window.
+
+§14 open decisions still with the project owner or later tasks:
+identifiers-as-features (with model choice, TASK-031), extra calendar
+features, `lag_14`/`lag_30` evaluation, rolling median/std, and final
+feature selection — each may be resolved with DEC-027 evidence at
+TASK-030/031. The 31-observation minimum applies to training; an
+inference-time minimum-history policy is decided at TASK-033.

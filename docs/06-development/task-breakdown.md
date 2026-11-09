@@ -566,7 +566,7 @@ Completion record (2026-11-09): `src/smartstock/ml/baselines.py` — `naive_fore
 ### TASK-028: Implement Feature Engineering
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-008, TASK-026
 
 Description:
@@ -578,6 +578,8 @@ Evidence:
 - Date, lag, and rolling features are generated correctly.
 - Target leakage checks pass.
 - Feature tests pass.
+
+Completion record (2026-11-09): `src/smartstock/ml/features.py` per feature-engineering.md §2–§9 — `build_features` over the preprocessed frame: calendar features (`day_of_week` 0=Monday via `Series.dt.day_of_week`, `month`, `day_of_month`), lags `lag_1`/`lag_7` shifted within each (store, item) series after chronological sort, and `rolling_mean_7`/`rolling_mean_30` computed on `sales.shift(1)` (min_periods = window) so the current target never enters its own features (§6/§10). `FEATURE_COLUMNS` fixed order `[day_of_week, month, day_of_month, lag_1, lag_7, rolling_mean_7, rolling_mean_30]` (§9); no arbitrary missing-value fills (§8) — `drop_rows_without_features` lets training explicitly keep complete rows only (a series needs 31 observed days: first complete row is observation index 30), and `feature_matrix` returns the (X, y) split with the target excluded. Real-dataset pin: 91,300 rows in, 89,800 complete training rows (50 items × 1,796), verified no-leakage property (2016-12-31's lag_1 equals every item's 2016-12-30 actual sales) and a hand-checked row (item 1, 2013-02-01: lag_1 = 01-31 sales, lag_7 = 01-25 sales, rolling_mean_7 = mean of 01-25..01-31). §14 open items remaining: identifiers-as-features (decided with model choice at TASK-031), extra calendar features, lag_14/lag_30, rolling std/median, final feature selection (may be evaluated at TASK-030/031 with DEC-027 evidence); minimum-history is now measured (31 days) and will be revisited for inference-time policy at TASK-033. Tests: 23 feature tests (synthetic hand-computed ramps, interleaved series cross-item-bug guards, outlier-target-exclusion proof, NaN-preserving comparisons, matrix shapes/order; real-dataset pins); suite 262.
 
 ### TASK-029: Implement Chronological Data Splitting
 

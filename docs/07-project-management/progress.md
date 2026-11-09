@@ -402,3 +402,17 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-056 (accepted by the project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-028 feature engineering, TASK-029 chronological splitting helper, then TASK-030 candidate model training.
+
+### Feature Engineering Completed (TASK-028)
+
+- Date: 2026-11-09.
+- Status: The approved feature set is implemented, leakage-verified, and ready for candidate model training.
+- Work Completed:
+  - `src/smartstock/ml/features.py`: `build_features` (calendar features, per-series lags, shifted rolling means per the §6 safe approach), `FEATURE_COLUMNS` fixed order, `drop_rows_without_features` (explicit §8 drop strategy, no arbitrary fills), `feature_matrix` (X/y split).
+  - `docs/04-machine-learning/feature-engineering.md` §16: implementation status, measured minimum history (31 observations → 89,800 complete training rows), leakage verification notes.
+- Tests Executed: full pytest suite (23 new feature tests: hand-computed lag/rolling values, cross-item-bug guards, outlier exclusion proof, real-dataset pins incl. no-leakage property).
+- Test Results: 262/262 passed.
+- Tasks Updated: TASK-028 → Verified.
+- Decisions Made: none new (feature-set open items ride with model selection at TASK-031; inference minimum history deferred to TASK-033).
+- Blockers: None recorded.
+- Next Steps: TASK-029 chronological splitting helper (DEC-056 constants), then TASK-030 candidate model training/evaluation.
