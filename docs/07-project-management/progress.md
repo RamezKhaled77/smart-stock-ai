@@ -503,3 +503,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-033 confirmation (with project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-035 — implement the restocking recommendation service (reorder point, target stock, order quantity per the confirmed formulas; missing-input handling; no inventory mutation), then TASK-036 recommendation display.
+
+### Restocking Calculations Implemented with DEC-059 (TASK-035)
+
+- Date: 2026-11-10.
+- Status: The advisory recommendation engine is implemented end to end with every confirmed formula, explicit unavailable states, and a read-only service; inventory untouched.
+- Work Completed:
+  - DEC-059 accepted with the owner: ADD = calendar mean ending at the last recorded sale, zeros filled, denominator min(30, span) — lone single-day history yields the sale itself (not sale ÷ 30).
+  - `domain/inventory.py`: DEC-059 re-anchoring, `demand_window_days_used`, `calculate_target_stock` (DEC-038), `calculate_recommended_order_quantity` (DEC-033), shared validation helper.
+  - `domain/restocking.py`: `RestockRecommendation` composition with explicit available/unavailable semantics and formula-citing explanations (DEC-032/033/038, BR-022, DEC-031).
+  - `sales_repository.get_first_sale_date`; `inventory_service.get_stock_overview` fetches full observed history (page contract unchanged); new read-only `restock_service.get_restock_recommendations`.
+- Tests Executed: full pytest suite — 41 domain tests (anchoring, window denominators, both new formulas, composition with hand-computed values), 4 service tests (unavailable path, formulas, read-only invariance, inactive exclusion), overview pins repinned to DEC-059.
+- Test Results: 361/361 passed.
+- Tasks Updated: TASK-035 → Verified.
+- Decisions Made: DEC-059 (with project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-036 — recommendation display page, then the Forecast page (operational-product ↔ dataset-item mapping decision needed there), dashboard updates, and phase wrap-up.

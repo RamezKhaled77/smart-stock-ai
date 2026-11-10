@@ -225,7 +225,7 @@ A product should only receive a model-based forecast when sufficient valid histo
 
 Where:
 
-- Average Daily Demand is the mean of the product's daily sales over the most recent 30 days of available history (at least one observed day; DEC-038's "minimum required history" resolves to DEC-058's shortfall policy).
+- Average Daily Demand is the mean of the product's daily sales over a calendar window ending at the product's last recorded sale date, covering min(30 days, history span), with days inside the window counted as zero demand (at least one observed day required; DEC-059).
 - Lead Time is the expected number of days required to receive replenishment (manual per-product field, DEC-037).
 - Safety Stock is the additional inventory buffer (manual per-product field, DEC-036).
 
@@ -265,9 +265,9 @@ Where:
 
 `Target Stock = Average Daily Demand × (Lead Time + 7 days) + Safety Stock`
 
-where Average Daily Demand is the mean of the product's daily sales over the most recent 30 days of available history, rounded up to a whole unit in the business logic layer.
+where Average Daily Demand is the mean of the product's daily sales over the most recent 30 days of available history (anchored at the last recorded sale date with zeros filled, per DEC-059), rounded up to a whole unit in the business logic layer before multiplication.
 
-The (Lead Time + 7 days) factor covers expected demand during replenishment plus a 7-day buffer after restock. Using the historical average keeps restocking logic independent of the forecasting model (consistent with DEC-030). If the product lacks the minimum required history, the recommendation is unavailable with a clear explanation. Lead Time and Safety Stock follow DEC-037 and DEC-036.
+The (Lead Time + 7 days) factor covers expected demand during replenishment plus a 7-day buffer after restock. Using the historical average keeps restocking logic independent of the forecasting model (consistent with DEC-030). If the product lacks the minimum required history (any observed day, DEC-033), the recommendation is unavailable with a clear explanation. Lead Time and Safety Stock follow DEC-037 and DEC-036.
 
 ## BR-025: Advisory Recommendations
 

@@ -178,6 +178,18 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-059: Average Daily Demand Window Anchoring
+
+- Status: Accepted
+- Decision: Average Daily Demand (the demand input for BR-020/DEC-032 and BR-024/DEC-038) is computed as the mean of the product's daily sold quantity over a **calendar window ending at the product's last recorded sale date**, covering `min(30 days, history span)` calendar days, with days inside the window that have no sale counted as zero demand. A lone single-day history therefore yields the sale itself as the demand (span 1), not the sale divided by 30.
+- Context:
+  - Deciding anchor and denominator closes the ambiguity in DEC-038's "most recent 30 days of available history" (three variants considered; see Method).
+  - Ending at the last recorded sale (not today) treats an old backdated sale as "this is the most recent demand we know about" and never manufactures zero-demand days the business layer has no evidence for; gaps *between* recorded sales still count as zero because they are in-history non-sale days.
+  - Denominating by calendar days (zeros filled) treats "no sale" as "zero demand" — intermittent sellers get fair, lower demand estimates, which matters for fair reorder points and consistent with the project goal of forecasting *demand* rather than sale-day volume.
+  - The cap `min(30, span)` avoids diluting short histories with a fixed 30 denominator, so a new product's early demand is not understated purely because data is young; recommendation availability from the first observed day follows DEC-033 (2026-11-10 confirmation).
+  - Note the deliberate difference from the ML feature windows (features are observation-based per feature-engineering): restocking formulas are calendar-day based by this decision — both documented, serving different purposes (DEC-030 keeps them separate components).
+- Method: Chosen with the project owner from documented options (2026-11-10, TASK-035): calendar days with zeros filled (chosen) vs. sale-day-records-only vs. calendar window ending today.
+
 ### DEC-058: Insufficient-History Forecasting Policy
 
 - Status: Accepted
@@ -553,6 +565,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-056 | Chronological split | Train 2013–2015, Validation 2016, Test 2017; test touched once (DEC-027) |
 | DEC-057 | Final model | Random Forest (seed 2026); RULES: lowest validation MAE 6.033, LR ≈7.4% worse → 5% band not triggered |
 | DEC-058 | Short-history policy | ≥31 days → RF; 1–30 days → MA-7 recursive fallback; 0 days → explicit error |
+| DEC-059 | Demand window anchoring | Calendar window ends at last sale; zeros filled; denominator min(30, span) |
 
 ---
 

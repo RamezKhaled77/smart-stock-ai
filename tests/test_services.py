@@ -8,12 +8,15 @@ composition) the pages will use.
 
 from pathlib import Path
 
+import datetime as dt
+
 import pytest
 
 from smartstock.database.initialization import initialize_database
 from smartstock.services import (
     inventory_service,
     product_service,
+    restock_service,
     sales_service,
 )
 from smartstock.utils.dates import utc_today_iso
@@ -306,7 +309,7 @@ class TestSalesService:
         )
 
 class TestStockOverview:
-    """Listing overview: demand (DEC-038), reorder point (DEC-032),
+    """Listing overview: demand (DEC-059), reorder point (DEC-032),
     status (BR-008) per active product."""
 
     def test_new_product_without_sales(self, db_path: Path) -> None:
@@ -323,7 +326,8 @@ class TestStockOverview:
     def test_status_uses_demand_lead_and_safety(
         self, db_path: Path, product
     ) -> None:
-        # Sale of 8 today in the window → demand 8/30 per day.
+        # Sale of 8 today: the DEC-059 window ends at this last sale,
+        # span 1 day → demand = 8.0.
         sales_service.record_sale(
             product["id"], 8, utc_today_iso(), db_path=db_path
         )
@@ -331,10 +335,10 @@ class TestStockOverview:
         row = overview[0]
         # Stock after the sale: 10 - 8 = 2.
         assert row["current_stock"] == 2
-        assert row["average_daily_demand"] == pytest.approx(0.2667)
-        # reorder = ceil(0.2667 * 5) + 2 = 2 + 2 = 4 (DEC-032)
-        assert row["reorder_point"] == 4
-        assert row["stock_status"] == "Low Stock"  # 2 <= 4
+        assert row["average_daily_demand"] == pytest.approx(8.0)
+        # reorder = ceil(8 * 5) + 2 = 42 (DEC-032)
+        assert row["reorder_point"] == 42
+        assert row["stock_status"] == "Low Stock"  # 2 <= 42
 
     def test_overview_excludes_inactive_products(
         self, db_path: Path, product
@@ -348,19 +352,20 @@ class TestStockOverview:
         overview = inventory_service.get_stock_overview(db_path=db_path)
         assert [row["id"] for row in overview] == [other["id"]]
 
-    def test_overview_skips_sales_older_than_the_window(
+    def test_backdated_sale_anchors_the_demand_window(
         self, db_path: Path, product
     ) -> None:
-        # Backdated sale far outside the 30-day window must not raise
-        # demand or the reorder point.
+        # DEC-059: an old backdated sale is the last recorded sale, so
+        # the window ends there (1-day span → demand = 5.0) rather than
+        # today going forward with zeros.
         sales_service.record_sale(
             product["id"], 5, "2026-01-01", db_path=db_path
         )
         overview = inventory_service.get_stock_overview(db_path=db_path)
         row = overview[0]
-        assert row["average_daily_demand"] == 0.0
-        assert row["reorder_point"] == 2  # safety stock only
-        assert row["stock_status"] == "In Stock"  # 5 > 2
+        assert row["average_daily_demand"] == pytest.approx(5.0)
+        assert row["reorder_point"] == 27  # ceil(5 * 5) + 2 = 27
+        assert row["stock_status"] == "Low Stock"  # 5 <= 27
 
     def test_daily_sales_and_filters(self, db_path: Path, product) -> None:
         sales_service.record_sale(
@@ -383,3 +388,97 @@ class TestStockOverview:
             db_path=db_path,
         )
         assert [s["sale_date"] for s in window] == ["2026-11-03"]
+
+
+class TestRestockRecommendations:
+    """Advisory recommendation listing (TASK-035, read-only)."""
+
+    def test_unavailable_without_history_but_stock_shown(
+        self, db_path: Path
+    ) -> None:
+        product_service.create_product(
+            name="No Sales Yet", sku="SKU-NONE", db_path=db_path
+        )
+        rows = restock_service.get_restock_recommendations(
+            db_path=db_path
+        )
+        assert len(rows) == 1
+        row = rows[0]
+        assert row["available"] is False
+        assert "No sales are recorded" in row["unavailable_reason"]
+        assert row["current_stock"] == 0
+        assert row["average_daily_demand"] is None
+        assert row["reorder_point"] is None
+        assert row["target_stock"] is None
+        assert row["recommended_order_quantity"] is None
+
+    def test_recommendation_follows_all_confirmed_formulas(
+        self, db_path: Path
+    ) -> None:
+        stocky = product_service.create_product(
+            name="Item B",
+            sku="SKU-B",
+            initial_stock=20,
+            lead_time_days=5,
+            safety_stock=2,
+            db_path=db_path,
+        )
+        # Sale of 8 today and 4 four days ago: span 5 → ADD = 12/5.
+        today = utc_today_iso()
+        four_days_ago = (
+            dt.date.fromisoformat(today) - dt.timedelta(days=4)
+        ).isoformat()
+        sales_service.record_sale(
+            stocky["id"], 8, today, db_path=db_path
+        )
+        sales_service.record_sale(
+            stocky["id"], 4, four_days_ago, db_path=db_path
+        )
+        row = restock_service.get_restock_recommendations(
+            db_path=db_path
+        )[0]
+        assert row["available"] is True
+        assert row["demand_window_days_used"] == 5
+        assert row["average_daily_demand"] == pytest.approx(2.4)
+        # reorder = ceil(2.4 * 5) + 2 = 14 (DEC-032)
+        assert row["reorder_point"] == 14
+        # target = ceil(2.4)=3 → 3 * (5 + 7) + 2 = 38 (DEC-038)
+        assert row["target_stock"] == 38
+        # order = max(0, 38 - 8) = 30 (DEC-033; stock 20 - 12 = 8)
+        assert row["current_stock"] == 8
+        assert row["recommended_order_quantity"] == 30
+        assert row["needs_reorder"] is True
+        assert row["stock_status"] == "Low Stock"
+
+    def test_recommendations_are_read_only(
+        self, db_path: Path, product
+    ) -> None:
+        sales_service.record_sale(
+            product["id"], 3, "2026-11-05", db_path=db_path
+        )
+        stock_before = inventory_service.get_current_stock(
+            product["id"], db_path=db_path
+        )
+        restock_service.get_restock_recommendations(db_path=db_path)
+        restock_service.get_restock_recommendations(db_path=db_path)
+        # Nothing mutated: stock identical, sale rows identical.
+        assert (
+            inventory_service.get_current_stock(
+                product["id"], db_path=db_path
+            )
+            == stock_before
+        )
+        assert len(
+            sales_service.list_sales(product["id"], db_path=db_path)
+        ) == 1
+
+    def test_recommendations_exclude_inactive_products(
+        self, db_path: Path, product
+    ) -> None:
+        product_service.set_product_active(
+            product["id"], False, db_path=db_path
+        )
+        assert (
+            restock_service.get_restock_recommendations(db_path=db_path)
+            == []
+        )

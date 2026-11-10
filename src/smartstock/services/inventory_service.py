@@ -18,8 +18,6 @@ insufficient-stock policy (DEC-035).
 
 from pathlib import Path
 
-import datetime as dt
-
 import config
 from smartstock.database.connection import ConnectionContext, session
 from smartstock.domain.inventory import (
@@ -115,9 +113,11 @@ def get_stock_overview(db_path: Path | None = None) -> list:
     For every active product (BR-026), combines stored product data
     with computed stock indicators:
 
-    - ``average_daily_demand``: mean demand over the most recent
-      ``DEMAND_WINDOW_DAYS`` (30) calendar days ending today (DEC-038);
-      days without sales count as zero.
+    - ``average_daily_demand``: mean demand over the product's most
+      recent available history — per DEC-059 the window ends at the
+      product's last recorded sale date and covers up to
+      ``DEMAND_WINDOW_DAYS`` (30) calendar days; days without sales
+      count as zero.
     - ``reorder_point``: per DEC-032 from the demand, the product's
       lead time, and safety stock.
     - ``stock_status``: In Stock / Low Stock / Out of Stock (BR-008).
@@ -129,23 +129,25 @@ def get_stock_overview(db_path: Path | None = None) -> list:
         List of product dictionaries with the three extra keys, ordered
         by SKU. Empty list when there are no active products.
     """
-    today = utc_today_iso()
-    window_start = (
-        dt.date.fromisoformat(today)
-        - dt.timedelta(days=DEMAND_WINDOW_DAYS - 1)
-    ).isoformat()
-
     with _run(db_path) as connection:
         products = product_repository.list_products(connection)
-        sales_by_product = sales_repository.get_daily_sales_by_product(
-            connection, window_start, today
-        )
+        first_sale_date = sales_repository.get_first_sale_date(connection)
+        if first_sale_date is None:
+            sales_by_product = {}
+        else:
+            # Full observed history: the DEC-059 window ends at each
+            # product's last sale, so nothing may be cut off by a
+            # today-anchored pre-filter. Future sales cannot exist
+            # (backdated is allowed, future is rejected).
+            sales_by_product = sales_repository.get_daily_sales_by_product(
+                connection, first_sale_date, utc_today_iso()
+            )
 
     overview = []
     for product in products:
         daily_totals = sales_by_product.get(product["id"], {})
         demand = calculate_average_daily_demand(
-            daily_totals, DEMAND_WINDOW_DAYS, today
+            daily_totals, DEMAND_WINDOW_DAYS
         )
         reorder_point = calculate_reorder_point(
             demand,

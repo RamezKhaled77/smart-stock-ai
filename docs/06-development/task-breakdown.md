@@ -702,7 +702,7 @@ Completion record (2026-11-10): the parameter set is fully approved and every do
 ### TASK-035: Implement Restocking Calculations
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-014, TASK-033, TASK-034
 
 Description:
@@ -715,6 +715,8 @@ Evidence:
 - Missing inputs are handled.
 - Unit tests pass.
 - No inventory mutation occurs.
+
+Completion record (2026-11-10): **DEC-059 accepted with the owner** — Average Daily Demand is a calendar-window mean ending at the product's last recorded sale date, zeros filled, denominator min(30 days, history span); closes the DEC-038 ambiguity. Implementation across the 5 layers: `domain/inventory.py` re-anchored to DEC-059 (`calculate_average_daily_demand` without a today parameter, window = max(first sale, end − window_days + 1) … last sale with an inclusive zero-filled walk; `demand_window_days_used` reports the real denominator), plus the confirmed formulas `calculate_target_stock` (ceil(demand) × (lead + 7) + safety, DEC-038) and `calculate_recommended_order_quantity` (max(0, target − current), DEC-033) sharing a `_validated_demand_inputs` guard with `calculate_reorder_point` (identical error messages preserved); `domain/restocking.py` composes BR-020/022/023/024 into a `RestockRecommendation` dataclass with explicit `available`/`unavailable_reason` semantics (no sales history or missing stock level → unavailable with a plain explanation, known fields like current stock still shown — never silent zeros; explanations cite DEC-032/033/038/031 and DEC-059); `sales_repository.get_first_sale_date` (MIN(sale_date)) enables full-history fetches; `inventory_service.get_stock_overview` now fetches each product's full observed history (first sale date → UTC today) instead of a today-anchored pre-window — page contract unchanged (`average_daily_demand` rounded to 4, `reorder_point`, `stock_status`); new read-only `services/restock_service.py::get_restock_recommendations` follows the `_run`/repositories pattern, active products only, rounds demand in the display layer (prediction-logic §11), never mutates inventory (DEC-031). Tests: 41 domain tests (DEC-059 anchoring incl. lone-sale span-1, gap zero-fill, 30-day cap, edge inclusivity, zero-quantity-sale scenario proven impossible and removed; the 2 new formula classes incl. ceil-before-multiply and clamp behavior; composition class with all hand-computed values); 4 service tests (unavailable path, full formulas on a 20-stock product — ADD 2.4 → reorder 14/target 38/order 30, read-only double-call invariance, inactive exclusion); `test_services.py` overview pins repinned to DEC-059 (sale of 8 today → demand 8.0, reorder 42; lone backdated sale → demand 5.0, reorder 27, Low Stock — test renamed to `test_backdated_sale_anchors_the_demand_window`). Suite 361/361 passed (was 334).
 
 ### TASK-036: Implement Recommendation Display
 

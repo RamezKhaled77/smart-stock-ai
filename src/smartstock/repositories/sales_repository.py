@@ -136,6 +136,35 @@ def list_sales(
     return [dict(row) for row in rows]
 
 
+def get_first_sale_date(connection: sqlite3.Connection) -> str | None:
+    """Earliest recorded sale date across all products, if any.
+
+    Used by the stock overview to fetch each product's full observed
+    history (DEC-059 anchors the demand window at the last sale date,
+    but "no product may lose history just because it sold before this
+    window" requires knowing how far back sales exist).
+
+    Args:
+        connection: Open database connection.
+
+    Returns:
+        The earliest ``sale_date`` as ``YYYY-MM-DD``, or ``None`` when
+        no sales are recorded.
+
+    Raises:
+        DatabaseError: If the query fails.
+    """
+    try:
+        row = connection.execute(
+            "SELECT MIN(sale_date) AS first_date FROM sales"
+        ).fetchone()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not read the first sale date: {error}", cause=error
+        )
+    return row["first_date"] if row is not None else None
+
+
 def get_daily_sales(
     connection: sqlite3.Connection,
     product_id: int,
