@@ -178,6 +178,16 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-058: Insufficient-History Forecasting Policy
+
+- Status: Accepted
+- Decision: Product forecasting eligibility thresholds, applied at inference time:
+  - **≥ 31 observed days of history** → the full Random Forest model (DEC-057) with recursive features (DEC-025). 31 is the measured minimum for the feature set (TASK-028: `rolling_mean_30` plus the one-step shift).
+  - **1 → 30 observed days** → fall back to the trailing-7-day moving average forecast (baseline `moving_average_7`, validation MAE 8.077), applied recursively over the horizon with predictions included in the trailing window. No product is blocked from forecasting by short history.
+  - **0 observed days** → forecasting is refused with an explicit "no suitable history exists" error (prediction-logic §13).
+- Context: prediction-logic §13 requires an explicit insufficient-history behavior and feature-engineering §8 sanctions "use a simpler forecasting approach for products with limited history". The MA-7 choice is evidence-based (it is the strongest baseline measured at TASK-027 and beats MA-30's 8.298) and keeps every policy-facing forecast available from day one of sales. Consistent with §6, model-path features are computed exactly as in training (observation-based, leakage-free).
+- Method: Chosen with the project owner from documented options (2026-11-10, TASK-033). Companion policies decided autonomously per existing doc language: predictions stay raw for evaluation (rounding happens in business logic, prediction-logic §11) and negative predictions are clipped to zero and documented (prediction-logic §10; the Random Forest structurally cannot emit negatives since leaf values are averages of non-negative sales).
+
 ### DEC-057: Final Forecasting Model Selection
 
 - Status: Accepted
@@ -540,6 +550,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-055 | Import scope in v1 | Historical dataset import only; operational sales import not built in v1 |
 | DEC-056 | Chronological split | Train 2013–2015, Validation 2016, Test 2017; test touched once (DEC-027) |
 | DEC-057 | Final model | Random Forest (seed 2026); RULES: lowest validation MAE 6.033, LR ≈7.4% worse → 5% band not triggered |
+| DEC-058 | Short-history policy | ≥31 days → RF; 1–30 days → MA-7 recursive fallback; 0 days → explicit error |
 
 ---
 

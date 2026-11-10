@@ -332,14 +332,13 @@ Resolved on 2026-11-04 (see `../07-project-management/decisions.md`):
 - ~~Recursive or direct multi-step prediction~~ → DEC-025 (recursive).
 - ~~Forecast persistence~~ → DEC-028 (generate on demand; no persistence in v1).
 
-Still to be resolved based on measured evidence or later approval:
+Resolved at TASK-032/TASK-033 (2026-11-09/10):
 
-- Final model artifact format.
-- Minimum historical data requirement.
-- Negative prediction handling.
-- Prediction rounding policy.
-- Model version selection strategy.
-    
+- ~~Final model artifact format~~ → joblib + JSON metadata (DEC-057 model, `model_artifacts.py`).
+- ~~Minimum historical data requirement~~ → DEC-058 (31 observed days for the model path; MA-7 recursive fallback for 1–30 days; refusal with a clear error at 0 days).
+- ~~Negative prediction handling~~ → clip to zero, documented (§10; the Random Forest structurally cannot emit negatives).
+- ~~Prediction rounding policy~~ → raw prediction preserved by this layer; rounding happens in business logic (§11).
+- Model version selection strategy — single version in v1; recorded in metadata per run.
 
 ## 17. Related Documentation
 
@@ -356,3 +355,32 @@ Still to be resolved based on measured evidence or later approval:
 - Business Rules
     
 - System Architecture
+
+---
+
+## 18. Implementation Status — Completed (TASK-033, 2026-11-10)
+
+Implemented in `src/smartstock/ml/inference.py`, tested by
+`tests/test_ml_inference.py` (20 tests):
+
+- `forecast_product(model, metadata, history, horizon_days, product_id)`
+  — validated horizon (DEC-026), validated single-series history
+  (numeric, non-negative, one observation per day; duplicates are
+  rejected with aggregation guidance), chronological re-sorting.
+- DEC-058 paths: ≥31 observed days → Random Forest with recursive
+  features (observation-wise, matching training math exactly);
+  1–30 days → trailing-7-day average applied recursively (reusing the
+  tested baseline function — no duplicated logic); 0 days → explicit
+  "No suitable history exists" error (§13).
+- §8 recursive loop: each prediction joins the per-call working
+  history before the next day's features; operational sales records
+  are never touched (§12); output contract per §9 with raw (§11)
+  predictions clipped to ≥ 0 (§10, tested with a negative stub) and a
+  non-finite-output rejection (§13).
+- Verified manually-replicated recursion on a real trained forest and
+  a constant-series exactness pin; real-artifact pins forecast item 1
+  for 2018-01-01→07 deterministically with the model path.
+
+Remaining for the Forecast page task: the mapping between operational
+products and dataset `item` identifiers (DEC-052 kept them separate
+deliberately) — to be decided when that page is designed.

@@ -473,3 +473,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: artifact fit scope decided autonomously — production model fits on ALL observed history (89,800 complete rows; inference forecasts the unobserved future), while selection metrics come from the DEC-056 protocol runs; documented in metadata and task record.
 - Blockers: None recorded.
 - Next Steps: TASK-033 — forecast inference service (recursive multi-step per DEC-025, horizons 7/14/30; user checkpoint for prediction rounding policy and minimum/no-history product rules).
+
+### Forecast Inference Completed with DEC-058 (TASK-033)
+
+- Date: 2026-11-10.
+- Status: The inference path is implemented end to end — every product with any history can be forecast; model math verified against the training pipeline.
+- Work Completed:
+  - DEC-058 accepted with the owner: ≥31 observed days → Random Forest; 1–30 days → trailing-7-day average fallback (recursive); 0 days → explicit error. Companion policies (raw predictions; clip-negatives) per existing doc language.
+  - `src/smartstock/ml/inference.py`: validated input/horizon, §8 recursive loop with per-call working history, §9 output contract, §10 non-finite rejection, §13 clear errors.
+  - Docs: prediction-logic §16 open decisions closed (all except version strategy), §18 implementation record.
+- Tests Executed: full pytest suite (20 new inference tests: guards, DEC-058 path selection, manual §8-loop replication and constant-series pins, real-artifact forecast of 2018-01-01→07).
+- Test Results: 334/334 passed.
+- Tasks Updated: TASK-033 → Verified.
+- Decisions Made: DEC-058 (with project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-034 — confirm/restock parameter handling (lead time, safety stock already decided as manual), then the Forecast page (operational-product ↔ dataset-item mapping decision needed at that task).

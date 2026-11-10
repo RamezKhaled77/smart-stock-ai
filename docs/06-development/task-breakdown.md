@@ -655,7 +655,7 @@ Completion record (2026-11-09): `src/smartstock/ml/model_artifacts.py` + `script
 ### TASK-033: Implement Forecast Inference
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-032
 
 Description:
@@ -668,6 +668,8 @@ Evidence:
 - Insufficient history is handled.
 - Inference tests pass.
 - Inventory remains unchanged.
+
+Completion record (2026-11-10): `src/smartstock/ml/inference.py` implements the prediction-logic workflow as pure functions: `forecast_product(model, metadata, history, horizon_days, product_id)` validates the DEC-026 horizon (7/14/30), required history columns, numeric non-negative sales, and one-observation-per-day (duplicates rejected with multi-record-day guidance; input is sorted internally), then walks the §8 recursive loop — each day's prediction joins a per-call working history before the next day's features are recomputed (never touching operational sales records). **DEC-058 accepted with the owner**: ≥31 observed days → Random Forest path (calendar + lag_1/lag_7 + trailing 7/30 means computed observation-wise, exactly matching training feature math); 1→30 days → MA-7 fallback applied recursively with predictions in the trailing window (strongest measured baseline, MAE 8.077); 0 days → explicit "No suitable history exists" error (§13). Output: DataFrame per §9 (product_id, forecast_date, predicted_demand, model_used, model_version from artifact metadata, generated_at UTC). Policies per doc language: raw predictions preserved with clipping to ≥0 documented (§10; RF is structurally non-negative anyway) and no rounding in this layer (§11 — the business layer rounds at restocking). Model-path verification includes a manual §8-loop replica test (inference consumes its own predictions, hand-computed features) and a constant-series pin (forest trained on constant data predicts the constant exactly). Tests: 20 inference tests (validation guards incl. horizon/duplicates/negatives, output contract, DEC-058 path selection incl. 20-day real-history fallback, negative-clipping stub, non-finite rejection, determinism, real-artifact pins: item 1 forecasts 2018-01-01→07 with the model path post-training-history); suite 334. Inventory untouched by design (§12) — restocking integration is TASK-034+.
 
 ---
 
