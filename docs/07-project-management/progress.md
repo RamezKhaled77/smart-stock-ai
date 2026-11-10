@@ -488,3 +488,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-058 (with project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-034 — confirm/restock parameter handling (lead time, safety stock already decided as manual), then the Forecast page (operational-product ↔ dataset-item mapping decision needed at that task).
+
+### Restocking Parameters Confirmed (TASK-034)
+
+- Date: 2026-11-10.
+- Status: Every restocking formula and input is approved; the recommendation service (TASK-035) has a complete, unambiguous rule set.
+- Work Completed:
+  - DEC-033 confirmed with the project owner: Recommended Order Quantity = max(0, Target Stock − Inventory Position); options recorded; clamp rationale documented.
+  - DEC-038's minimum-required-history resolved to "≥1 observed day" (consistent with DEC-058); 0 days → unavailable with explanation.
+  - `business-rules.md` statuses reconciled to Accepted for BR-018/019/020/023/025 with their decision references.
+- Tests Executed: full pytest suite (no code changes in this task; run as a regression check).
+- Test Results: 334/334 passed.
+- Tasks Updated: TASK-034 → Verified.
+- Decisions Made: DEC-033 confirmation (with project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-035 — implement the restocking recommendation service (reorder point, target stock, order quantity per the confirmed formulas; missing-input handling; no inventory mutation), then TASK-036 recommendation display.

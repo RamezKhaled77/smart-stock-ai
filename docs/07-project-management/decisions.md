@@ -354,14 +354,15 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-033: Recommended Order Quantity
 
-- Status: Proposed
+- Status: Accepted
 - Formula:
 
   `Recommended Order Quantity = max(0, Target Stock - Inventory Position)`
 
 - Context: This is a candidate formula for estimating the quantity required to reach the target stock.
 - Inputs now defined: Target Stock per DEC-038; Inventory Position = current stock (no incoming-stock tracking in v1, consistent with DEC-031 and BR-022).
-- Confirmation Required: Formula confirmation during implementation review (the input definitions are no longer open).
+- Confirmation: Confirmed by the project owner on 2026-11-10 during TASK-034, choosing the clamped form from documented options — the max(0, …) clamp keeps a command "recommendation quantity" a nonnegative actionable number; if stock already meets or exceeds target, the recommendation is 0 ("no need to order") rather than a negative surplus value, which also keeps the reorder framing (Current Stock ≤ Reorder Point) consistent with the quantity framing. Signed-difference and extra-buffer variants were considered and rejected (the Target Stock formula already contains the lead-time and 7-day buffers, so adding buffers would double-count; surplus display has no operational benefit in v1).
+- Recommendation availability: a recommendation requires at least one observed day of history for Average Daily Demand (the "minimum required history" of DEC-038 resolves to the DEC-058 shortfall policy: recommendations are available from the first observed day; 0 days → unavailable with a clear explanation).
 
 ### DEC-034: Negative Stock Policy
 
@@ -539,6 +540,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-036 | Safety stock | Manually configured per product (optional, default 0) |
 | DEC-037 | Lead time source | Manual per-product field (optional, default 3 days) |
 | DEC-038 | Target stock | `Avg Daily Demand × (Lead Time + 7) + Safety Stock`, demand = 30-day mean |
+| DEC-033 | Order quantity (confirmed) | `max(0, Target Stock − Inventory Position)`; recommendation needs ≥1 observed day (DEC-058) |
 | DEC-047 | Stock storage model | Direct `current_stock` column on products; movements entity not built in v1 |
 | DEC-048 | Product deletion | Soft delete via `is_active` flag |
 | DEC-049 | Returns | Not supported in v1; recorded sales immutable |

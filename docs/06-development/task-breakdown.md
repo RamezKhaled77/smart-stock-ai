@@ -678,7 +678,7 @@ Completion record (2026-11-10): `src/smartstock/ml/inference.py` implements the 
 ### TASK-034: Confirm Restocking Parameters
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-001
 
 Description:
@@ -696,6 +696,8 @@ Evidence:
 
 - Required parameters and formulas are approved.
 - Missing decisions are documented.
+
+Completion record (2026-11-10): the parameter set is fully approved and every documentation status reconciled with the decision records. Confirmed with the project owner: **DEC-033 Recommended Order Quantity = max(0, Target Stock − Inventory Position)** (the only formula still formally Proposed — the clamp keeps a nonnegative actionable quantity and "0 = no need to order"; signed-difference and extra-buffer variants rejected, the latter because DEC-038's Target Stock already contains the lead-time and 7-day buffers). Resolution of DEC-038's "minimum required history": a recommendation needs **at least one observed day** of history for Average Daily Demand (mean over the most recent 30 available days); 0 days → unavailable with a clear explanation — consistent with DEC-058's shortfall policy. Status grammar reconciled in `business-rules.md`: BR-018 invalid predictions (non-finite → error, negatives clipped, TASK-033), BR-019 forecast availability (DEC-058), BR-020 reorder point (DEC-032), BR-023 order quantity (DEC-033), BR-025 advisory (DEC-031) — all now Accepted. Inputs: Lead Time (DEC-037, manual, default 3), Safety Stock (DEC-036, manual, default 0), Inventory Position = current stock (BR-022/DEC-031). No code changes: TASK-034 is the documentation-confirmation checkpoint; implementation is TASK-035. Suite unchanged at 334 (run to confirm).
 
 ### TASK-035: Implement Restocking Calculations
 

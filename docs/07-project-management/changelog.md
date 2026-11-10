@@ -322,6 +322,8 @@ It does not imply that the application itself has been implemented.
 - [TASK-032] Model artifact pipeline: atomic save/verify/replace persistence with metadata contract, scripts/train_model.py training workflow, production artifact fit on all observed history (89,800 rows) with committed metadata; suite at 314 passing tests.
 - [DEC-058] Short-history forecasting policy: ≥31 days → Random Forest; 1–30 days → MA-7 recursive fallback; 0 days → explicit error.
 - [TASK-033] Forecast inference: validated recursive §8 loop with per-call working history, all DEC-026 horizons, DEC-058 path selection, and §9 output contract; suite at 334 passing tests.
+- [DEC-033 confirmed] Recommended Order Quantity = max(0, Target Stock − Inventory Position); recommendation availability from ≥1 observed day.
+- [TASK-034] Restocking parameters confirmed: all formulas and inputs approved, business-rules statuses reconciled to Accepted; ready for the recommendation service implementation.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template

@@ -201,17 +201,17 @@ Examples include:
 - Unexpected output shapes.
 - Negative predicted quantities where negative demand is not meaningful.
 
-If a regression model produces a negative demand estimate, the application may apply an approved non-negative output policy.
+**Decided handling (prediction-logic §10, implemented at TASK-033):** non-finite model outputs reject the forecast with a clear error; numeric negative predictions are clipped to zero (documented policy). The selected Random Forest (DEC-057) emits leaf averages of non-negative sales, so it cannot structurally produce negatives — the clip is a defensive policy that keeps the rule true for any future model.
 
-The exact handling must be documented.
+**Status:** Accepted
 
 ## BR-019: Forecast Availability
 
 A product should only receive a model-based forecast when sufficient valid historical data is available.
 
-The minimum data requirement must be established through experimentation.
+**Decided policy (DEC-058, 2026-11-10):** the measured feature minimum is 31 observed days (rolling_mean_30 plus the one-step shift, TASK-028). Products with 1–30 observed days receive the trailing-7-day moving average fallback forecast, applied recursively; products with 0 days receive a clear "no suitable history exists" message instead of a forecast.
 
-**Status:** Proposed
+**Status:** Accepted
 
 ---
 
@@ -219,17 +219,17 @@ The minimum data requirement must be established through experimentation.
 
 ## BR-020: Reorder Point
 
-The proposed reorder point formula is:
+**Decided formula (DEC-032):**
 
 `Reorder Point = Average Daily Demand × Lead Time + Safety Stock`
 
 Where:
 
-- Average Daily Demand is the estimated average daily product demand.
-- Lead Time is the expected number of days required to receive replenishment.
-- Safety Stock is the additional inventory buffer.
+- Average Daily Demand is the mean of the product's daily sales over the most recent 30 days of available history (at least one observed day; DEC-038's "minimum required history" resolves to DEC-058's shortfall policy).
+- Lead Time is the expected number of days required to receive replenishment (manual per-product field, DEC-037).
+- Safety Stock is the additional inventory buffer (manual per-product field, DEC-036).
 
-**Status:** Proposed
+**Status:** Accepted
 
 ## BR-021: Safety Stock
 
@@ -247,18 +247,17 @@ Since the initial application does not support automatic purchasing or incoming-
 
 ## BR-023: Recommended Order Quantity
 
-A proposed simplified formula is:
+**Decided formula (DEC-033, confirmed 2026-11-10):**
 
 `Recommended Order Quantity = max(0, Target Stock - Inventory Position)`
 
 Where:
 
-- Target Stock represents the desired inventory level after replenishment.
-- Inventory Position represents the quantity available or expected to be available according to approved rules.
+- Target Stock represents the desired inventory level after replenishment (DEC-038).
+- Inventory Position equals the current stock in v1 (DEC-031, BR-022).
+- The clamp keeps the recommendation a nonnegative actionable quantity; if stock already meets or exceeds target, the recommendation is 0 ("no need to order").
 
-If incoming stock is not supported, the calculation may use current stock only.
-
-**Status:** Proposed
+**Status:** Accepted
 
 ## BR-024: Target Stock
 
@@ -278,7 +277,7 @@ The user must make the final replenishment decision.
 
 The initial system must not automatically purchase or order products.
 
-**Status:** Proposed
+**Status:** Accepted (DEC-031)
 
 ---
 
