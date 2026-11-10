@@ -326,6 +326,7 @@ It does not imply that the application itself has been implemented.
 - [TASK-034] Restocking parameters confirmed: all formulas and inputs approved, business-rules statuses reconciled to Accepted; ready for the recommendation service implementation.
 - [DEC-059] Average Daily Demand window: calendar window ends at the last recorded sale, zeros filled, denominator min(30 days, history span).
 - [TASK-035] Restocking calculations: DEC-059 demand anchoring, target stock (DEC-038) and order quantity (DEC-033) formulas, RestockRecommendation composition with explicit unavailable states, read-only restock service; suite at 361 passing tests.
+- [TASK-036] Restocking Recommendations page: advisory display with summary metrics, supporting inputs, per-product explanations and unavailable reasons; navigation registered; suite at 367 passing tests.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template

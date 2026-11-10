@@ -19,6 +19,7 @@ import streamlit as st
 
 from smartstock.pages.imports import render as imports_render
 from smartstock.pages.products import render as products_render
+from smartstock.pages.restock import render as restock_render
 from smartstock.pages.sales import render as sales_render
 
 st.set_page_config(
@@ -49,6 +50,12 @@ page = st.navigation(
                 title="Products & Inventory",
                 icon="🏷️",
                 url_path="products-and-inventory",
+            ),
+            st.Page(
+                restock_render,
+                title="Restocking Recommendations",
+                icon="📦",
+                url_path="restocking-recommendations",
             ),
         ],
         "Sales": [

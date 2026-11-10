@@ -438,7 +438,7 @@ The exact rules must be defined in `business-rules.md`.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (restocking calculations implemented and approved; see DEC-032/033/036/037/038/058/059)
 
 ### Description
 

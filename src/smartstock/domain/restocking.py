@@ -59,6 +59,8 @@ class RestockRecommendation:
     available: bool
     unavailable_reason: str | None
     current_stock: int | None
+    lead_time_days: int | None
+    safety_stock: int | None
     average_daily_demand: float | None
     demand_window_days_used: int | None
     reorder_point: int | None
@@ -99,6 +101,8 @@ def build_restock_recommendation(
             available=False,
             unavailable_reason=UNAVAILABLE_NO_STOCK_FIELD,
             current_stock=None,
+            lead_time_days=int(product["lead_time_days"]),
+            safety_stock=int(product["safety_stock"]),
             average_daily_demand=None,
             demand_window_days_used=None,
             reorder_point=None,
@@ -115,6 +119,8 @@ def build_restock_recommendation(
             available=False,
             unavailable_reason=UNAVAILABLE_NO_HISTORY,
             current_stock=int(product["current_stock"]),
+            lead_time_days=int(product["lead_time_days"]),
+            safety_stock=int(product["safety_stock"]),
             average_daily_demand=None,
             demand_window_days_used=0,
             reorder_point=None,
@@ -167,6 +173,8 @@ def build_restock_recommendation(
         available=True,
         unavailable_reason=None,
         current_stock=current_stock,
+        lead_time_days=lead_time_days,
+        safety_stock=safety_stock,
         average_daily_demand=demand,
         demand_window_days_used=window_days,
         reorder_point=reorder_point,

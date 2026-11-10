@@ -519,3 +519,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-059 (with project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-036 — recommendation display page, then the Forecast page (operational-product ↔ dataset-item mapping decision needed there), dashboard updates, and phase wrap-up.
+
+### Recommendation Display Implemented (TASK-036)
+
+- Date: 2026-11-10.
+- Status: Users can now open the Recommendations page and see, per product, whether stock needs attention, how much to order, and why — advisory only.
+- Work Completed:
+  - `src/smartstock/pages/restock.py` — metrics, attention table (all supporting inputs per user-flows §11 incl. lead time and safety stock via extended dataclass), per-product explanations, not-available-yet section with plain reasons, empty/success states.
+  - Registered in `app.py` navigation (Inventory group, unique url_path).
+  - `RestockRecommendation` dataclass extended with `lead_time_days`/`safety_stock`.
+- Tests Executed: 6 new AppTest page tests + app.py startup test; full pytest suite.
+- Test Results: 367/367 passed.
+- Tasks Updated: TASK-036 → Verified.
+- Decisions Made: None new (display follows already-approved DEC-031/BR rules and the user-flow spec).
+- Blockers: None recorded.
+- Next Steps: Forecast page — requires the operational-product ↔ dataset-item mapping decision (prediction-logic §18 leftover), then dashboard metrics (TASK-037) and sales trend visualization (TASK-038), phase wrap-up.

@@ -721,7 +721,7 @@ Completion record (2026-11-10): **DEC-059 accepted with the owner** — Average 
 ### TASK-036: Implement Recommendation Display
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-035
 
 Description:
@@ -733,6 +733,8 @@ Evidence:
 - Recommendations are understandable.
 - Supporting information is displayed.
 - No automatic purchasing is triggered.
+
+Completion record (2026-11-10): new `src/smartstock/pages/restock.py`, registered in `app.py` navigation under Inventory as "Restocking Recommendations" (unique url_path `restocking-recommendations`). The page calls `restock_service.get_restock_recommendations()` only — no SQL, no business rules, rendering only (`DatabaseError` displayed, never raised). Composition: three summary metrics (needing reorder / recommendations available / without enough data), a "🛒 Consider restocking" table with every supporting input per user-flows §11 (name, SKU, current stock, ADD with 2-decimal format, lead time, safety stock, reorder point, target stock, order quantity) — supported by adding `lead_time_days`/`safety_stock` to the `RestockRecommendation` dataclass — plus one expander per attention product carrying the formula walk-through explanation from the domain layer (DEC-032/033/038/059/031 references), felt as understandable plain text. Unavailable products get a dedicated "ℹ️ Not available yet" section showing the domain's plain-language reasons (no sales history / no stock level), never hidden rows. States: no active products → info with pointer to Products & Inventory; nothing needs reorder → success banner. Advisory-only enforced everywhere (DEC-031): no purchase action, no stock mutation — verified by a test that re-reads stock after rendering. Tests: 6 new AppTest tests (empty state, table values + metrics + subheader with hand-computed pins — stock 12 after a sale of 8 from 20, ADD 8.0, reorder 42, target 98, order 86 —, success state, unavailable reason, read-only side-effect check) + an app.py startup test proving the navigation registers all five page modules; suite 367/367 passed. Metric values surface as strings in AppTest (documented quirk in test comments).
 
 ---
 
