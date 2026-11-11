@@ -49,6 +49,7 @@ def initialize_database(db_path: Path) -> None:
             # Foreign key enforcement is required by the schema document.
             connection.execute("PRAGMA foreign_keys = ON")
             connection.executescript(schema_sql)
+            _migrate_products_columns(connection)
             connection.commit()
         finally:
             connection.close()
@@ -56,6 +57,24 @@ def initialize_database(db_path: Path) -> None:
         raise DatabaseError(
             f"Could not initialize the database at {db_path}: {error}"
         ) from error
+
+
+def _migrate_products_columns(connection: sqlite3.Connection) -> None:
+    """Add columns added to ``products`` after a database was created.
+
+    ``CREATE TABLE IF NOT EXISTS`` never alters an existing table, so
+    databases created before DEC-060 lack ``dataset_item_id``. The
+    migration is additive (nullable column, no backfill needed) and
+    idempotent.
+    """
+    cursor = connection.execute("PRAGMA table_info(products)")
+    existing = {row[1] for row in cursor.fetchall()}
+    if "dataset_item_id" not in existing:
+        connection.execute(
+            "ALTER TABLE products ADD COLUMN "
+            "dataset_item_id INTEGER DEFAULT NULL "
+            "CHECK (dataset_item_id IS NULL OR dataset_item_id > 0)"
+        )
 
 
 def verify_tables(db_path: Path) -> dict:

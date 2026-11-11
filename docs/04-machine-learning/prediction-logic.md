@@ -383,4 +383,9 @@ Implemented in `src/smartstock/ml/inference.py`, tested by
 
 Remaining for the Forecast page task: the mapping between operational
 products and dataset `item` identifiers (DEC-052 kept them separate
-deliberately) — to be decided when that page is designed.
+deliberately) — resolved by DEC-060 (2026-11-10): products carry a
+nullable `dataset_item_id`; the Demand Forecast page (TASK-040)
+forecasts a selected product from its linked item's imported
+`historical_sales` series (operational sales are not mixed in v1;
+in-span gaps are zero-filled because the model's world is a
+continuous daily series).

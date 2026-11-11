@@ -270,6 +270,22 @@ def _render_edit_form() -> None:
             step=1,
             key=f"edit_safety_{product['id']}",
         )
+        # DEC-060: optional link to the imported dataset's item number,
+        # used by the Demand Forecast page.
+        dataset_item_id = st.number_input(
+            "Linked dataset item (optional, blank = none)",
+            min_value=1,
+            value=product["dataset_item_id"]
+            if product["dataset_item_id"] is not None
+            else 1,
+            step=1,
+            key=f"edit_item_{product['id']}",
+        )
+        link_item = st.checkbox(
+            "Forecast via a linked dataset item",
+            value=product["dataset_item_id"] is not None,
+            key=f"edit_link_{product['id']}",
+        )
         submitted = st.form_submit_button("Save changes", type="primary")
 
     if product["is_active"]:
@@ -320,6 +336,9 @@ def _render_edit_form() -> None:
             category=category,
             lead_time_days=int(lead_time_days),
             safety_stock=int(safety_stock),
+            dataset_item_id=(
+                int(dataset_item_id) if link_item else None
+            ),
         )
     except (ValueError, DatabaseError) as error:
         st.error(f"Changes not saved: {error}")

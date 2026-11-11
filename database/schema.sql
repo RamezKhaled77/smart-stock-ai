@@ -10,16 +10,18 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS products (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    name           TEXT    NOT NULL,
-    sku            TEXT    NOT NULL UNIQUE,
-    category       TEXT    NOT NULL DEFAULT '',
-    current_stock  INTEGER NOT NULL DEFAULT 0 CHECK (current_stock >= 0),
-    lead_time_days INTEGER NOT NULL DEFAULT 3 CHECK (lead_time_days >= 0),
-    safety_stock   INTEGER NOT NULL DEFAULT 0 CHECK (safety_stock >= 0),
-    is_active      INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
-    created_at     TEXT    NOT NULL,
-    updated_at     TEXT    NOT NULL
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT    NOT NULL,
+    sku             TEXT    NOT NULL UNIQUE,
+    category        TEXT    NOT NULL DEFAULT '',
+    current_stock   INTEGER NOT NULL DEFAULT 0 CHECK (current_stock >= 0),
+    lead_time_days  INTEGER NOT NULL DEFAULT 3 CHECK (lead_time_days >= 0),
+    safety_stock    INTEGER NOT NULL DEFAULT 0 CHECK (safety_stock >= 0),
+    dataset_item_id INTEGER DEFAULT NULL
+        CHECK (dataset_item_id IS NULL OR dataset_item_id > 0),
+    is_active       INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+    created_at      TEXT    NOT NULL,
+    updated_at      TEXT    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sales (

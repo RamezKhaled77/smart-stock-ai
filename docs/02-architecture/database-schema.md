@@ -66,6 +66,7 @@ Represents products managed by the application.
 | current_stock | INTEGER | Current available stock |
 | lead_time_days | INTEGER | Expected replenishment time |
 | safety_stock | INTEGER | Additional stock buffer |
+| dataset_item_id | INTEGER (nullable) | Linked dataset item number used by forecasting (DEC-060) |
 | is_active | INTEGER | Soft-delete flag (1 = active, 0 = deactivated) |
 | created_at | TEXT | Creation timestamp |
 | updated_at | TEXT | Last update timestamp |
@@ -78,6 +79,7 @@ Represents products managed by the application.
 - `is_active` implements the soft-delete policy (DEC-048). Removal deactivates; rows are never deleted. Counts and listings exclude inactive products (BR-026).
 - Negative stock is forbidden (DEC-034): the column carries a `CHECK (current_stock >= 0)`.
 - Stock status derives from `current_stock` against the reorder point (BR-008).
+- `dataset_item_id` links a product to the imported dataset's item number for forecasting (DEC-060, added 2026-11-10). Nullable — unset means "not forecastable yet"; the Demand Forecast page consumes the linked item's `historical_sales` series. The column is added to pre-existing databases by the guarded, idempotent migration in `initialization.py` (`ALTER TABLE` when missing).
 
 ---
 

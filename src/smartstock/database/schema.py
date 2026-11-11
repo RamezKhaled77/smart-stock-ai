@@ -31,6 +31,7 @@ EXPECTED_COLUMNS = {
         "current_stock",
         "lead_time_days",
         "safety_stock",
+        "dataset_item_id",
         "is_active",
         "created_at",
         "updated_at",

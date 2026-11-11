@@ -40,6 +40,7 @@ def create_product(
     initial_stock: int = 0,
     lead_time_days: int = 3,
     safety_stock: int = 0,
+    dataset_item_id: int | None = None,
     db_path: Path | None = None,
 ) -> dict:
     """Create a product with its initial stock in one operation.
@@ -57,6 +58,8 @@ def create_product(
         initial_stock: Nonnegative starting quantity (default 0).
         lead_time_days: Nonnegative replenishment days (default 3).
         safety_stock: Nonnegative buffer quantity (default 0).
+        dataset_item_id: Optional linked dataset item for forecasting
+            (DEC-060; default no link).
         db_path: Database to use; defaults to the configured path.
 
     Returns:
@@ -75,6 +78,7 @@ def create_product(
             current_stock=initial_stock,
             lead_time_days=lead_time_days,
             safety_stock=safety_stock,
+            dataset_item_id=dataset_item_id,
         )
 
 

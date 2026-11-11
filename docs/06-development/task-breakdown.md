@@ -788,7 +788,7 @@ Evidence:
 ### TASK-040: Implement Forecasting Interface
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-033
 
 Description:
@@ -800,6 +800,8 @@ Evidence:
 - Users can request supported forecasts.
 - Predictions are displayed correctly.
 - Errors and insufficient data are explained.
+
+Completion record (2026-11-10): **DEC-060 accepted with the owner** — products gain a nullable `dataset_item_id`; the Forecast page is product-driven and consumes the linked dataset item's imported `historical_sales` series only (operational sales not mixed in v1; in-span gaps zero-filled so the inference module sees one observation per day — DEC-058 "observed days" = calendar days of the item's span). Layers: `database/schema.sql` adds the column with a CHECK; `initialization.py` gains a guarded, idempotent `ALTER TABLE` migration for pre-DEC-060 databases (applied to the real dev DB non-destructively, rows verified intact; legacy-DB test added); `schema.py` EXPECTED_COLUMNS contract updated; `product_repository.create_product/update_product` support link/unlink via a sentinel (None = unlink, unset = unchanged; validation "positive integer or empty") with lifecycle + validation repository tests; `product_service.create_product` passes the link through; `historical_repository.get_daily_sales_for_item` (grouped per-day totals); new `services/forecast_service.py::get_forecast(product_id, horizon, db_path, model=None, metadata=None)` — link gate (`ProductNotLinkError`), no-history gate ("No suitable history exists", §13), artifact load (clear "run scripts/train_model.py" ArtifactError), zero-fill, inference call, display rounding to 3 decimals (§11), model stub hook for tests; new `pages/forecast.py` (product selectbox, 7/14/30 horizon radio, generate button → total/average/item metrics, forecast table, method caption distinguishing RF vs MA-7 fallback per DEC-058; unlinked → guidance info; no history → info; missing artifact → warning; ForecastError → info; read-only); registered in `app.py` navigation ("Forecasting" group, url_path `demand-forecast`). Tests: 9 service tests (gates, zero-fill recursion hand-math, stub model path, missing artifact, real-artifact/real-import pin: item 1 → 7 rows starting 2018-01-01, model path, 1,826 observed days), 4 page AppTest tests, 2 repository link tests, 1 migration test; suite 383/383 passed.
 
 ### TASK-041: Implement Sales Analytics Page
 

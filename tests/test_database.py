@@ -72,6 +72,46 @@ class TestInitializeDatabase:
         connection.close()
         assert count == 1
 
+    def test_legacy_database_gets_dec060_column(self, tmp_path) -> None:
+        """Additive migration: a pre-DEC-060 products table upgrades.
+
+        Simulates a database created before the mapping decision by
+        building the products table without the column, then letting
+        ``initialize_database`` apply its guarded ALTER TABLE.
+        """
+        db_path = tmp_path / "legacy.db"
+        connection = _connect(db_path)
+        connection.execute(
+            "CREATE TABLE products ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "name TEXT NOT NULL, sku TEXT NOT NULL UNIQUE,"
+            "category TEXT NOT NULL DEFAULT '',"
+            "current_stock INTEGER NOT NULL DEFAULT 0,"
+            "lead_time_days INTEGER NOT NULL DEFAULT 3,"
+            "safety_stock INTEGER NOT NULL DEFAULT 0,"
+            "is_active INTEGER NOT NULL DEFAULT 1,"
+            "created_at TEXT NOT NULL, updated_at TEXT NOT NULL)"
+        )
+        connection.execute(
+            "INSERT INTO products (name, sku, created_at, updated_at) "
+            "VALUES ('Legacy', 'SKU-LEG', '2026-01-01T00:00:00Z', "
+            "'2026-01-01T00:00:00Z')"
+        )
+        connection.commit()
+        connection.close()
+
+        initialize_database(db_path)
+        columns = verify_tables(db_path)["products"]
+        assert "dataset_item_id" in columns
+        # Existing row survives; its link is NULL until set.
+        connection = _connect(db_path)
+        row = connection.execute(
+            "SELECT name, dataset_item_id FROM products"
+        ).fetchone()
+        connection.close()
+        assert row[0] == "Legacy"
+        assert row[1] is None
+
     def test_missing_database_raises_on_verify(self, tmp_path: Path) -> None:
         with pytest.raises(DatabaseError, match="not found"):
             verify_tables(tmp_path / "never_created.db")

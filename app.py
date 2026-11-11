@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import streamlit as st
 
+from smartstock.pages.forecast import render as forecast_render
 from smartstock.pages.imports import render as imports_render
 from smartstock.pages.products import render as products_render
 from smartstock.pages.restock import render as restock_render
@@ -64,6 +65,14 @@ page = st.navigation(
                 title="Sales Management",
                 icon="🧾",
                 url_path="sales-management",
+            ),
+        ],
+        "Forecasting": [
+            st.Page(
+                forecast_render,
+                title="Demand Forecast",
+                icon="🔮",
+                url_path="demand-forecast",
             ),
         ],
         "Data": [

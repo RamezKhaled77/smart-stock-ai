@@ -19,6 +19,17 @@ def _to_dict(row: sqlite3.Row) -> dict:
     return dict(row)
 
 
+def _validate_dataset_item_id(value: int | None) -> None:
+    """Validate the DEC-060 dataset-item link (positive int or None)."""
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(
+            f"Dataset item id must be a positive integer or empty, "
+            f"got {value!r}."
+        )
+
+
 def create_product(
     connection: sqlite3.Connection,
     name: str,
@@ -27,6 +38,7 @@ def create_product(
     current_stock: int = 0,
     lead_time_days: int = 3,
     safety_stock: int = 0,
+    dataset_item_id: int | None = None,
 ) -> dict:
     """Insert a new product and return it as a dictionary.
 
@@ -42,6 +54,8 @@ def create_product(
         current_stock: Initial stock (nonnegative, default 0).
         lead_time_days: Nonnegative integer (default 3).
         safety_stock: Nonnegative integer (default 0).
+        dataset_item_id: Optional linked dataset item (DEC-060) used
+            by the forecasting component (default no link).
 
     Returns:
         The created product as a dictionary.
@@ -50,6 +64,7 @@ def create_product(
         ValueError: If a field is invalid or the SKU already exists.
         DatabaseError: If the insert fails for another database reason.
     """
+    _validate_dataset_item_id(dataset_item_id)
     if not isinstance(name, str) or not name.strip():
         raise ValueError("Product name must be a nonempty string.")
     if not isinstance(sku, str) or not sku.strip():
@@ -70,8 +85,8 @@ def create_product(
         cursor = connection.execute(
             "INSERT INTO products "
             "(name, sku, category, current_stock, lead_time_days, "
-            " safety_stock, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " safety_stock, dataset_item_id, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 name.strip(),
                 sku.strip(),
@@ -79,6 +94,7 @@ def create_product(
                 current_stock,
                 lead_time_days,
                 safety_stock,
+                dataset_item_id,
                 now,
                 now,
             ),
@@ -151,6 +167,9 @@ def list_products(
     return [_to_dict(row) for row in cursor.fetchall()]
 
 
+UNSET = object()  # sentinel: dataset_item_id provided vs. unchanged
+
+
 def update_product(
     connection: sqlite3.Connection,
     product_id: int,
@@ -159,6 +178,7 @@ def update_product(
     category: str | None = None,
     lead_time_days: int | None = None,
     safety_stock: int | None = None,
+    dataset_item_id: int | None = UNSET,  # type: ignore[assignment]
 ) -> dict | None:
     """Update editable product fields and return the updated product.
 
@@ -167,12 +187,20 @@ def update_product(
     parameter here; use the inventory repository for stock changes so
     the approved adjustment rules apply in one place.
 
+    ``dataset_item_id`` (DEC-060) uses a sentinel: pass an integer to
+    link, ``None`` to unlink, and leave unset to keep the current link.
+
     Raises:
         ValueError: If FK-unique violations (SKU) or invalid values.
         DatabaseError: For other database failures.
     """
     assignments: list = []
     parameters: list = []
+
+    if dataset_item_id is not UNSET:
+        _validate_dataset_item_id(dataset_item_id)
+        assignments.append("dataset_item_id = ?")
+        parameters.append(dataset_item_id)
 
     if name is not None:
         if not isinstance(name, str) or not name.strip():

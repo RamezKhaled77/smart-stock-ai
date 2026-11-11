@@ -109,6 +109,50 @@ class TestProductRepository:
         # category/current_stock untouched when not provided
         assert updated["current_stock"] == 10
 
+    def test_dataset_item_link_lifecycle(
+        self, db_path: Path, product_a: dict
+    ) -> None:
+        """DEC-060: create with link, link/unlink via the sentinel."""
+        with session(db_path) as conn:
+            linked = product_repository.create_product(
+                conn, name="Item B", sku="SKU-B", dataset_item_id=7
+            )
+            assert linked["dataset_item_id"] == 7
+
+            updated = product_repository.update_product(
+                conn, product_a["id"], dataset_item_id=3
+            )
+            assert updated["dataset_item_id"] == 3
+
+            # Not provided → unchanged (sentinel, not unlink).
+            untouched = product_repository.update_product(
+                conn, product_a["id"], name="Item A2"
+            )
+            assert untouched["dataset_item_id"] == 3
+
+            # Explicit None → unlink.
+            unlinked = product_repository.update_product(
+                conn, product_a["id"], dataset_item_id=None
+            )
+            assert unlinked["dataset_item_id"] is None
+
+    def test_dataset_item_validation(
+        self, db_path: Path, product_a: dict
+    ) -> None:
+        with session(db_path) as conn:
+            with pytest.raises(ValueError, match="positive integer"):
+                product_repository.create_product(
+                    conn, name="Bad", sku="SKU-BAD", dataset_item_id=0
+                )
+            with pytest.raises(ValueError, match="positive integer"):
+                product_repository.create_product(
+                    conn, name="Bad2", sku="SKU-BAD2", dataset_item_id=2.5
+                )
+            with pytest.raises(ValueError, match="positive integer"):
+                product_repository.update_product(
+                    conn, product_a["id"], dataset_item_id=-1
+                )
+
     def test_update_sku_conflict_rejected(
         self, db_path: Path, product_a: dict
     ) -> None:

@@ -343,7 +343,7 @@ Monetary analytics require reliable price information.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (TASK-040, 2026-11-10 — product-driven Demand Forecast page over the DEC-057 model; see prediction-logic §18)
 
 ### Description
 

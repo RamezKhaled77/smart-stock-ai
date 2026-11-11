@@ -238,6 +238,47 @@ def _batch_to_dict(values: tuple, batch_id: int) -> dict:
     return batch
 
 
+def get_daily_sales_for_item(
+    connection: sqlite3.Connection,
+    item: int,
+) -> dict:
+    """One dataset item's daily sold quantity (DEC-060 forecast input).
+
+    Args:
+        connection: Open database connection.
+        item: Dataset item number (positive integer).
+
+    Returns:
+        Dictionary mapping ``YYYY-MM-DD`` to the sold quantity for the
+        linked item. Zero-sales days are real observations here
+        (historical rows may store quantity 0); days absent from the
+        stored data are simply absent from this dictionary — the
+        forecast service zero-fills the calendar span.
+
+    Raises:
+        ValueError: If the item is not a positive integer.
+        DatabaseError: If the query fails.
+    """
+    if isinstance(item, bool) or not isinstance(item, int) or item <= 0:
+        raise ValueError(
+            f"Dataset item must be a positive integer, got {item!r}."
+        )
+    try:
+        cursor = connection.execute(
+            "SELECT sale_date, SUM(quantity) AS total "
+            "FROM historical_sales WHERE item = ? "
+            "GROUP BY sale_date ORDER BY sale_date",
+            (item,),
+        )
+        rows = cursor.fetchall()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not read history for item {item}: {error}",
+            cause=error,
+        ) from error
+    return {str(row["sale_date"]): int(row["total"]) for row in rows}
+
+
 def _utc_now() -> str:
     """Current UTC ISO timestamp (delegated to the shared helper)."""
     return utc_now_iso()

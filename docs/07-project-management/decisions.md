@@ -178,6 +178,18 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-060: Product ↔ Dataset-Item Forecast Mapping
+
+- Status: Accepted
+- Decision: Products gain a nullable **`dataset_item_id`** field (positive integer or NULL). The Forecast page is product-driven: the user selects an operational product; products linked to a dataset item are forecast from that item's imported `historical_sales` series; unlinked products receive a clear "no dataset item linked" message instead of a forecast.
+- Context:
+  - Closes prediction-logic §18's leftover: §3's "User Selects Product" flow requires the connection between the operational product universe (SKUs, restocking) and the historical dataset universe (items 1–50, what the model was trained on, DEC-052 kept them separate).
+  - A product field makes the link explicit, persistent, user-controlled, and reviewable in the existing product forms; SKU-pattern inference was rejected (fabricates a convention, silently mis-forecasts) and item-only forecasting was rejected (leaves the two app halves permanently disconnected).
+  - The forecast consumes **the linked item's imported history only** — operational sales are not mixed in v1: they are a different series (different time span, recorded quantities vs dataset observations) and mixing would change what the DEC-057 model was validated on. Revisit with a new decision if a combined-history forecast is ever wanted.
+  - `historical_sales.gaps` inside an item's observed span are zero-filled calendar days before prediction: the model's world is a continuous daily series, and the dataset's zero-sales days are real observations (the table allows quantity 0, unlike operational `sales`). Consequence: DEC-058 "observed days" = calendar days in the item's span, after zero-fill.
+  - Schema change is additive (nullable column), no data migration, soft-delete and all existing rules unaffected.
+- Method: Chosen with the project owner from documented options (2026-11-10, Forecast page task).
+
 ### DEC-059: Average Daily Demand Window Anchoring
 
 - Status: Accepted
@@ -566,6 +578,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-057 | Final model | Random Forest (seed 2026); RULES: lowest validation MAE 6.033, LR ≈7.4% worse → 5% band not triggered |
 | DEC-058 | Short-history policy | ≥31 days → RF; 1–30 days → MA-7 recursive fallback; 0 days → explicit error |
 | DEC-059 | Demand window anchoring | Calendar window ends at last sale; zeros filled; denominator min(30, span) |
+| DEC-060 | Product ↔ dataset-item mapping | Nullable products.dataset_item_id; forecast from the linked item's imported history only |
 
 ---
 

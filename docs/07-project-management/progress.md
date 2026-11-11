@@ -534,3 +534,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new (display follows already-approved DEC-031/BR rules and the user-flow spec).
 - Blockers: None recorded.
 - Next Steps: Forecast page — requires the operational-product ↔ dataset-item mapping decision (prediction-logic §18 leftover), then dashboard metrics (TASK-037) and sales trend visualization (TASK-038), phase wrap-up.
+
+### Forecasting Interface Implemented with DEC-060 (TASK-040)
+
+- Date: 2026-11-10.
+- Status: Users can select a product, choose a 7/14/30-day horizon, and see the demand forecast with the method explained; unlinked and no-history states give clear guidance instead of crashes.
+- Work Completed:
+  - DEC-060 accepted with the owner: nullable `products.dataset_item_id`; forecasts consume the linked item's imported history only; gaps inside the span zero-filled.
+  - Schema change + guarded idempotent migration (applied to the real dev DB, rows verified intact); repository link/unlink via sentinel with validation.
+  - `forecast_service.get_forecast` — link gate, no-history gate, artifact loading, zero-fill, inference, display rounding; page stub hook for tests.
+  - `pages/forecast.py` (selectbox, horizon radio, metrics, forecast table, method caption) + navigation registration.
+- Tests Executed: 9 service tests, 4 page AppTest tests, 2 repository link tests, 1 migration test; full pytest suite.
+- Test Results: 383/383 passed.
+- Tasks Updated: TASK-040 → Verified.
+- Decisions Made: DEC-060 (with project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-037 dashboard metrics, TASK-038 sales trend visualization, TASK-039 low-stock overview; phase wrap-up afterwards.
