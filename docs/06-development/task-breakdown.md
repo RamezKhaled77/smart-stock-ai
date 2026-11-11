@@ -920,7 +920,7 @@ Completion record (2026-11-11): formal verification run — **430 tests collecte
 ### TASK-047: Perform Manual Application Testing
 
 - Priority: P0
-- Status: Not Started
+- Status: In Progress
 - Dependencies: TASK-044
 
 Description:
@@ -932,6 +932,8 @@ Evidence:
 - Core workflows are manually verified.
 - Screens or notes are recorded where useful.
 - Discovered issues are tracked.
+
+Completion record (2026-11-11, **partially complete — human pass pending**): machine-verified part done — the real `app.py` was launched with `streamlit run app.py --server.headless` and every registered route (`/`, `dashboard`, `products-and-inventory`, `restocking-recommendations`, `sales-management`, `sales-analytics`, `demand-forecast`, `data-import`) answered HTTP 200 with a clean boot and clean shutdown; no runtime errors in the server log. The genuinely human part — clicking through the interface, judging layout and wording — cannot be verified by this agent, so a complete step-by-step checklist was written to `docs/06-development/manual-test-plan.md` (eight sections mirroring the seven pages plus navigation; every approved decision's user-visible behavior is a checklist item; a "Discovered issues" section tracks findings). Remaining: the owner walks the checklist; the task record updates to Verified when done.
 
 ### TASK-048: Review Documentation Consistency
 

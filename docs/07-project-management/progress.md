@@ -652,3 +652,17 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new.
 - Blockers: None recorded.
 - Next Steps: TASK-047 manual application testing, TASK-048 documentation consistency review, TASK-049 export reports, phase wrap-up.
+
+### Manual Testing Prepared, Server Smoke Verified (TASK-047 — partially complete)
+
+- Date: 2026-11-11.
+- Status: Machine-verified server smoke done (all 8 routes HTTP 200, clean boot/shutdown); the human click-through pass is prepared but pending — this part genuinely needs the owner's eyes.
+- Work Completed:
+  - Real `app.py` launched with Streamlit; every registered route responded correctly; server log clean.
+  - `docs/06-development/manual-test-plan.md` written: an eight-section checklist mirroring all seven pages plus navigation, with every approved decision's user-visible behavior as an item and a "Discovered issues" tracker.
+- Tests Executed: server smoke (HTTP route checks); automated suite untouched (430 passing).
+- Test Results: all routes 200; suite 430/430.
+- Tasks Updated: TASK-047 → In Progress (human pass pending).
+- Decisions Made: None new.
+- Blockers: The manual pass itself requires the project owner (agent cannot judge UI feel/wording); everything else proceeds.
+- Next Steps: TASK-048 documentation consistency review and TASK-049 export reports (independent of the manual pass); the checklist can be walked whenever the owner has time.
