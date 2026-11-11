@@ -514,7 +514,7 @@ Actual and predicted values must refer to the same product and time period.
 
 **Priority:** Advanced
 
-**Status:** Proposed
+**Status:** Accepted (TASK-043, 2026-11-11 — per-product units, daily average, first/last sale, half-vs-half trend; stock-warning frequency not tracked in v1)
 
 Provides additional product-level insights.
 

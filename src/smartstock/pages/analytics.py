@@ -105,6 +105,7 @@ def _render_analytics(
     _render_daily_trend(data)
     _render_weekday_pattern(data)
     _render_per_product(data)
+    _render_performance(start, end, product_id)
     _render_monthly(data)
 
 
@@ -167,6 +168,53 @@ def _render_per_product(data: dict) -> None:
         ]
     )
     st.dataframe(table, hide_index=True, width="stretch")
+
+
+def _render_performance(
+    start: str, end: str, product_id: int | None
+) -> None:
+    """TASK-043: per-product performance insights (F-011)."""
+    st.subheader("🔎 Product performance")
+    try:
+        rows = analytics_service.get_product_performance(
+            start, end, product_id=product_id
+        )
+    except (ValueError, DatabaseError) as error:
+        st.error(f"Could not load product performance: {error}")
+        return
+    if not rows:
+        st.info("No sales recorded in this range.")
+        return
+    table = pd.DataFrame(
+        [
+            {
+                "Name": row["name"],
+                "SKU": row["sku"],
+                "Units sold": row["units_sold"],
+                "Avg units/day": row["avg_units_per_day"],
+                "First sale": row["first_sale"],
+                "Last sale": row["last_sale"],
+                "Trend": row["trend"],
+            }
+            for row in rows
+        ]
+    )
+    st.dataframe(
+        table,
+        hide_index=True,
+        width="stretch",
+        column_config={
+            "Avg units/day": st.column_config.NumberColumn(
+                "Avg units/day", format="%.3f",
+            ),
+        },
+    )
+    st.caption(
+        "Trend compares the two calendar halves of the range (zeros "
+        "count): Rising/Falling when the second half's daily average "
+        "differs by ≥ 15%. Stock-warning frequency is not tracked in "
+        "v1 — warnings are advisory snapshots, not logged events."
+    )
 
 
 def _render_monthly(data: dict) -> None:

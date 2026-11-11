@@ -19,6 +19,13 @@ WEEKDAY_NAMES = (
     "Saturday", "Sunday",
 )
 
+# F-011 trend direction: compare the average daily units of the two
+# calendar halves of the selected range. A change within ±15% counts
+# as steady — anything smaller is noise for a small business's daily
+# quantities.
+RISING_THRESHOLD = 1.15
+FALLING_THRESHOLD = 0.85
+
 
 def get_sales_analytics(
     start_date: str,
@@ -118,6 +125,116 @@ def _validate_iso(label: str, value: str) -> None:
         raise ValueError(
             f"{label} must be a 'YYYY-MM-DD' string, got {value!r}."
         ) from error
+
+
+def get_product_performance(
+    start_date: str,
+    end_date: str,
+    product_id: int | None = None,
+    db_path: Path | None = None,
+) -> list:
+    """Per-product performance rows for a range (F-011, TASK-043).
+
+    Args:
+        start_date: Inclusive lower bound (``YYYY-MM-DD``).
+        end_date: Inclusive upper bound (``YYYY-MM-DD``).
+        product_id: Optional filter to one product.
+        db_path: Database to use; defaults to the configured path.
+
+    Returns:
+        List of dicts (best seller first): ``product_id``, ``name``,
+        ``sku``, ``units_sold``, ``sale_count``, ``avg_units_per_day``
+        (calendar days of the range, zeros included), ``first_sale``,
+        ``last_sale`` (dates with sales in the range), and ``trend``
+        (direction label comparing the two calendar halves — see
+        ``_trend_direction``). Only products that sold in the range
+        appear; stock-warning frequency is not tracked in v1.
+
+    Raises:
+        ValueError: If the dates are invalid or the range is inverted.
+        DatabaseError: If a read fails.
+    """
+    for label, value in (("start_date", start_date), ("end_date", end_date)):
+        _validate_iso(label, value)
+    if start_date > end_date:
+        raise ValueError(
+            "Start date must not be after the end date "
+            f"({start_date} > {end_date})."
+        )
+
+    start = dt.date.fromisoformat(start_date)
+    end = dt.date.fromisoformat(end_date)
+    days_in_range = (end - start).days + 1
+
+    summary = sales_service.get_product_sales_summary(
+        start_date, end_date, db_path=db_path
+    )
+    daily_by_product = sales_service.get_daily_sales_by_product(
+        start_date, end_date, db_path=db_path
+    )
+
+    rows = []
+    for entry in summary:
+        if product_id is not None and entry["product_id"] != product_id:
+            continue
+        daily = daily_by_product.get(entry["product_id"], {})
+        sale_days = sorted(daily)
+        rows.append(
+            {
+                **entry,
+                "avg_units_per_day": round(
+                    entry["units_sold"] / days_in_range, 3
+                ),
+                "first_sale": sale_days[0] if sale_days else None,
+                "last_sale": sale_days[-1] if sale_days else None,
+                "trend": _trend_direction(daily, start, days_in_range),
+            }
+        )
+    return rows
+
+
+def _trend_direction(
+    daily: dict[str, int], start: dt.date, days_in_range: int
+) -> str:
+    """Demand direction over the range, halves compared.
+
+    The range is split into two calendar halves (an odd extra day
+    joins the second half). Zeros count — a quiet first half with
+    sales only in the second half reads as rising demand, mirroring
+    the DEC-059 "no sale = zero demand" calendar view.
+
+    Returns ``"Rising"``, ``"Falling"``, ``"Steady"``, or
+    ``"No sales in range"``. A single-day range cannot be split, so
+    it reports ``"Steady"`` (nothing to compare).
+    """
+    if days_in_range < 2:
+        return "Steady"
+    first_days = days_in_range // 2
+    first_end = start + dt.timedelta(days=first_days)  # exclusive bound
+    first_units = second_units = 0
+    for day, units in daily.items():
+        day_date = dt.date.fromisoformat(day)
+        if day_date < first_end:
+            first_units += units
+        else:
+            second_units += units
+
+    first_avg = first_units / first_days if first_days else 0.0
+    second_days = days_in_range - first_days
+    second_avg = second_units / second_days if second_days else 0.0
+
+    if first_avg == 0.0 and second_avg == 0.0:
+        return "No sales in range"
+    if first_avg == 0.0:
+        return "Rising (new)"
+    if second_avg == 0.0:
+        return "Falling (stopped)"
+    ratio = second_avg / first_avg
+    if ratio >= RISING_THRESHOLD:
+        return "Rising"
+    if ratio <= FALLING_THRESHOLD:
+        return "Falling"
+    return "Steady"
 
 
 def _weekday_pattern(

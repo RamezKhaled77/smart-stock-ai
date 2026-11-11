@@ -846,7 +846,7 @@ Completion record (2026-11-11): **DEC-062 accepted with the owner** — the comp
 ### TASK-043: Implement Product Performance Analysis
 
 - Priority: P2
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-026, TASK-041
 
 Description:
@@ -857,6 +857,8 @@ Evidence:
 
 - Metrics are clearly defined.
 - Results are based on available data.
+
+Completion record (2026-11-11): new `analytics_service.get_product_performance(start, end, product_id, db_path)` with clearly defined, documented metrics per F-011: units sold, sale count, average units/day over the range's calendar days (zeros included, DEC-059 view), first/last sale dates in the range, and a **trend direction** comparing the two calendar halves of the range (odd extra day joins the second half; zeros count — quiet first half with second-half sales = "Rising (new)", sales only in the first half = "Falling (stopped)"; ratio ≥ 1.15 → Rising, ≤ 0.85 → Falling, else Steady; single-day range → Steady). Sales layer gained the `sales_service.get_daily_sales_by_product` wrapper. Page: "🔎 Product performance" section on the Sales Analytics page (respects the product filter), with an honest caption that stock-warning frequency is **not tracked in v1** — warnings are advisory snapshots, not logged events, so that F-011 indicator has no valid data source yet (the "interpretation must be based on valid data" requirement applied honestly). Highest/lowest-selling products are already covered by the ranking table above it. Tests: 6 new service tests (row arithmetic hand-computed: 35 units / 59 days, Rising 5× ratio, Falling 0.16 ratio, Steady 1.0, stopped/single-day cases, filter and absent-product behavior) + page test extended to the new table (trend labels, first/last sale dates). Suite 424/424.
 
 ---
 

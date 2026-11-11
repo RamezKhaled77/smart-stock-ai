@@ -596,3 +596,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-062 (with project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-043 product performance analysis (implementable autonomously), then TASK-044…049 integration/verification tasks and phase wrap-up.
+
+### Product Performance Analysis Implemented (TASK-043)
+
+- Date: 2026-11-11.
+- Status: The Sales Analytics page now shows per-product performance — units, average per day, first/last sale dates, and a documented half-vs-half demand trend.
+- Work Completed:
+  - `analytics_service.get_product_performance` with clearly defined metrics: calendar-day averages (zeros included), first/last sale dates, trend direction (two calendar halves; ±15% thresholds; "Rising (new)"/"Falling (stopped)"/"Steady" edge labels; single-day range → Steady).
+  - `sales_service.get_daily_sales_by_product` wrapper; "Product performance" section on the analytics page honoring the product filter.
+  - Stock-warning frequency indicator honestly marked "not tracked in v1" (warnings are advisory snapshots, not logged events — F-011's "valid data" requirement).
+- Tests Executed: 6 new service tests + extended page test; full pytest suite.
+- Test Results: 424/424 passed.
+- Tasks Updated: TASK-043 → Verified.
+- Decisions Made: None new (trend definition documented on the page; threshold ±15% chosen as a small-business-appropriate noise floor, recorded in the task record).
+- Blockers: None recorded.
+- Next Steps: TASK-044 integrate pages/services, TASK-045 error handling, TASK-046 automated test suite run, TASK-047 manual testing, TASK-048 documentation consistency review, TASK-049 export reports; then phase wrap-up.

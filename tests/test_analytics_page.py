@@ -90,7 +90,17 @@ class TestAnalyticsPage:
         ranking = tables[0].value
         assert ranking["SKU"].tolist() == ["SKU-A", "SKU-B"]
         assert ranking["Units sold"].tolist() == [35, 3]
+        # Performance table (TASK-043) with trend directions.
+        performance = tables[1].value
+        assert performance["SKU"].tolist() == ["SKU-A", "SKU-B"]
+        assert performance["Trend"].tolist() == [
+            "Falling", "Falling (stopped)",
+        ]
+        # Item A: first sale Jan 5, last sale Feb 1.
+        a_row = performance[performance["SKU"] == "SKU-A"].iloc[0]
+        assert a_row["First sale"] == "2026-01-05"
+        assert a_row["Last sale"] == "2026-02-01"
         # Monthly totals table present with split months.
-        monthly = tables[1].value
+        monthly = tables[2].value
         assert monthly["Month"].tolist() == ["2026-01", "2026-02"]
         assert monthly["Units sold"].tolist() == [33, 5]

@@ -241,3 +241,20 @@ def get_product_sales_summary(
         return sales_repository.get_product_sales_summary(
             connection, start_date, end_date
         )
+
+
+def get_daily_sales_by_product(
+    start_date: str,
+    end_date: str,
+    db_path: Path | None = None,
+) -> dict:
+    """Per-product per-day totals in an inclusive window.
+
+    Returns:
+        Dictionary mapping each product id that sold in the window to
+        its ``{date: units}`` totals (days without sales absent).
+    """
+    with _run(db_path) as connection:
+        return sales_repository.get_daily_sales_by_product(
+            connection, start_date, end_date
+        )
