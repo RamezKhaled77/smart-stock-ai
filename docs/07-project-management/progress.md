@@ -611,3 +611,17 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new (trend definition documented on the page; threshold ±15% chosen as a small-business-appropriate noise floor, recorded in the task record).
 - Blockers: None recorded.
 - Next Steps: TASK-044 integrate pages/services, TASK-045 error handling, TASK-046 automated test suite run, TASK-047 manual testing, TASK-048 documentation consistency review, TASK-049 export reports; then phase wrap-up.
+
+### End-to-End Integration Tests Added (TASK-044)
+
+- Date: 2026-11-11.
+- Status: Core workflows proven end to end — real `app.py` startup plus two full business flows through the service layers on one database.
+- Work Completed:
+  - `tests/integration/test_end_to_end.py`: app startup (all seven page modules import, navigation registers, Dashboard default page runs); product-to-forecast workflow (create → sell → stock decrement → dashboard/analytics/performance → restock advice → CSV import → linked-item forecast → evaluation display) and a reorder-breach workflow verified against hand-computed reorder points and the DEC-038 target-stock formula.
+  - Confirmed every page↔service pairing is already exercised by its page's AppTest tests; no integration gaps found — no production code changes needed.
+- Tests Executed: 3 integration tests; full pytest suite.
+- Test Results: 427/427 passed.
+- Tasks Updated: TASK-044 → Verified.
+- Decisions Made: None new.
+- Blockers: None recorded.
+- Next Steps: TASK-045 error-handling review across pages, then TASK-046 (suite run), TASK-047 (manual testing), TASK-048 (docs consistency), TASK-049 (export reports).

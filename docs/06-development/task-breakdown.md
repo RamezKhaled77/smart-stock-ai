@@ -867,7 +867,7 @@ Completion record (2026-11-11): new `analytics_service.get_product_performance(s
 ### TASK-044: Integrate Application Pages and Services
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: Core UI and service tasks
 
 Description:
@@ -878,6 +878,8 @@ Evidence:
 
 - Core workflows work end to end.
 - No major integration errors remain.
+
+Completion record (2026-11-11): new `tests/integration/test_end_to_end.py` (the placeholder directory's first occupant) proves integration at two levels. (1) Real `app.py` startup via AppTest: all seven page modules import at module level, the `st.navigation` structure registers, and the default Dashboard page runs without exception (AppTest 1.66 does not expose the nav switcher as sidebar widgets, so the default-page assertion documents that limitation). (2) Two business workflows walked through the service layers on one temporary database — product → sales → inventory decrement → dashboard metrics → analytics totals → performance trend → restocking advice (reorder point + DEC-038 target-stock ROQ hand-computed) → CSV import → linked-item forecast (MA-7 path, 28.0 units over 7 days) → stored evaluation summary; plus a reorder-breach flow (span-1 demand → reorder point 24 breach, ROQ 78) appearing in both the restock service and the dashboard low-stock overview. Every page↔service pairing was already covered by its page's AppTest tests; this task adds the cross-layer connection proof. Suite 427/427.
 
 ### TASK-045: Implement Application Error Handling
 
