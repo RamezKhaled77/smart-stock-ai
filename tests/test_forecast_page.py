@@ -1,4 +1,4 @@
-"""Tests for the Demand Forecast page (DEC-060).
+"""Tests for the Demand Forecast page (DEC-060, TASK-042).
 
 Streamlit AppTest runs the real page against a temporary database
 injected by patching ``config.DATABASE_PATH`` (services resolve the
@@ -11,8 +11,9 @@ import pytest
 
 from smartstock.database.connection import session
 from smartstock.database.initialization import initialize_database
+from smartstock.ml import model_artifacts
 from smartstock.repositories import historical_repository
-from smartstock.services import product_service
+from smartstock.services import evaluation_service, product_service
 
 
 @pytest.fixture
@@ -22,7 +23,26 @@ def app_db(tmp_path: Path, monkeypatch) -> Path:
     db_path = tmp_path / "app_test.db"
     initialize_database(db_path)
     monkeypatch.setattr(config, "DATABASE_PATH", db_path)
+    # Hermetic evaluation section: point it at an empty artifact dir;
+    # individual tests overwrite it with controlled metadata.
+    monkeypatch.setattr(
+        evaluation_service, "ARTIFACTS_DIR", tmp_path / "artifacts"
+    )
     return db_path
+
+
+def _write_metadata(artifacts_dir: Path, evaluation: dict) -> None:
+    metadata = model_artifacts.build_metadata(
+        model_name="random_forest",
+        model_parameters={"n_estimators": 200},
+        dataset_reference="test dataset",
+        training_row_count=1,
+        evaluation_metrics=evaluation,
+    )
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+    (artifacts_dir / model_artifacts.METADATA_FILE).write_text(
+        __import__("json").dumps(metadata)
+    )
 
 
 def _run_page() -> object:
@@ -123,3 +143,67 @@ class TestForecastPage:
         assert not app_test.exception
         texts = [i.value for i in app_test.info]
         assert any("No suitable history exists" in text for text in texts)
+
+
+class TestEvaluationSection:
+    """TASK-042: stored training-time metrics, never new predictions."""
+
+    def test_stored_metrics_displayed(self, app_db, tmp_path) -> None:
+        _write_metadata(
+            tmp_path / "artifacts",
+            {
+                "validation_window": {
+                    "start": "2016-01-01",
+                    "end": "2016-12-31",
+                    "mae": 6.033,
+                    "rmse": 7.785,
+                    "predictions": 18300,
+                },
+                "test_window": {
+                    "start": "2017-01-01",
+                    "end": "2017-12-31",
+                    "mae": 6.088,
+                    "rmse": 7.91,
+                    "predictions": 18250,
+                },
+                "baselines_for_reference": {
+                    "naive_validation": 10.27,
+                    "moving_average_7_validation": 8.077,
+                },
+            },
+        )
+        app_test = _run_page()
+        assert not app_test.exception
+        texts = [c.value for c in app_test.caption]
+        assert any(
+            "no predictions are generated" in text.lower()
+            for text in texts
+        )
+        assert any("baselines" in text.lower() for text in texts)
+        metrics = {m.label: m.value for m in app_test.metric}
+        assert any(label.startswith("Validation window") for label in metrics)
+        assert any(
+            label.startswith("Test window") and "(2017" in label
+            for label in metrics
+        )
+        assert metrics[
+            [label for label in metrics if label.startswith("Test window")][0]
+        ] == "MAE 6.088"
+
+    def test_missing_artifacts_show_guidance_notice(
+        self, app_db, tmp_path
+    ) -> None:
+        # app_db points the evaluation section at an empty dir.
+        app_test = _run_page()
+        assert not app_test.exception
+        texts = [i.value for i in app_test.info]
+        assert any(
+            "train_model.py" in text for text in texts
+        )
+
+    def test_section_renders_without_products(self, app_db) -> None:
+        # Empty inventory still shows the accuracy section.
+        app_test = _run_page()
+        assert not app_test.exception
+        subheaders = [s.value for s in app_test.subheader]
+        assert any("accurate" in text for text in subheaders)

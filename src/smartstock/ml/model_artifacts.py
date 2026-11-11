@@ -153,6 +153,37 @@ def save_model_artifact(
     return model_path, metadata_path
 
 
+def load_model_metadata(
+    artifacts_dir: Path = DEFAULT_ARTIFACTS_DIR,
+) -> dict:
+    """Load and validate only the model metadata (no model file).
+
+    The evaluation display (TASK-042) reads the stored training-time
+    metrics from metadata alone — loading the full model would be
+    wasted work for a read-only summary.
+
+    Raises:
+        ArtifactError: If the metadata file is missing, unreadable,
+            or fails the contract validation.
+    """
+    artifacts_dir = Path(artifacts_dir)
+    metadata_path = artifacts_dir / METADATA_FILE
+    if not metadata_path.is_file():
+        raise ArtifactError(
+            "Model metadata not found. Run "
+            "``scripts/train_model.py`` to create one first (the "
+            "artifact files are git-ignored runtime data)."
+        )
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ArtifactError(
+            f"Metadata file {metadata_path} is unreadable: {error}"
+        ) from error
+    _validate_metadata(metadata)
+    return metadata
+
+
 def load_model_artifact(
     artifacts_dir: Path = DEFAULT_ARTIFACTS_DIR,
 ) -> tuple[object, dict]:
@@ -206,4 +237,8 @@ def _validate_metadata(metadata: dict) -> None:
         raise ArtifactError(
             "Metadata feature_names do not match the enforced training "
             f"feature set ({FEATURE_COLUMNS})."
+        )
+    if not isinstance(metadata["evaluation_metrics"], dict):
+        raise ArtifactError(
+            "Metadata evaluation_metrics must be a JSON object."
         )

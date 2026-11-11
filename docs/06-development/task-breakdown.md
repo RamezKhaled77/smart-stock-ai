@@ -829,7 +829,7 @@ Completion record (2026-11-10/11): new `pages/analytics.py` registered under Sal
 ### TASK-042: Implement Actual vs Predicted Visualization
 
 - Priority: P2
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-031, TASK-040
 
 Description:
@@ -840,6 +840,8 @@ Evidence:
 
 - Actual and predicted values are aligned correctly.
 - The comparison does not mix training and evaluation results incorrectly.
+
+Completion record (2026-11-11): **DEC-062 accepted with the owner** — the comparison is the stored, training-time evaluation metrics only (no new predictions; DEC-056's one-touch test window stays intact). Implementation: `model_artifacts.load_model_metadata` (metadata-only loader, contract-validated, now also type-checking `evaluation_metrics`); new `services/evaluation_service.py::get_evaluation_summary` formatting the stored windows (validation first, then the labeled test window) and baselines; new "📐 How accurate is the model?" section on `pages/forecast.py` (window MAE metrics with RMSE/prediction-count help text, baseline-context caption, model/version/training-date caption, missing-artifact guidance info; renders even with no products). The task's evidence is met by construction: the displayed numbers come from the recorded evaluation runs (validation 2016 / test 2017) and no training-window data is presented as evaluation — the DEC-056 labeling makes the window provenance explicit. Tests: 6 service tests (stored numbers surfaced faithfully, optional sections omitted, missing/unreadable/contract-invalid artifacts, real-artifact pin: validation MAE 6.033 < test MAE 6.088 < baselines 10.27/8.077 per DEC-027) + 3 page AppTest tests (stored metrics displayed incl. "MAE 6.088" and DEC-056 window labeling, missing-artifact notice, section renders without products). Suite 418/418.
 
 ### TASK-043: Implement Product Performance Analysis
 

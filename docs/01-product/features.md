@@ -493,7 +493,7 @@ These responsibilities must remain separate.
 
 **Priority:** Advanced
 
-**Status:** Proposed
+**Status:** Accepted (TASK-042, 2026-11-11 — DEC-062: stored evaluation metrics display, no new predictions)
 
 Compare previous forecasts with actual observed sales.
 

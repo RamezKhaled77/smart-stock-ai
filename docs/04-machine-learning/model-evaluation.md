@@ -159,6 +159,15 @@ The chart must use real evaluation outputs.
 
 Illustrative values must never be presented as actual model performance.
 
+**Decision (DEC-062, 2026-11-11):** the v1 implementation (TASK-042) shows the
+stored training-time evaluation metrics — window MAE/RMSE for validation (2016)
+and the one-time test window (2017), plus baseline context — in a dedicated
+"How accurate is the model?" section on the Demand Forecast page. No per-day
+actual-vs-predicted chart is produced at display time: new per-day predictions
+would either touch the DEC-056 test window a second time or run the model on
+non-era data. The chart form is deferred until a new, documented evaluation
+scheme justifies it.
+
 ## 8. Residual Analysis
 
 A residual is the difference between actual and predicted demand.

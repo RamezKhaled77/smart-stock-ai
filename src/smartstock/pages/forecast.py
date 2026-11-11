@@ -13,7 +13,11 @@ from smartstock.database.connection import DatabaseError
 from smartstock.ml import model_artifacts
 from smartstock.ml.inference import DEFAULT_HORIZON_DAYS, SUPPORTED_HORIZONS
 from smartstock.pages.ui import show_flash
-from smartstock.services import forecast_service, product_service
+from smartstock.services import (
+    evaluation_service,
+    forecast_service,
+    product_service,
+)
 
 HORIZON_LABELS = {
     7: "Next 7 days",
@@ -47,6 +51,7 @@ def render() -> None:
             "No active products yet. Add products on the Products & "
             "Inventory page first."
         )
+        _render_evaluation()
         return
 
     options = {
@@ -70,6 +75,62 @@ def render() -> None:
 
     if st.button("Generate forecast", key="forecast_generate"):
         _render_forecast(product["id"], horizon)
+
+    _render_evaluation()
+
+
+def _render_evaluation() -> None:
+    """TASK-042: stored, training-time evaluation metrics.
+
+    Per the recorded decision, this displays the already-computed
+    window metrics only — no new predictions, keeping the DEC-056
+    one-touch test-window discipline intact. The numbers are the
+    measured values from model selection, never illustrative ones.
+    """
+    st.subheader("📐 How accurate is the model?")
+    try:
+        summary = evaluation_service.get_evaluation_summary()
+    except model_artifacts.ArtifactError as error:
+        st.info(
+            "Evaluation metrics become available after the model is "
+            "trained — run ``scripts/train_model.py`` first."
+        )
+        st.caption(str(error))
+        return
+
+    st.caption(
+        "Measured during model selection on held-out evaluation data "
+        "(MAE/RMSE in units per product-day — lower is better). No "
+        "predictions are generated here, so the one-time 2017 test "
+        "window stays untouched (DEC-056)."
+    )
+    windows = summary["windows"]
+    if windows:
+        columns = st.columns(len(windows))
+        for index, window in enumerate(windows):
+            columns[index].metric(
+                window["label"],
+                f"MAE {window['mae']}",
+                help=(
+                    f"RMSE {window['rmse']} over "
+                    f"{window['predictions']:,} product-days."
+                ),
+            )
+    if summary["baselines"]:
+        st.caption(
+            "Context — simple baselines on the same validation data: "
+            + "; ".join(
+                f"{row['label']} {row['mae']}"
+                for row in summary["baselines"]
+            )
+            + ". The model must beat these to be selected (DEC-027) — "
+            "and it did."
+        )
+    st.caption(
+        f"Model: {summary['model_name']} v{summary['model_version']}, "
+        f"trained {summary['trained_at']}. Forecasts are estimates — "
+        "actual demand can differ (prediction-logic §11)."
+    )
 
 
 def _render_link_status(product: dict) -> None:

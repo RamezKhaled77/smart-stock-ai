@@ -178,6 +178,14 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-062: Actual-vs-Predicted Display Uses Stored Evaluation Metrics Only
+
+- Status: Accepted
+- Decision: TASK-042 displays the already-computed training-time evaluation metrics (validation 2016 and test 2017 MAE/RMSE, baselines for reference) in a "How accurate is the model?" section on the Demand Forecast page. No new predictions are generated at display time.
+- Context: model-evaluation.md §7 asks for an actual-vs-predicted chart over time. Producing per-day predictions would either reuse the DEC-056 test window a second time (violating the one-touch discipline) or run the model on non-era data (recent imported history behaves differently from the 2013–2017 training era, so results would not be comparable evidence). The stored window-level metrics are the measured, decision-relevant numbers.
+- Consequences: no per-day actual-vs-predicted chart in v1; §7's visualization goal is met in aggregate form (window metrics + baseline context). If per-day comparison is ever added, it must use a new, documented evaluation scheme (e.g. a walk-forward backtest on non-era data), never a second pass over 2017.
+- Method: Chosen with the project owner from documented options (2026-11-11, TASK-042): stored-metrics display (chosen) vs. walk-forward on recent history vs. both.
+
 ### DEC-061: Dashboard Metric Set
 
 - Status: Accepted
@@ -587,6 +595,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-059 | Demand window anchoring | Calendar window ends at last sale; zeros filled; denominator min(30, span) |
 | DEC-060 | Product ↔ dataset-item mapping | Nullable products.dataset_item_id; forecast from the linked item's imported history only |
 | DEC-061 | Dashboard metrics | Six groups: products, stock, needing-reorder, 7-day sales, top-3 sellers (30 d), forecast readiness |
+| DEC-062 | Actual-vs-predicted display | Stored training-time evaluation metrics only; no new predictions, test window one-touch |
 
 ---
 

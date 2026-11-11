@@ -580,3 +580,19 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new (analytics scope follows F-006's documented v1 limits).
 - Blockers: None recorded.
 - Next Steps: TASK-042 actual-vs-predicted visualization (approach checkpoint with the owner: DEC-056's one-time test window constrains new per-day 2017 predictions), TASK-043 product performance, then TASK-044…049 integration/verification and phase wrap-up.
+
+### Model Evaluation Display Implemented (TASK-042)
+
+- Date: 2026-11-11.
+- Status: The Demand Forecast page now answers "how accurate is the model?" with the measured training-time evaluation metrics — no new predictions generated, so the DEC-056 one-touch test window stays intact.
+- Work Completed:
+  - DEC-062 accepted with the owner: stored-metrics display over walk-forward alternatives; model-evaluation.md §7 updated to document the deviation from the per-day chart goal.
+  - Metadata-only artifact loader (`model_artifacts.load_model_metadata`, contract-validated; `evaluation_metrics` type check added).
+  - `evaluation_service.get_evaluation_summary` (windows: validation 2016, test 2017 labeled "evaluated once — DEC-056"; baselines for reference).
+  - "How accurate is the model?" section on the Forecast page: MAE metrics with RMSE/prediction-count help, baseline context (model beat both, DEC-027), model/version/date caption, missing-artifact guidance; renders even without products.
+- Tests Executed: 6 service tests + 3 page AppTest tests; full pytest suite.
+- Test Results: 418/418 passed.
+- Tasks Updated: TASK-042 → Verified.
+- Decisions Made: DEC-062 (with project owner).
+- Blockers: None recorded.
+- Next Steps: TASK-043 product performance analysis (implementable autonomously), then TASK-044…049 integration/verification tasks and phase wrap-up.
