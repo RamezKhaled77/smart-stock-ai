@@ -204,6 +204,26 @@ class TestRecordSaleForm:
 class TestSalesHistory:
     """TASK-021: history display and filters."""
 
+    def test_database_failure_shows_friendly_error(
+        self, app_db: Path, monkeypatch
+    ) -> None:
+        # TASK-045: a read failure degrades to a message, not a crash.
+        from smartstock.database.connection import DatabaseError
+
+        def broken(**kwargs):
+            raise DatabaseError("disk unavailable")
+
+        monkeypatch.setattr(sales_service, "list_sales", broken)
+        product_service.create_product(
+            name="Coffee", sku="SKU-C", db_path=app_db
+        )
+        app_test = _run_page()
+        assert app_test.exception == []
+        assert any(
+            "Could not load sales history" in e.value
+            for e in app_test.error
+        )
+
     @pytest.fixture
     def two_products_with_sales(self, app_db: Path, product) -> dict:
         other = product_service.create_product(

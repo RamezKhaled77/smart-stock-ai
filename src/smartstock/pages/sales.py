@@ -53,7 +53,11 @@ def render() -> None:
 # ---------------------------------------------------------------------------
 
 def _render_sale_form() -> None:
-    products = product_service.list_products()  # active only (DEC-050)
+    try:
+        products = product_service.list_products()  # active only (DEC-050)
+    except DatabaseError as error:
+        st.error(f"Could not load products: {error}")
+        return
     if not products:
         st.info(
             "No products yet — a sale needs a product. Add one under "
@@ -140,7 +144,12 @@ def _find_by_sku(products: list, sku: str) -> dict:
 def _render_sales_history() -> None:
     # Products of any state: deactivated products keep their records
     # visible (DEC-048).
-    products = product_service.list_products(active_only=False)
+    try:
+        products = product_service.list_products(active_only=False)
+        sales = None  # populated below after validation
+    except DatabaseError as error:
+        st.error(f"Could not load sales history: {error}")
+        return
     if not products:
         st.info("No products yet — sales history will appear here.")
         return
@@ -181,9 +190,13 @@ def _render_sales_history() -> None:
         start = start_date.isoformat()
         end = end_date.isoformat()
 
-    sales = sales_service.list_sales(
-        product_id=product_id, start_date=start, end_date=end
-    )
+    try:
+        sales = sales_service.list_sales(
+            product_id=product_id, start_date=start, end_date=end
+        )
+    except DatabaseError as error:
+        st.error(f"Could not load sales history: {error}")
+        return
     total_units = sum(sale["quantity"] for sale in sales)
     st.caption(
         f"{len(sales)} sale(s), {total_units} unit(s) total"

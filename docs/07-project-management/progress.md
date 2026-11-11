@@ -625,3 +625,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new.
 - Blockers: None recorded.
 - Next Steps: TASK-045 error-handling review across pages, then TASK-046 (suite run), TASK-047 (manual testing), TASK-048 (docs consistency), TASK-049 (export reports).
+
+### Error Handling Review Completed (TASK-045)
+
+- Date: 2026-11-11.
+- Status: Every page now degrades gracefully on expected failures — no raw stack traces on database errors; messages are short and human-readable.
+- Work Completed:
+  - Audit of all seven pages' exception coverage; most were already guarded from their own tasks.
+  - Fixed the remaining unguarded reads/actions: `list_products()` (analytics, forecast, sales ×2, products ×3), `list_sales()`, `get_stock_overview()`, and both `set_product_active` actions now catch the specific expected exception and show a friendly `st.error`.
+  - Exposure policy noted in the task record: service-level exception text only (no SQL, secrets, or tracebacks).
+- Tests Executed: 3 new AppTest degradation tests (failing service injected, friendly error asserted); full pytest suite.
+- Test Results: 430/430 passed.
+- Tasks Updated: TASK-045 → Verified.
+- Decisions Made: None new.
+- Blockers: None recorded.
+- Next Steps: TASK-046 automated test suite run (formal verification record), TASK-047 manual testing, TASK-048 documentation consistency review, TASK-049 export reports.

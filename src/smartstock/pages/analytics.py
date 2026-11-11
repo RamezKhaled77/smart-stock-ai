@@ -29,7 +29,12 @@ def render() -> None:
 
     show_flash()
 
-    products = product_service.list_products()
+    products: list = []
+    try:
+        products = product_service.list_products()
+    except DatabaseError as error:
+        st.error(f"Could not load products: {error}")
+        return
     if not products:
         st.info(
             "No active products yet. Add products on the Products & "

@@ -207,3 +207,20 @@ class TestEvaluationSection:
         assert not app_test.exception
         subheaders = [s.value for s in app_test.subheader]
         assert any("accurate" in text for text in subheaders)
+
+    def test_database_failure_shows_friendly_error(
+        self, app_db, monkeypatch
+    ) -> None:
+        # TASK-045: a read failure degrades to a message, not a crash.
+        from smartstock.database.connection import DatabaseError
+        from smartstock.services import product_service
+
+        def broken(db_path=None, **kwargs):
+            raise DatabaseError("disk unavailable")
+
+        monkeypatch.setattr(product_service, "list_products", broken)
+        app_test = _run_page()
+        assert not app_test.exception
+        assert any(
+            "Could not load products" in e.value for e in app_test.error
+        )

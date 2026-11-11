@@ -884,7 +884,7 @@ Completion record (2026-11-11): new `tests/integration/test_end_to_end.py` (the 
 ### TASK-045: Implement Application Error Handling
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-044
 
 Description:
@@ -896,6 +896,8 @@ Evidence:
 - Expected errors are handled.
 - Users receive understandable messages.
 - Internal error details are not unnecessarily exposed.
+
+Completion record (2026-11-11): audited every page's exception coverage. Already guarded (no changes needed): restock (DatabaseError), imports (CsvFileError/CsvStructureError/DuplicateImportError/ImportRejectedError/DatabaseError), all form submissions (ValueError/DatabaseError → inline messages), forecast (ProductNotLinkError/ArtifactError/ForecastError/DatabaseError/ValueError), dashboard and analytics service reads. Gaps found and fixed — top-level page reads that would have surfaced raw stack traces on a database failure: `product_service.list_products()` in analytics, forecast, sales (entry + history), and products (listing, edit, stock tabs); `sales_service.list_sales()` in the sales history; `inventory_service.get_stock_overview()` in the products listing; and the two `set_product_active` actions. All now follow the established pattern: catch the specific expected exception, show a short human message ("Could not load products: …"), and return cleanly. Exposure policy: messages include the service-level exception text (already user-safe, no SQL, no stack traces, no secrets) and never Python tracebacks; unexpected exceptions remain visible as Streamlit's own error display, which is honest for an educational project. Tests: 3 new AppTest degradation tests (analytics, forecast, sales history) that inject a failing service and assert a friendly `st.error` with no page exception. Suite 430/430.
 
 ### TASK-046: Run Automated Test Suite
 

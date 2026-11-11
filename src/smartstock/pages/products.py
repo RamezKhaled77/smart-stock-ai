@@ -63,7 +63,11 @@ def render() -> None:
 # ---------------------------------------------------------------------------
 
 def _render_listing() -> None:
-    overview = inventory_service.get_stock_overview()
+    try:
+        overview = inventory_service.get_stock_overview()
+    except DatabaseError as error:
+        st.error(f"Could not load products: {error}")
+        return
 
     if not overview:
         st.info(
@@ -228,9 +232,13 @@ def _render_add_form() -> None:
 def _render_edit_form() -> None:
     st.subheader("✏️ Edit product")
     # All products (including deactivated) so they can be reactivated.
-    products = product_service.list_products(
-        active_only=False,
-    )
+    try:
+        products = product_service.list_products(
+            active_only=False,
+        )
+    except DatabaseError as error:
+        st.error(f"Could not load products: {error}")
+        return
     if not products:
         st.info("No products to edit yet — add one in the Add tab.")
         return
@@ -301,9 +309,13 @@ def _render_edit_form() -> None:
             if not confirm:
                 st.error("Tick the confirmation box first.")
             else:
-                product_service.set_product_active(
-                    product["id"], False,
-                )
+                try:
+                    product_service.set_product_active(
+                        product["id"], False,
+                    )
+                except (ValueError, DatabaseError) as error:
+                    st.error(f"Product not deactivated: {error}")
+                    return
                 flash(
                     "success",
                     f"'{product['name']}' deactivated. Its sales history "
@@ -318,9 +330,13 @@ def _render_edit_form() -> None:
         if st.button(
             "Reactivate product", key=f"edit_reactivate_{product['id']}"
         ):
-            product_service.set_product_active(
-                product["id"], True,
-            )
+            try:
+                product_service.set_product_active(
+                    product["id"], True,
+                )
+            except (ValueError, DatabaseError) as error:
+                st.error(f"Product not reactivated: {error}")
+                return
             flash(
                 "success", f"'{product['name']}' reactivated."
             )
@@ -376,7 +392,11 @@ def _render_stock_panel() -> None:
         "changes. **Set exact stock** is a correction that overwrites "
         "the stored value — use it to fix wrong data."
     )
-    products = product_service.list_products()
+    try:
+        products = product_service.list_products()
+    except DatabaseError as error:
+        st.error(f"Could not load products: {error}")
+        return
     if not products:
         st.info("No products yet — add one in the Add tab.")
         return
