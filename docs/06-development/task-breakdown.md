@@ -902,7 +902,7 @@ Completion record (2026-11-11): audited every page's exception coverage. Already
 ### TASK-046: Run Automated Test Suite
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: Implemented core services
 
 Description:
@@ -914,6 +914,8 @@ Evidence:
 - Test results are recorded.
 - Failures are fixed or documented.
 - No tests are reported as passing without execution.
+
+Completion record (2026-11-11): formal verification run — **430 tests collected, 430 passed, 0 failed, 0 skipped, no warnings, ~110 seconds** (three consecutive clean runs during this checkpoint, plus every prior task ran the full suite before its commit; every "suite N/N" claim in this document corresponds to an actually executed `pytest` run). Suite shape: flat `tests/` layout organized by layer — repositories, database (incl. the DEC-060 legacy-migration test), domain (inventory/restocking formulas), ML (exploration, baselines, features, splits, training, artifacts, inference, with skip-guards for real-artifact pins), preprocessing/CSV import (M-001…M-006), services (products, sales, inventory, restock, forecast, dashboard, analytics, evaluation), page AppTest tests (products, sales, restock, dashboard, forecast, analytics, imports), and the TASK-044 integration tests (real `app.py` startup + end-to-end workflows; `tests/unit` and `tests/fixtures` remain empty placeholders — no separate unit layout needed at this scale). Coverage focus follows the testing strategy: inventory calculations, sales arithmetic, data validation, forecast feature generation, prediction output handling, restocking recommendations — every business rule named in the docs is pinned by at least one hand-computed test.
 
 ### TASK-047: Perform Manual Application Testing
 
