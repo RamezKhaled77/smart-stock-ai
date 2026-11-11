@@ -812,7 +812,7 @@ Completion record (2026-11-10): **DEC-060 accepted with the owner** — products
 ### TASK-041: Implement Sales Analytics Page
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-038
 
 Description:
@@ -823,6 +823,8 @@ Evidence:
 
 - Supported analytics are displayed.
 - Calculations match source data.
+
+Completion record (2026-11-10/11): new `pages/analytics.py` registered under Sales (url_path `sales-analytics`), quantity-based per F-006 v1 (no revenue analytics — the app stores no prices; caption states this). Inputs: date range (date inputs, end capped at UTC today, default last 30 days) and an optional product filter. Metrics: units sold, sale count, average units/day over **all** days in the range (zeros included, DEC-059's calendar-day view), and days with sales. Sections: daily units trend (`st.line_chart`), weekday pattern (`st.bar_chart`, average per weekday over the full range with zero days included), sales-by-product ranking with per-product share of units (best seller first), and monthly totals. Layers: `sales_repository.get_product_sales_summary` (per-product units + sale counts in one grouped query) with a `sales_service` wrapper; new `services/analytics_service.py::get_sales_analytics(start, end, product_id, db_path)` composing existing sales services with range validation (ISO dates, inverted range rejected) and zero-filled weekday averaging. Empty states: no products guidance, no sales in range. Tests: 9 service tests (totals/sale-count arithmetic hand-computed — 38 units in 4 sales, share 35/38, month split 33/5, mirrored weekday computation, product filter narrowing everything, inverted-range and date-format rejection, empty-range zeros) + 2 page AppTest tests (empty DB, full render with both charts, ranking and monthly tables; date widgets set via AppTest — the default 30-day range shows zeros for out-of-window data, which the test exercises deliberately). Suite 409/409.
 
 ### TASK-042: Implement Actual vs Predicted Visualization
 

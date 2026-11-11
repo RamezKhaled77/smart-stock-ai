@@ -308,7 +308,7 @@ The import process should avoid partially updating important records when an imp
 
 **Priority:** Core / Advanced
 
-**Status:** Proposed
+**Status:** Accepted (TASK-041, 2026-11-10/11 — quantity-based Sales Analytics page; v1 scope, no revenue analytics)
 
 ### Description
 

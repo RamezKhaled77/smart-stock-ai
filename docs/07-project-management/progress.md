@@ -565,3 +565,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-061 (with project owner).
 - Blockers: None recorded.
 - Next Steps: Remaining UI tasks — TASK-041 sales analytics page, TASK-042 actual-vs-predicted visualization, TASK-043 product performance; then integration/verification tasks (TASK-044…049) and phase wrap-up.
+
+### Sales Analytics Page Implemented (TASK-041)
+
+- Date: 2026-11-10/11.
+- Status: Users can analyze recorded sales over a date range with an optional product filter — quantity metrics, daily trend, weekday pattern, product ranking with shares, and monthly totals.
+- Work Completed:
+  - `pages/analytics.py` registered under Sales (`sales-analytics`): date range (end capped at UTC today, default last 30 days), product filter, 4 metrics, daily line chart, weekday bar chart, ranking and monthly tables, empty states.
+  - `sales_repository.get_product_sales_summary` + `sales_service` wrapper; `services/analytics_service.py::get_sales_analytics` (range validation, zero-included weekday averages per the DEC-059 calendar view, monthly split, per-product share).
+  - Quantity-based per F-006 v1 — revenue analytics need price data the app does not store (stated on the page).
+- Tests Executed: 9 service tests + 2 page AppTest tests; full pytest suite.
+- Test Results: 409/409 passed.
+- Tasks Updated: TASK-041 → Verified.
+- Decisions Made: None new (analytics scope follows F-006's documented v1 limits).
+- Blockers: None recorded.
+- Next Steps: TASK-042 actual-vs-predicted visualization (approach checkpoint with the owner: DEC-056's one-time test window constrains new per-day 2017 predictions), TASK-043 product performance, then TASK-044…049 integration/verification and phase wrap-up.

@@ -225,3 +225,19 @@ def get_daily_totals(
         for day, quantity in daily.items():
             totals[day] = totals.get(day, 0) + quantity
     return totals
+
+
+def get_product_sales_summary(
+    start_date: str,
+    end_date: str,
+    db_path: Path | None = None,
+) -> list:
+    """Per-product units and sale counts in an inclusive window.
+
+    Analytics input (F-006): every product that sold in the window,
+    best seller first.
+    """
+    with _run(db_path) as connection:
+        return sales_repository.get_product_sales_summary(
+            connection, start_date, end_date
+        )

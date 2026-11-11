@@ -358,6 +358,63 @@ def get_top_products(
     ]
 
 
+def get_product_sales_summary(
+    connection: sqlite3.Connection,
+    start_date: str,
+    end_date: str,
+) -> list:
+    """Per-product units and sale counts in an inclusive window.
+
+    The Sales Analytics page input (F-006): every product that sold in
+    the window with its totals, best seller first.
+
+    Args:
+        connection: Open database connection.
+        start_date: Inclusive lower bound (``YYYY-MM-DD``).
+        end_date: Inclusive upper bound (``YYYY-MM-DD``).
+
+    Returns:
+        List of ``{"product_id", "name", "sku", "units_sold",
+        "sale_count"}`` dicts, best seller first.
+
+    Raises:
+        ValueError: If the dates are invalid.
+        DatabaseError: If the query fails.
+    """
+    for value in (start_date, end_date):
+        if not _is_iso_date(value):
+            raise ValueError(
+                f"Dates must be 'YYYY-MM-DD' strings, got {value!r}."
+            )
+    try:
+        cursor = connection.execute(
+            "SELECT p.id AS product_id, p.name AS name, "
+            "p.sku AS sku, SUM(s.quantity) AS units_sold, "
+            "COUNT(*) AS sale_count "
+            "FROM sales s JOIN products p ON p.id = s.product_id "
+            "WHERE s.sale_date >= ? AND s.sale_date <= ? "
+            "GROUP BY p.id, p.name, p.sku "
+            "ORDER BY units_sold DESC, p.name ASC",
+            (start_date, end_date),
+        )
+        rows = cursor.fetchall()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not read product sales summary: {error}",
+            cause=error,
+        ) from error
+    return [
+        {
+            "product_id": int(row["product_id"]),
+            "name": str(row["name"]),
+            "sku": str(row["sku"]),
+            "units_sold": int(row["units_sold"]),
+            "sale_count": int(row["sale_count"]),
+        }
+        for row in rows
+    ]
+
+
 def _is_iso_date(value: str) -> bool:
     """Check that a string parses as an ISO calendar date."""
     try:
