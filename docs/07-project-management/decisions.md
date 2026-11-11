@@ -178,6 +178,13 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-061: Dashboard Metric Set
+
+- Status: Accepted
+- Decision: The v1 Dashboard shows six metric groups over actual application data: (1) total active products, (2) total current stock, (3) products needing reorder (BR-022: current stock ≤ reorder point, advisory data from the restocking calculations), (4) recent sales activity (units sold and number of sales in the last 7 days ending today, UTC), (5) the top 3 selling products over the last 30 days (by units), and (6) a forecast-readiness line (how many active products are linked to a dataset item per DEC-060, out of the total).
+- Context: features.md lists eight candidate indicators and leaves finalization to UI/business-rule design. The forecast "highlights" candidate (running a live forecast per product on every dashboard visit) is deferred: each visit would trigger N model predictions and artifact loads for a summary line — the Forecast page already owns that workflow, and the readiness metric tells users what is forecastable. Sales trends (TASK-038) and the low-stock overview (TASK-039) are their own dashboard sections/tasks; all windows end at the current UTC date and align with DEC-059's calendar-day view.
+- Method: Chosen with the project owner from documented options (2026-11-10/11, TASK-037): six-metric set (chosen) vs. inventory-only vs. all eight candidates.
+
 ### DEC-060: Product ↔ Dataset-Item Forecast Mapping
 
 - Status: Accepted
@@ -579,6 +586,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-058 | Short-history policy | ≥31 days → RF; 1–30 days → MA-7 recursive fallback; 0 days → explicit error |
 | DEC-059 | Demand window anchoring | Calendar window ends at last sale; zeros filled; denominator min(30, span) |
 | DEC-060 | Product ↔ dataset-item mapping | Nullable products.dataset_item_id; forecast from the linked item's imported history only |
+| DEC-061 | Dashboard metrics | Six groups: products, stock, needing-reorder, 7-day sales, top-3 sellers (30 d), forecast readiness |
 
 ---
 

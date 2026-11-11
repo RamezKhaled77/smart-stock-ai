@@ -258,6 +258,106 @@ def get_daily_sales_by_product(
     return totals_by_product
 
 
+def get_sales_window_summary(
+    connection: sqlite3.Connection,
+    start_date: str,
+    end_date: str,
+) -> dict:
+    """Sale count and total units sold in an inclusive date window.
+
+    Args:
+        connection: Open database connection.
+        start_date: Inclusive lower bound (``YYYY-MM-DD``).
+        end_date: Inclusive upper bound (``YYYY-MM-DD``).
+
+    Returns:
+        ``{"sale_count": int, "units_sold": int}`` (both 0 when the
+        window has no sales).
+
+    Raises:
+        ValueError: If the dates are invalid.
+        DatabaseError: If the query fails.
+    """
+    for value in (start_date, end_date):
+        if not _is_iso_date(value):
+            raise ValueError(
+                f"Dates must be 'YYYY-MM-DD' strings, got {value!r}."
+            )
+    try:
+        row = connection.execute(
+            "SELECT COUNT(*) AS sale_count, "
+            "COALESCE(SUM(quantity), 0) AS units_sold "
+            "FROM sales WHERE sale_date >= ? AND sale_date <= ?",
+            (start_date, end_date),
+        ).fetchone()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not summarize sales: {error}", cause=error
+        ) from error
+    return {
+        "sale_count": int(row["sale_count"]),
+        "units_sold": int(row["units_sold"]),
+    }
+
+
+def get_top_products(
+    connection: sqlite3.Connection,
+    start_date: str,
+    end_date: str,
+    limit: int = 3,
+) -> list:
+    """Best-selling products in a window, by total units (inclusive).
+
+    Args:
+        connection: Open database connection.
+        start_date: Inclusive lower bound (``YYYY-MM-DD``).
+        end_date: Inclusive upper bound (``YYYY-MM-DD``).
+        limit: Number of products to return (positive integer).
+
+    Returns:
+        List of ``{"product_id", "name", "sku", "units_sold"}`` dicts,
+        best seller first. Products with no sales in the window are
+        absent; fewer than ``limit`` entries when fewer sold.
+
+    Raises:
+        ValueError: If the dates are invalid or the limit is invalid.
+        DatabaseError: If the query fails.
+    """
+    for value in (start_date, end_date):
+        if not _is_iso_date(value):
+            raise ValueError(
+                f"Dates must be 'YYYY-MM-DD' strings, got {value!r}."
+            )
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+        raise ValueError(
+            f"Limit must be a positive integer, got {limit!r}."
+        )
+    try:
+        cursor = connection.execute(
+            "SELECT p.id AS product_id, p.name AS name, "
+            "p.sku AS sku, SUM(s.quantity) AS units_sold "
+            "FROM sales s JOIN products p ON p.id = s.product_id "
+            "WHERE s.sale_date >= ? AND s.sale_date <= ? "
+            "GROUP BY p.id, p.name, p.sku "
+            "ORDER BY units_sold DESC, p.name ASC LIMIT ?",
+            (start_date, end_date, limit),
+        )
+        rows = cursor.fetchall()
+    except sqlite3.Error as error:
+        raise DatabaseError(
+            f"Could not read top products: {error}", cause=error
+        ) from error
+    return [
+        {
+            "product_id": int(row["product_id"]),
+            "name": str(row["name"]),
+            "sku": str(row["sku"]),
+            "units_sold": int(row["units_sold"]),
+        }
+        for row in rows
+    ]
+
+
 def _is_iso_date(value: str) -> bool:
     """Check that a string parses as an ISO calendar date."""
     try:

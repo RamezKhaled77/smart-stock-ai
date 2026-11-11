@@ -170,3 +170,58 @@ def get_daily_sales(
         return sales_repository.get_daily_sales(
             connection, product_id, start_date, end_date
         )
+
+
+def get_sales_window_summary(
+    start_date: str,
+    end_date: str,
+    db_path: Path | None = None,
+) -> dict:
+    """Sale count and total units sold in an inclusive window.
+
+    Returns:
+        ``{"sale_count": int, "units_sold": int}`` (both 0 without
+        sales in the window).
+    """
+    with _run(db_path) as connection:
+        return sales_repository.get_sales_window_summary(
+            connection, start_date, end_date
+        )
+
+
+def get_top_sellers(
+    start_date: str,
+    end_date: str,
+    limit: int = 3,
+    db_path: Path | None = None,
+) -> list:
+    """Best-selling products in an inclusive window, best first.
+
+    Returns:
+        List of ``{"product_id", "name", "sku", "units_sold"}``.
+    """
+    with _run(db_path) as connection:
+        return sales_repository.get_top_products(
+            connection, start_date, end_date, limit=limit
+        )
+
+
+def get_daily_totals(
+    start_date: str,
+    end_date: str,
+    db_path: Path | None = None,
+) -> dict:
+    """Total units sold per day across all products (inclusive bounds).
+
+    Merges the per-product daily aggregates into one dictionary —
+    the input for the dashboard sales-trend chart (TASK-038).
+    """
+    with _run(db_path) as connection:
+        by_product = sales_repository.get_daily_sales_by_product(
+            connection, start_date, end_date
+        )
+    totals: dict[str, int] = {}
+    for daily in by_product.values():
+        for day, quantity in daily.items():
+            totals[day] = totals.get(day, 0) + quantity
+    return totals

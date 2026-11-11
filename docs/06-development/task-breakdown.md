@@ -743,7 +743,7 @@ Completion record (2026-11-10): new `src/smartstock/pages/restock.py`, registere
 ### TASK-037: Implement Dashboard Metrics
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-013, TASK-014, TASK-015
 
 Description:
@@ -756,10 +756,12 @@ Evidence:
 - Calculations are verified.
 - Empty states are supported.
 
+Completion record (2026-11-10/11): **DEC-061 accepted with the owner** — six metric groups: active products, total stock, products needing reorder (BR-022 via restocking recommendations; products without history not counted), recent sales (units + sale count, last 7 days ending today UTC), top 3 sellers of the last 30 days (fixed window), and a forecast-readiness line (linked dataset items per DEC-060 out of active products). The "live forecast highlights" candidate was deferred: N model predictions per dashboard visit for a summary line is poor value when the Demand Forecast page owns that workflow. Implementation: `sales_repository.get_sales_window_summary` (COUNT + SUM in one query) and `get_top_products` (GROUP BY … ORDER BY units DESC, LIMIT with product JOIN); `sales_service` wrappers (`get_sales_window_summary`, `get_top_sellers`, `get_daily_totals` merging per-product daily aggregates); new `services/dashboard_service.py::get_dashboard_data` composing the services only (no SQL, no rules; windows: week = today−6…today, month = today−29…today; top sellers stay on the 30-day window regardless of the trend selection); page `pages/dashboard.py` with two metric rows, trend chart, top-sellers table, low-stock overview (TASK-039), forecast-readiness line, and full empty states. Tests: 10 service tests (empty state, product-only state, window inclusivity hand-computed — today back to 6 days ago is the 7-day window — ranking, breach counting incl. the DEC-059 span-1 lesson, trend totals, fixed top-seller window under a 7-day trend, forecast readiness, trend_days validation) + 5 page AppTest tests. Suite 398/398.
+
 ### TASK-038: Implement Sales Trend Visualization
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-015
 
 Description:
@@ -771,10 +773,12 @@ Evidence:
 - Aggregations are correct.
 - Date filtering works where supported.
 
+Completion record (2026-11-10/11): charting approach is **Streamlit's built-in `st.line_chart`** (no new dependency, consistent with the dependency rules); trend data comes from `sales_service.get_daily_totals(start, end)` (merged per-product daily aggregates, verified at repository level previously and service level now). The dashboard offers a 7/30-day radio selector — date filtering is exercised by a service test (29-days-ago sale present in the 30-day trend, absent from the 7-day trend) and the page keeps the radio functional (AppTest radio set_value run without exceptions). Days without sales are absent from the series (preprocessing policy); an empty window shows an info state. Chart element verified in AppTest as a `vega_lite_chart` element. Suite 398/398.
+
 ### TASK-039: Implement Low-Stock Overview
 
 - Priority: P1
-- Status: Not Started
+- Status: Verified
 - Dependencies: TASK-019
 
 Description:
@@ -784,6 +788,8 @@ Display products that meet the approved low-stock conditions.
 Evidence:
 
 - Displayed products match the business rules.
+
+Completion record (2026-11-10/11): the dashboard's low-stock overview lists every active product whose BR-008 status is Out of Stock or Low Stock (current stock at or below the reorder point), sourced from the restocking recommendations (DEC-032 reorder points, DEC-059 demand) — no duplicated business rules in the page. Warning banner counts the breaches; the table shows stock, average daily demand, reorder point, and the advisory suggested order (DEC-033), with a DEC-031 advisory caption pointing to the Restocking Recommendations page. Verified by a service test (breach list matches hand-computed reorder points, safe product excluded) and a page test (breach appears, calm product absent). Suite 398/398.
 
 ### TASK-040: Implement Forecasting Interface
 

@@ -550,3 +550,18 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: DEC-060 (with project owner).
 - Blockers: None recorded.
 - Next Steps: TASK-037 dashboard metrics, TASK-038 sales trend visualization, TASK-039 low-stock overview; phase wrap-up afterwards.
+
+### Dashboard Metrics, Sales Trend, and Low-Stock Overview Implemented (TASK-037/038/039)
+
+- Date: 2026-11-10/11.
+- Status: The Dashboard placeholder is now a real summarized view per DEC-061; all metrics derive from verified services.
+- Work Completed:
+  - DEC-061 accepted with the owner: six metric groups; live per-product forecast highlights deferred to the Demand Forecast page.
+  - Sales aggregates added (repository COUNT/SUM + top-products query; service wrappers incl. `get_daily_totals`).
+  - `dashboard_service.get_dashboard_data` composition; `pages/dashboard.py` with metric rows, `st.line_chart` trend (7/30-day selector), top-sellers table, low-stock overview (BR-008 via restocking data), forecast-readiness line, and empty states; app.py placeholder replaced with the real page.
+- Tests Executed: 10 service tests + 5 page AppTest tests; full pytest suite (Streamlit-internal pandas-4 deprecation filtered with an explicit, documented filterwarnings).
+- Test Results: 398/398 passed.
+- Tasks Updated: TASK-037, TASK-038, TASK-039 → Verified.
+- Decisions Made: DEC-061 (with project owner).
+- Blockers: None recorded.
+- Next Steps: Remaining UI tasks — TASK-041 sales analytics page, TASK-042 actual-vs-predicted visualization, TASK-043 product performance; then integration/verification tasks (TASK-044…049) and phase wrap-up.

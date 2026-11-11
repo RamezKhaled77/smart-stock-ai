@@ -54,6 +54,10 @@ Unless explicitly approved in the project decision log, features in this documen
 
 **Priority:** Core
 
+**Status:** Accepted (TASK-037/038/039, 2026-11-10/11 — DEC-061 metric set)
+
+**Priority:** Core
+
 **Status:** Proposed
 
 ### Description

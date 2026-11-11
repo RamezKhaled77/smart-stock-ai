@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import streamlit as st
 
+from smartstock.pages.dashboard import render as dashboard_render
 from smartstock.pages.forecast import render as forecast_render
 from smartstock.pages.imports import render as imports_render
 from smartstock.pages.products import render as products_render
@@ -31,13 +32,9 @@ st.set_page_config(
 
 
 def dashboard() -> None:
-    """Dashboard placeholder (built in a later phase)."""
-    st.title("🏠 Dashboard")
-    st.info(
-        "The dashboard (inventory summary, low-stock review, sales "
-        "trends) will be built in a later development phase. Use "
-        "Products & Inventory in the navigation to manage stock today."
-    )
+    """Placeholder retained for compatibility; the real page lives in
+    ``smartstock.pages.dashboard``."""
+    dashboard_render()
 
 
 page = st.navigation(

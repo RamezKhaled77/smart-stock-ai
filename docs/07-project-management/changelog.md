@@ -329,6 +329,8 @@ It does not imply that the application itself has been implemented.
 - [TASK-036] Restocking Recommendations page: advisory display with summary metrics, supporting inputs, per-product explanations and unavailable reasons; navigation registered; suite at 367 passing tests.
 - [DEC-060] Product ↔ dataset-item mapping: nullable products.dataset_item_id; forecasts consume the linked item's imported history only; guarded schema migration.
 - [TASK-040] Demand Forecast page: product-driven forecasts (7/14/30 days) over the DEC-057 model with DEC-058 path labels, forecast service, zero-filled linked history, clear unlinked/no-history/artifact-missing states; suite at 383 passing tests.
+- [DEC-061] Dashboard metric set: six groups (products, stock, needing-reorder, 7-day sales activity, top-3 sellers, forecast readiness).
+- [TASK-037/038/039] Dashboard implemented: metrics from verified services, built-in line-chart sales trend with 7/30-day selector, low-stock overview per BR-008; suite at 398 passing tests.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template
