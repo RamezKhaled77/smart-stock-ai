@@ -191,6 +191,14 @@ A proposed decision must not be treated as accepted.
 - Context: PDF generation needs a new report dependency and adds little value for v1's tabular reports; CSV opens natively in every spreadsheet tool the target users already have. Exports serialize the raw service output rows (not re-parsed display tables), so files always match source data.
 - Method: Chosen with the project owner from documented options (2026-11-12, TASK-049): CSV on two pages (chosen) vs. CSV on three pages (adding sales history) vs. deferring TASK-049.
 
+### DEC-064: UI Design System — Material Symbols Icons and Native Theme
+
+- Status: Accepted
+- Decision: The user interface uses a unified design system with no new dependencies: (1) all emojis are replaced with icons from the Material Symbols (Rounded) library through Streamlit's native support — `icon=` parameters on titles, subheaders, metrics, alerts, buttons, download buttons, and expanders, plus `:material/name:` shortcodes in markdown — the icon font ships inside Streamlit and is served locally; (2) the palette, semantic state colors, radii, borders, and chart palette are defined with Streamlit's native theme engine in `.streamlit/config.toml`; (3) the browser-tab icon is `assets/favicon.svg` (a package mark on the brand-blue tile), not an emoji.
+- Context: A UI/UX professionalization pass (2026-11-12) found every page's headings, empty states, and action buttons using assorted emojis, and default Streamlit styling with no shared palette. Streamlit already bundles and validates the Material Symbols Rounded font (`streamlit.material_icon_names`, 4301 names), so a separate icon dependency (e.g. Lucide) would add weight for nothing. The theme is presentation-only: no business rules, services, repositories, ML code, or data changed.
+- Consequences: pages share one visual language (brand blue `#2563eb`, semantic green/orange/red states, bordered metric cards, tinted status cells via pandas Styler on the product table); tab labels stay plain text because `st.tabs` labels support only GitHub-flavored Markdown. New icons must use names from Streamlit's whitelist; emojis must not be reintroduced into user-facing UI.
+- Method: Directed by the project owner as a UI/UX improvement task (2026-11-12); icon-library selection and implementation made autonomously under the task's guardrails after auditing the installed Streamlit's icon support.
+
 ### DEC-062: Actual-vs-Predicted Display Uses Stored Evaluation Metrics Only
 
 - Status: Accepted
@@ -616,6 +624,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-061 | Dashboard metrics | Six groups: products, stock, needing-reorder, 7-day sales, top-3 sellers (30 d), forecast readiness |
 | DEC-062 | Actual-vs-predicted display | Stored training-time evaluation metrics only; no new predictions, test window one-touch |
 | DEC-063 | Export reports | CSV exports on Sales Analytics and Restocking Recommendations; PDF deferred |
+| DEC-064 | UI design system | Material Symbols icons (Streamlit-native, no emoji), native theme in `.streamlit/config.toml`, SVG favicon |
 
 ---
 

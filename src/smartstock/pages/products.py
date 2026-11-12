@@ -18,26 +18,35 @@ from smartstock.domain.inventory import (
     STATUS_LOW_STOCK,
     STATUS_OUT_OF_STOCK,
 )
-from smartstock.pages.ui import flash, show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    flash,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import inventory_service, product_service
 
-# Marker chosen for quick visual scanning next to the status text.
-STATUS_MARKERS = {
-    STATUS_IN_STOCK: "🟢",
-    STATUS_LOW_STOCK: "🟠",
-    STATUS_OUT_OF_STOCK: "🔴",
-}
-
 ALL = "All"
+
+# Semantic background tints for the status column of the product table
+# (light shades of the approved green/orange/red state colors).
+STATUS_TINT = {
+    STATUS_IN_STOCK: "#f0fdf4",  # green-50
+    STATUS_LOW_STOCK: "#fff7ed",  # orange-50
+    STATUS_OUT_OF_STOCK: "#fef2f2",  # red-50
+}
+DEFAULT_TINT = "transparent"
 
 
 def render() -> None:
     """Render the Products & Inventory page."""
-    st.title("🏷️ Products & Inventory")
-    st.caption(
+    page_header(
+        "inventory_2",
+        "Products & Inventory",
         "Active products with their current stock and stock status "
         "(reorder point = average daily demand of the last 30 days × "
-        "lead time + safety stock)."
+        "lead time + safety stock).",
     )
 
     # Feedback messages survive the st.rerun() a successful action
@@ -45,8 +54,7 @@ def render() -> None:
     show_flash()
 
     tab_list, tab_add, tab_edit, tab_stock = st.tabs(
-        ["📋 Product list", "➕ Add product", "✏️ Edit product",
-         "📦 Adjust stock"]
+        ["Product list", "Add product", "Edit product", "Adjust stock"]
     )
     with tab_list:
         _render_listing()
@@ -70,15 +78,20 @@ def _render_listing() -> None:
         return
 
     if not overview:
-        st.info(
-            "No products yet — create your first product in the "
-            "**Add product** tab above."
+        empty_state(
+            "No products yet",
+            "Create your first product in the **Add product** tab "
+            "above to start tracking stock and demand.",
+            icon="inventory_2",
         )
         return
 
     overview = _apply_filters(overview, len(overview))
     if not overview:
-        st.warning("No products match the current search and filters.")
+        st.warning(
+            "No products match the current search and filters.",
+            icon=":material/search_off:",
+        )
         return
 
     _render_product_table(overview)
@@ -136,7 +149,6 @@ def _render_product_table(overview: list) -> None:
 
     rows = []
     for product in overview:
-        marker = STATUS_MARKERS.get(product["stock_status"], "")
         rows.append(
             {
                 "Name": product["name"],
@@ -147,12 +159,19 @@ def _render_product_table(overview: list) -> None:
                 "Safety stock": product["safety_stock"],
                 "Reorder point": product["reorder_point"],
                 "Avg daily demand": product["average_daily_demand"],
-                "Status": f"{marker} {product['stock_status']}",
+                "Status": product["stock_status"],
             }
         )
 
+    frame = pd.DataFrame(rows)
+    # Tint the status cells with the approved state colors so low and
+    # out-of-stock rows stand out without any decorative styling.
+    style = frame.style.map(
+        lambda status: f"background-color: {STATUS_TINT.get(status, DEFAULT_TINT)}",
+        subset=["Status"],
+    )
     st.dataframe(
-        pd.DataFrame(rows),
+        style,
         hide_index=True,
         width="stretch",
         column_config={
@@ -175,7 +194,8 @@ def _render_product_table(overview: list) -> None:
         )
         st.warning(
             f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
-            f"and may need restocking: {names}."
+            f"and may need restocking: {names}.",
+            icon=":material/warning:",
         )
 
 
@@ -184,7 +204,7 @@ def _render_product_table(overview: list) -> None:
 # ---------------------------------------------------------------------------
 
 def _render_add_form() -> None:
-    st.subheader("➕ Add product")
+    section("add_circle", "Add product")
     st.caption(
         "Required: name and SKU. Lead time defaults to 3 days and "
         "safety stock to 0."
@@ -205,7 +225,11 @@ def _render_add_form() -> None:
         safety_stock = right.number_input(
             "Safety stock", min_value=0, value=0, step=1, key="add_safety"
         )
-        submitted = st.form_submit_button("Create product", type="primary")
+        submitted = st.form_submit_button(
+            "Create product",
+            type="primary",
+            icon=":material/check:",
+        )
 
     if not submitted:
         return
@@ -230,7 +254,7 @@ def _render_add_form() -> None:
 
 
 def _render_edit_form() -> None:
-    st.subheader("✏️ Edit product")
+    section("edit_square", "Edit product")
     # All products (including deactivated) so they can be reactivated.
     try:
         products = product_service.list_products(
@@ -240,7 +264,11 @@ def _render_edit_form() -> None:
         st.error(f"Could not load products: {error}")
         return
     if not products:
-        st.info("No products to edit yet — add one in the Add tab.")
+        empty_state(
+            "No products to edit yet",
+            "Add a product in the **Add product** tab first.",
+            icon="edit_square",
+        )
         return
 
     selected_sku = st.selectbox(
@@ -294,7 +322,11 @@ def _render_edit_form() -> None:
             value=product["dataset_item_id"] is not None,
             key=f"edit_link_{product['id']}",
         )
-        submitted = st.form_submit_button("Save changes", type="primary")
+        submitted = st.form_submit_button(
+            "Save changes",
+            type="primary",
+            icon=":material/save:",
+        )
 
     if product["is_active"]:
         st.caption(
@@ -305,7 +337,11 @@ def _render_edit_form() -> None:
             "I understand this deactivates the product",
             key=f"edit_confirm_{product['id']}",
         )
-        if st.button("Deactivate product", key=f"edit_discard_{product['id']}"):
+        if st.button(
+            "Deactivate product",
+            key=f"edit_discard_{product['id']}",
+            icon=":material/inventory_2:",
+        ):
             if not confirm:
                 st.error("Tick the confirmation box first.")
             else:
@@ -328,7 +364,9 @@ def _render_edit_form() -> None:
             "sold). You can edit it or reactivate it below."
         )
         if st.button(
-            "Reactivate product", key=f"edit_reactivate_{product['id']}"
+            "Reactivate product",
+            key=f"edit_reactivate_{product['id']}",
+            icon=":material/unarchive:",
         ):
             try:
                 product_service.set_product_active(
@@ -386,7 +424,7 @@ def _find_by_sku(products: list, sku: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _render_stock_panel() -> None:
-    st.subheader("📦 Adjust stock")
+    section("package_2", "Adjust stock")
     st.caption(
         "**Add / remove units** for receipts, damage, and manual "
         "changes. **Set exact stock** is a correction that overwrites "
@@ -398,7 +436,11 @@ def _render_stock_panel() -> None:
         st.error(f"Could not load products: {error}")
         return
     if not products:
-        st.info("No products yet — add one in the Add tab.")
+        empty_state(
+            "No products yet",
+            "Add a product in the **Add product** tab first.",
+            icon="package_2",
+        )
         return
 
     mode = st.radio(
@@ -416,6 +458,7 @@ def _render_stock_panel() -> None:
     st.metric(
         "Current stock",
         product["current_stock"],
+        icon=":material/package:",
         border=True,
     )
 
@@ -433,7 +476,9 @@ def _render_adjust_by_change(product: dict) -> None:
         key=f"stock_change_{product['id']}",
     )
     if st.button(
-        "Apply adjustment", key=f"stock_apply_{product['id']}"
+        "Apply adjustment",
+        key=f"stock_apply_{product['id']}",
+        icon=":material/sync:",
     ):
         try:
             new_stock = inventory_service.adjust_stock(
@@ -464,7 +509,9 @@ def _render_adjust_by_exact_level(product: dict) -> None:
         key=f"stock_exact_{product['id']}",
     )
     if st.button(
-        "Set stock level", key=f"stock_set_{product['id']}"
+        "Set stock level",
+        key=f"stock_set_{product['id']}",
+        icon=":material/edit:",
     ):
         try:
             new_stock = inventory_service.set_stock_level(

@@ -1,0 +1,72 @@
+# Streamlit configuration — SmartStock AI design system (UI task, 2026-11-12).
+#
+# The palette is defined with Streamlit's native theme engine so buttons,
+# widgets, alerts, tables, and charts share one visual language without
+# custom CSS. Semantic colors follow docs/05-interface/ui-overview.md §6:
+# green = healthy, orange/yellow = attention, red = critical.
+#
+# Icons use Streamlit's bundled Material Symbols Rounded font via
+# ":material/name:" shortcodes (see docs/05-interface/ui-overview.md §6).
+
+[theme]
+base = "light"
+
+# Brand: calm, professional blue used for primary actions and accents.
+primaryColor = "#2563eb"
+
+# Surfaces: white content area, cool gray sidebar and secondary surfaces.
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f1f5f9"
+textColor = "#0f172a"
+borderColor = "#e2e8f0"
+
+# Shapes and sizing: slightly rounded cards and buttons, visible widget
+# borders for clear form affordances.
+baseRadius = "0.625rem"
+buttonRadius = "0.5rem"
+showWidgetBorder = true
+baseFontSize = 16
+
+# Tables: quiet borders with a soft header row.
+dataframeBorderColor = "#e2e8f0"
+dataframeHeaderBackgroundColor = "#f8fafc"
+dataframeHeaderTextColor = "#334155"
+
+# Semantic states.
+greenBackgroundColor = "#f0fdf4"
+greenColor = "#16a34a"
+greenTextColor = "#14532d"
+
+redBackgroundColor = "#fef2f2"
+redColor = "#dc2626"
+redTextColor = "#7f1d1d"
+
+orangeBackgroundColor = "#fff7ed"
+orangeColor = "#ea580c"
+orangeTextColor = "#7c2d12"
+
+yellowBackgroundColor = "#fefce8"
+yellowColor = "#ca8a04"
+yellowTextColor = "#713f12"
+
+blueBackgroundColor = "#eff6ff"
+blueColor = "#2563eb"
+blueTextColor = "#1e3a8a"
+
+grayBackgroundColor = "#f1f5f9"
+grayColor = "#64748b"
+grayTextColor = "#334155"
+
+# Links follow the brand color.
+linkColor = "#2563eb"
+
+# Charts: one brand-led categorical palette used by every chart.
+chartCategoricalColors = [
+    "#2563eb",
+    "#0ea5e9",
+    "#7c3aed",
+    "#f59e0b",
+    "#10b981",
+    "#ef4444",
+    "#64748b",
+]

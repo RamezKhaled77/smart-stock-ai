@@ -11,7 +11,12 @@ import pandas as pd
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
-from smartstock.pages.ui import show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import analytics_service, product_service
 from smartstock.utils.dates import utc_today_iso
 from smartstock.utils.export import to_csv
@@ -21,11 +26,12 @@ ALL_PRODUCTS = "All products"
 
 def render() -> None:
     """Render the Sales Analytics page."""
-    st.title("📊 Sales Analytics")
-    st.caption(
+    page_header(
+        "insights",
+        "Sales Analytics",
         "Quantity-based sales insights (F-006): units sold and "
         "patterns. Revenue analytics need price data the application "
-        "does not store."
+        "does not store.",
     )
 
     show_flash()
@@ -37,9 +43,11 @@ def render() -> None:
         st.error(f"Could not load products: {error}")
         return
     if not products:
-        st.info(
-            "No active products yet. Add products on the Products & "
-            "Inventory page, then record sales to see analytics."
+        empty_state(
+            "No active products yet",
+            "Add products on the Products & Inventory page, then "
+            "record sales to see analytics.",
+            icon="insights",
         )
         return
 
@@ -94,18 +102,32 @@ def _render_analytics(
 
     totals = data["totals"]
     columns = st.columns(4)
-    columns[0].metric("Units sold", totals["units_sold"])
-    columns[1].metric("Sales recorded", totals["sale_count"])
+    columns[0].metric(
+        "Units sold",
+        totals["units_sold"],
+        icon=":material/shopping_cart:",
+        border=True,
+    )
+    columns[1].metric(
+        "Sales recorded",
+        totals["sale_count"],
+        icon=":material/receipt:",
+        border=True,
+    )
     columns[2].metric(
         "Avg units/day",
         totals["avg_units_per_day"],
         help=f"Over all {totals['days_in_range']} days in the range "
         "(days without sales count as zero).",
+        icon=":material/calendar_month:",
+        border=True,
     )
     columns[3].metric(
         "Days with sales",
         totals["days_with_sales"],
         help=f"Out of {totals['days_in_range']} days in the range.",
+        icon=":material/event_available:",
+        border=True,
     )
 
     _render_daily_trend(data)
@@ -116,9 +138,14 @@ def _render_analytics(
 
 
 def _render_daily_trend(data: dict) -> None:
-    st.subheader("📈 Daily units sold")
+    section("trending_up", "Daily units sold")
     if not data["daily"]:
-        st.info("No sales recorded in this range.")
+        empty_state(
+            "No sales in this range",
+            "Record sales in this date range, or widen the range, to "
+            "see the daily trend.",
+            icon="trending_up",
+        )
         return
     days = sorted(data["daily"])
     frame = pd.DataFrame(
@@ -138,7 +165,7 @@ def frame_index(days: list):
 
 
 def _render_weekday_pattern(data: dict) -> None:
-    st.subheader("🗓️ Weekday pattern")
+    section("calendar_month", "Weekday pattern")
     st.caption(
         "Average units sold per weekday over the whole range — days "
         "without sales count as zero."
@@ -156,9 +183,14 @@ def _render_weekday_pattern(data: dict) -> None:
 
 
 def _render_per_product(data: dict) -> None:
-    st.subheader("🥇 Sales by product")
+    section("leaderboard", "Sales by product")
     if not data["per_product"]:
-        st.info("No sales recorded in this range.")
+        empty_state(
+            "No sales in this range",
+            "Record sales in this date range, or widen the range, to "
+            "see the per-product ranking.",
+            icon="leaderboard",
+        )
         return
     table = pd.DataFrame(
         [
@@ -175,7 +207,7 @@ def _render_per_product(data: dict) -> None:
     )
     st.dataframe(table, hide_index=True, width="stretch")
     _download_button(
-        "⬇️ Export sales by product (CSV)",
+        "Export sales by product (CSV)",
         data["per_product"],
         ["name", "sku", "units_sold", "sale_count", "share_of_units"],
         "sales-by-product.csv",
@@ -194,6 +226,7 @@ def _download_button(
         file_name=file_name,
         mime="text/csv",
         key=key,
+        icon=":material/download:",
     )
 
 
@@ -201,7 +234,7 @@ def _render_performance(
     start: str, end: str, product_id: int | None
 ) -> None:
     """TASK-043: per-product performance insights (F-011)."""
-    st.subheader("🔎 Product performance")
+    section("query_stats", "Product performance")
     try:
         rows = analytics_service.get_product_performance(
             start, end, product_id=product_id
@@ -210,7 +243,12 @@ def _render_performance(
         st.error(f"Could not load product performance: {error}")
         return
     if not rows:
-        st.info("No sales recorded in this range.")
+        empty_state(
+            "No sales in this range",
+            "Record sales in this date range, or widen the range, to "
+            "see per-product performance.",
+            icon="query_stats",
+        )
         return
     table = pd.DataFrame(
         [
@@ -243,7 +281,7 @@ def _render_performance(
         "v1 — warnings are advisory snapshots, not logged events."
     )
     _download_button(
-        "⬇️ Export product performance (CSV)",
+        "Export product performance (CSV)",
         rows,
         ["name", "sku", "units_sold", "avg_units_per_day",
          "first_sale", "last_sale", "trend"],
@@ -253,7 +291,7 @@ def _render_performance(
 
 
 def _render_monthly(data: dict) -> None:
-    st.subheader("📅 Monthly totals")
+    section("calendar_month", "Monthly totals")
     if not data["monthly"]:
         return
     months = sorted(data["monthly"])
@@ -269,7 +307,7 @@ def _render_monthly(data: dict) -> None:
         for month in months
     ]
     _download_button(
-        "⬇️ Export monthly totals (CSV)",
+        "Export monthly totals (CSV)",
         monthly_rows,
         ["month", "units_sold"],
         "monthly-totals.csv",

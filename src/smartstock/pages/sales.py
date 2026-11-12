@@ -17,7 +17,13 @@ from datetime import date, timedelta
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
-from smartstock.pages.ui import flash, show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    flash,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import product_service, sales_service
 from smartstock.utils.dates import utc_today_iso
 
@@ -31,17 +37,18 @@ def _utc_today() -> date:
 
 def render() -> None:
     """Render the Sales Management page."""
-    st.title("🧾 Sales Management")
-    st.caption(
+    page_header(
+        "receipt_long",
+        "Sales Management",
         "Recorded sales reduce stock automatically. Recording is "
         "rejected when the requested quantity exceeds the available "
         "stock — the sale is not stored and the inventory stays "
-        "unchanged."
+        "unchanged.",
     )
 
     show_flash()
 
-    tab_entry, tab_history = st.tabs(["🛒 Record sale", "📜 Sales history"])
+    tab_entry, tab_history = st.tabs(["Record sale", "Sales history"])
     with tab_entry:
         _render_sale_form()
     with tab_history:
@@ -53,15 +60,18 @@ def render() -> None:
 # ---------------------------------------------------------------------------
 
 def _render_sale_form() -> None:
+    section("shopping_cart", "Record a sale")
     try:
         products = product_service.list_products()  # active only (DEC-050)
     except DatabaseError as error:
         st.error(f"Could not load products: {error}")
         return
     if not products:
-        st.info(
-            "No products yet — a sale needs a product. Add one under "
-            "Products & Inventory."
+        empty_state(
+            "No products yet",
+            "A sale needs a product. Add one on the Products & "
+            "Inventory page first.",
+            icon="shopping_cart",
         )
         return
 
@@ -76,6 +86,7 @@ def _render_sale_form() -> None:
     st.metric(
         "Available stock",
         product["current_stock"],
+        icon=":material/package:",
         border=True,
     )
 
@@ -94,7 +105,12 @@ def _render_sale_form() -> None:
         help="Backdated entries are allowed; future dates are rejected.",
     )
 
-    if st.button("Record sale", key="sale_submit", type="primary"):
+    if st.button(
+        "Record sale",
+        key="sale_submit",
+        type="primary",
+        icon=":material/check:",
+    ):
         if isinstance(sale_date, str):  # no date chosen
             st.error("Sale date is required.")
             return
@@ -142,6 +158,7 @@ def _find_by_sku(products: list, sku: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _render_sales_history() -> None:
+    section("history", "Sales history")
     # Products of any state: deactivated products keep their records
     # visible (DEC-048).
     try:
@@ -151,7 +168,11 @@ def _render_sales_history() -> None:
         st.error(f"Could not load sales history: {error}")
         return
     if not products:
-        st.info("No products yet — sales history will appear here.")
+        empty_state(
+            "No products yet",
+            "Sales history appears here once products and sales exist.",
+            icon="history",
+        )
         return
 
     product_names = {product["id"]: product for product in products}
@@ -185,7 +206,10 @@ def _render_sales_history() -> None:
         start, end = None, None
     else:
         if start_date > end_date:
-            st.warning("The 'From' date is after the 'To' date.")
+            st.warning(
+                "The 'From' date is after the 'To' date.",
+                icon=":material/event_busy:",
+            )
             return
         start = start_date.isoformat()
         end = end_date.isoformat()
@@ -205,12 +229,16 @@ def _render_sales_history() -> None:
     )
     if not sales:
         if all_time and filtered == ALL:
-            st.info(
-                "No sales recorded yet — record the first sale in the "
-                "Record sale tab."
+            empty_state(
+                "No sales recorded yet",
+                "Record the first sale in the **Record sale** tab.",
+                icon="receipt",
             )
         else:
-            st.info("No sales match the current filters.")
+            st.info(
+                "No sales match the current filters.",
+                icon=":material/filter_alt:",
+            )
         return
 
     _render_sales_table(sales, product_names)

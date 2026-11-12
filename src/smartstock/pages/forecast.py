@@ -12,7 +12,12 @@ import streamlit as st
 from smartstock.database.connection import DatabaseError
 from smartstock.ml import model_artifacts
 from smartstock.ml.inference import DEFAULT_HORIZON_DAYS, SUPPORTED_HORIZONS
-from smartstock.pages.ui import show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import (
     evaluation_service,
     forecast_service,
@@ -36,11 +41,12 @@ MODEL_LABELS = {
 
 def render() -> None:
     """Render the Forecast page."""
-    st.title("🔮 Demand Forecast")
-    st.caption(
+    page_header(
+        "query_stats",
+        "Demand Forecast",
         "Advisory demand estimates per product, based on the linked "
         "dataset item's imported sales history. Forecasts are "
-        "estimates — not guaranteed outcomes."
+        "estimates — not guaranteed outcomes.",
     )
 
     show_flash()
@@ -51,9 +57,10 @@ def render() -> None:
         st.error(f"Could not load products: {error}")
         return
     if not products:
-        st.info(
-            "No active products yet. Add products on the Products & "
-            "Inventory page first."
+        empty_state(
+            "No active products yet",
+            "Add products on the Products & Inventory page first.",
+            icon="inventory_2",
         )
         _render_evaluation()
         return
@@ -77,7 +84,12 @@ def render() -> None:
     product = options[selection]
     _render_link_status(product)
 
-    if st.button("Generate forecast", key="forecast_generate"):
+    if st.button(
+        "Generate forecast",
+        key="forecast_generate",
+        type="primary",
+        icon=":material/rocket_launch:",
+    ):
         _render_forecast(product["id"], horizon)
 
     _render_evaluation()
@@ -91,13 +103,14 @@ def _render_evaluation() -> None:
     one-touch test-window discipline intact. The numbers are the
     measured values from model selection, never illustrative ones.
     """
-    st.subheader("📐 How accurate is the model?")
+    section("monitoring", "How accurate is the model?")
     try:
         summary = evaluation_service.get_evaluation_summary()
     except model_artifacts.ArtifactError as error:
         st.info(
             "Evaluation metrics become available after the model is "
-            "trained — run ``scripts/train_model.py`` first."
+            "trained — run ``scripts/train_model.py`` first.",
+            icon=":material/speed:",
         )
         st.caption(str(error))
         return
@@ -119,6 +132,8 @@ def _render_evaluation() -> None:
                     f"RMSE {window['rmse']} over "
                     f"{window['predictions']:,} product-days."
                 ),
+                icon=":material/monitoring:",
+                border=True,
             )
     if summary["baselines"]:
         st.caption(
@@ -145,10 +160,11 @@ def _render_link_status(product: dict) -> None:
             f"'{product['name']}' has no dataset item linked yet. Set "
             "'Linked dataset item' in the product's edit form "
             "(Replenishing → Edit product) to enable forecasting "
-            "(DEC-060)."
+            "(DEC-060).",
+            icon=":material/link_off:",
         )
     else:
-        st.caption(f"Linked dataset item: {linked}")
+        st.caption(f":material/link: Linked dataset item: {linked}")
 
 
 def _render_forecast(product_id: int, horizon: int) -> None:
@@ -156,28 +172,26 @@ def _render_forecast(product_id: int, horizon: int) -> None:
     try:
         result = forecast_service.get_forecast(product_id, horizon)
     except forecast_service.ProductNotLinkError as error:
-        st.info(str(error))
+        st.info(str(error), icon=":material/link_off:")
         return
     except model_artifacts.ArtifactError as error:
         st.warning(
             "The forecasting model artifact is not available — run "
-            "``scripts/train_model.py`` first."
+            "``scripts/train_model.py`` first.",
+            icon=":material/pending:",
         )
         st.caption(str(error))
         return
     except forecast_service.ForecastError as error:
         # e.g. the DEC-058 "No suitable history exists" state or an
         # unsupported horizon: understandable conditions, not crashes.
-        st.info(f"Forecast not available: {error}")
+        st.info(f"Forecast not available: {error}", icon=":material/info:")
         return
     except (DatabaseError, ValueError) as error:
         st.error(f"Could not generate the forecast: {error}")
         return
 
-    st.subheader(
-        f"Forecast for {result['product']['name']} "
-        f"({result['product']['sku']})"
-    )
+    section("insights", f"Forecast for {result['product']['name']} ({result['product']['sku']})")
     st.caption(f"Method: {MODEL_LABELS.get(result['model_used'], result['model_used'])}")
 
     rows = result["rows"]
@@ -186,12 +200,21 @@ def _render_forecast(product_id: int, horizon: int) -> None:
     columns[0].metric(
         f"Total demand ({result['horizon_days']} days)",
         f"{total:.1f}",
+        icon=":material/trending_up:",
+        border=True,
     )
     columns[1].metric(
         "Average per day",
         f"{total / len(rows):.1f}",
+        icon=":material/calendar_month:",
+        border=True,
     )
-    columns[2].metric("Dataset item", result["dataset_item_id"])
+    columns[2].metric(
+        "Dataset item",
+        result["dataset_item_id"],
+        icon=":material/dataset:",
+        border=True,
+    )
 
     import pandas as pd
 

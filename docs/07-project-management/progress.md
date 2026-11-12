@@ -712,6 +712,24 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: None.
 - Next Steps: The only open item remains TASK-047's owner manual pass; future-scope features await explicit approval.
 
+### UI/UX Professionalization (DEC-064)
+
+- Date: 2026-11-12.
+- Status: All user-facing pages share one design system; every emoji replaced with a Material Symbols icon; behavior and business logic unchanged.
+- Work Completed (owner-directed UI/UX task):
+  - Audit: read the UI/docs layer (ui-overview, pages-specification, dashboard-specification) and all seven pages; inventoried every emoji use and every pinned UI string.
+  - Icons: replaced all emojis (nav, page titles, section headings, metric cards, tabs, empty states, alerts, download/export buttons, action buttons, import validation expanders, favicon) with Material Symbols (Rounded) via Streamlit's native `icon=` parameters and `:material/name:` shortcodes. Chosen because the font ships inside Streamlit (served locally, validated server-side against a 4,301-name whitelist, built-in aria labels) — zero new dependencies and zero CSS injection; verified the bundled font carries the needed ligatures.
+  - Theme: `.streamlit/config.toml` defines the whole palette natively — brand blue `#2563eb`, neutral surfaces, semantic green/orange/yellow/red state colors, borders/radii, dataframe header styling, and a brand-led chart palette. No custom CSS anywhere.
+  - Shared helpers in `pages/ui.py`: `page_header`, `section`, `empty_state`, plus standardized flash alert icons — every page now has the same header/heading/empty-state structure.
+  - Per page: consistent bordered metric cards with icons; standardized empty states explaining why data is missing and what to do next; product table status cells tinted semantically via pandas Styler (replacing emoji markers); import preview/result metrics with icons; forecast/restock sections restructured under icon headings.
+  - `app.py`: SVG favicon (`assets/favicon.svg`) instead of the emoji page icon; navigation icons converted to `:material/name:` entries.
+- Tests Executed: full pytest suite (after removing an invalid `icon=` on `st.caption`, caught by tests); emoji scan of `src/` + `app.py` (0 matches); icon-name validation against Streamlit's whitelist (72 names used, 0 invalid); headless server smoke test (HTTP 200, health 200, favicon media endpoint 200).
+- Test Results: 435/435 passed. No tests were modified — the icons are attached via `icon=` parameters, so all pinned UI strings kept their values.
+- Tasks Updated: none (maintenance work recorded here and in DEC-064; task-breakdown covers TASK-001…049 only).
+- Decisions Made: DEC-064 (design system: Material Symbols via Streamlit-native support, native theme, SVG favicon).
+- Blockers: Browser-based visual inspection is unavailable in this environment — client-side rendering is verified from the installed Streamlit code paths (markdown/icon rendering and font ligatures) rather than screenshots; the owner's manual pass (TASK-047 checklist) provides visual confirmation.
+- Next Steps: Owner manual UI pass (TASK-047); any further visual feedback from the owner rides on the existing maintenance rhythm.
+
 ### Documentation Consistency Review Completed (TASK-048)
 
 - Date: 2026-11-11/12.

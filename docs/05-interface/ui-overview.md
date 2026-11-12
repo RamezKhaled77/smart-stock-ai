@@ -47,20 +47,20 @@ The initial version assumes a simple single-store workflow.
 
 ## 4. Application Structure
 
-The application will use Streamlit.
+The application uses Streamlit with its built-in navigation
+(`st.navigation`), grouped into five sidebar sections:
 
-The proposed navigation structure is:
+| Group | Pages |
+|---|---|
+| Overview | Dashboard |
+| Inventory | Products & Inventory, Restocking Recommendations |
+| Sales | Sales Management, Sales Analytics |
+| Forecasting | Demand Forecast |
+| Data | Data Import |
 
-1. Dashboard
-2. Products & Inventory
-3. Sales Management
-4. Sales Analytics
-5. AI Forecasting
-6. CSV Import
-
-The exact navigation layout may be implemented using Streamlit's built-in navigation capabilities.
-
-The application should provide a consistent navigation experience across all pages.
+Each navigation entry and every page header carries an icon from the
+Material Symbols (Rounded) set (§6), so users can orient themselves
+visually as well as by label.
 
 ---
 
@@ -95,30 +95,54 @@ Important actions should be easy to find.
 
 ---
 
-## 6. Visual Direction
+## 6. Visual Direction and Design System
 
-The interface should follow a clean dashboard-style design.
+The interface follows a clean dashboard-style design, implemented as a
+design system recorded in DEC-064:
 
-Recommended visual characteristics:
+### Icons — Material Symbols (Rounded)
 
-- Light and readable layout.
-- Consistent spacing.
-- Clear typography.
-- Limited use of colors.
-- Consistent chart styling.
-- Simple data tables.
-- Clear visual hierarchy.
+All icons come from the Material Symbols (Rounded) library through
+Streamlit's native support: navigation entries, page titles
+(`st.title(..., icon=...)`), section headings (`st.subheader`),
+metrics (`st.metric(icon=...)`), alerts, buttons, download buttons, and
+expanders. No emojis appear anywhere in the interface, no icon
+dependency was added (Streamlit ships the icon font), and icons carry
+Streamlit's built-in accessibility labels. Emojis must not be
+introduced back; new icons use `:material/name:` shortcodes or `icon=`
+parameters with names validated against Streamlit's icon whitelist.
 
-Use color to communicate meaning rather than decoration.
+### Colors — native theme (`.streamlit/config.toml`)
 
-Suggested semantic usage:
+| Token | Value | Use |
+|---|---|---|
+| Primary | `#2563eb` | Primary actions, links, chart lead color |
+| Background | `#ffffff` | Content area |
+| Secondary background | `#f1f5f9` | Sidebar and secondary surfaces |
+| Text | `#0f172a` | Body text |
+| Border | `#e2e8f0` | Widget and table borders |
+| Green | `#16a34a` | Success / In Stock |
+| Orange | `#ea580c` | Attention / Low Stock |
+| Yellow | `#ca8a04` | Warning |
+| Red | `#dc2626` | Error / Out of Stock |
+| Chart palette | brand-led categorical set | All charts |
 
-- Green: Healthy or positive status.
-- Yellow or orange: Warning or attention required.
-- Red: Critical or error state.
-- Neutral colors: General information.
+Semantic usage:
 
-These are design suggestions, not a finalized brand identity.
+- Green: healthy or positive status.
+- Yellow or orange: warning or attention required.
+- Red: critical or error state.
+- Neutral colors: general information.
+
+Color communicates meaning rather than decoration; there are no
+gradients and no decorative styling.
+
+### Typography and spacing
+
+Streamlit's default Source Sans family with a 16 px base size; titles,
+subheaders, and captions provide the hierarchy (title → subheader →
+body/caption). Metric cards use bordered cards with icons; sections are
+separated by consistent subheaders. Dark theme is not provided in v1.
 
 ---
 
@@ -288,13 +312,18 @@ Advanced design systems, complex animations, and custom frontend frameworks are 
 
 ## 15. Open Decisions
 
-- Final color palette.
-- Final typography.
-- Application logo or icon.
-- Exact navigation layout.
-- Whether a dark theme is required.
-- Detailed chart configurations.
-- Whether table filtering and sorting require custom controls.
+Resolved (see §6 and DEC-064):
+
+- Final color palette — implemented in `.streamlit/config.toml`.
+- Final typography — Streamlit defaults (Source Sans family, 16 px).
+- Application logo or icon — `assets/favicon.svg` (package mark on the
+  brand-blue tile).
+- Exact navigation layout — `st.navigation` with five sidebar groups.
+- Whether a dark theme is required — not in v1.
+- Detailed chart configurations — Streamlit built-in charts with the
+  themed categorical palette.
+- Whether table filtering and sorting require custom controls — Streamlit
+  dataframe sorting plus the page-level search/filter controls in place.
 
 ---
 

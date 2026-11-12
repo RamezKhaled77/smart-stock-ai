@@ -12,14 +12,16 @@ Streamlit pages must not contain duplicated business logic or direct database im
 
 ## 2. Navigation Structure
 
-The proposed application pages are:
+The application pages are, grouped into five sidebar sections of
+`st.navigation` (see `ui-overview.md` §4):
 
-1. Dashboard
-2. Products & Inventory
-3. Sales Management
-4. Sales Analytics
-5. AI Forecasting
-6. CSV Import
+1. Dashboard (Overview group)
+2. Products & Inventory (Inventory group)
+3. Restocking Recommendations (Inventory group)
+4. Sales Management (Sales group)
+5. Sales Analytics (Sales group)
+6. Demand Forecast (Forecasting group)
+7. Data Import (Data group)
 
 Each page should be accessible through the application's main navigation.
 

@@ -11,7 +11,13 @@ import streamlit as st
 
 from smartstock.database.connection import DatabaseError
 from smartstock.domain.csv_import import CsvFileError, CsvStructureError
-from smartstock.pages.ui import flash, show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    flash,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import import_service
 from smartstock.services.import_service import (
     DuplicateImportError,
@@ -25,12 +31,13 @@ LAST_IMPORT_KEY = "import_last_result"
 
 def render() -> None:
     """Render the Data Import page."""
-    st.title("📥 Data Import")
-    st.caption(
+    page_header(
+        "upload_file",
+        "Data Import",
         "Historical CSV import for forecasting (format: date, store, "
         "item, sales). Rows are filtered to store 1 per the project's "
         "single-store decision. Imports never change current stock — "
-        "they only feed analysis and forecasting."
+        "they only feed analysis and forecasting.",
     )
 
     show_flash()
@@ -41,9 +48,11 @@ def render() -> None:
         key="import_file",
     )
     if uploaded is None:
-        st.info(
+        empty_state(
+            "Nothing uploaded yet",
             "Upload a CSV file to validate it and preview the records "
-            "before importing. Nothing is stored until you confirm."
+            "before importing. Nothing is stored until you confirm.",
+            icon="upload",
         )
         _render_import_history()
         return
@@ -51,7 +60,10 @@ def render() -> None:
     try:
         preview = import_service.preview_import(uploaded)
     except (CsvFileError, CsvStructureError) as error:
-        st.error(f"The file cannot be imported: {error}")
+        st.error(
+            f"The file cannot be imported: {error}",
+            icon=":material/error:",
+        )
         return
 
     _render_preview(uploaded, preview)
@@ -62,7 +74,7 @@ def _render_preview(uploaded, preview) -> None:
     """Render the validation summary for one uploaded file (spec §8)."""
     already_imported = _is_current_file_imported(preview)
 
-    st.subheader("📋 Preview")
+    section("fact_check", "Preview")
     st.caption(
         f"{preview.filename} — {preview.file_size_bytes:,} bytes · "
         f"fingerprint {preview.sha256_fingerprint[:16]}…"
@@ -78,15 +90,29 @@ def _render_preview(uploaded, preview) -> None:
         return
 
     store_rows = st.columns(4)
-    store_rows[0].metric("Rows in file", f"{preview.total_rows:,}")
+    store_rows[0].metric(
+        "Rows in file",
+        f"{preview.total_rows:,}",
+        icon=":material/description:",
+        border=True,
+    )
     store_rows[1].metric(
-        "Valid for store 1", f"{preview.valid_row_count:,}"
+        "Valid for store 1",
+        f"{preview.valid_row_count:,}",
+        icon=":material/check_circle:",
+        border=True,
     )
     store_rows[2].metric(
-        "Rejected (invalid)", f"{preview.invalid_in_scope_rows:,}"
+        "Rejected (invalid)",
+        f"{preview.invalid_in_scope_rows:,}",
+        icon=":material/cancel:",
+        border=True,
     )
     store_rows[3].metric(
-        "Other stores", f"{preview.out_of_store_rows:,}"
+        "Other stores",
+        f"{preview.out_of_store_rows:,}",
+        icon=":material/filter_alt:",
+        border=True,
     )
 
     if preview.date_range is not None:
@@ -103,7 +129,8 @@ def _render_preview(uploaded, preview) -> None:
     if not preview.importable:
         st.warning(
             "Nothing to import: the file contains no valid rows for "
-            "store 1."
+            "store 1.",
+            icon=":material/warning:",
         )
         return
 
@@ -134,6 +161,7 @@ def _render_confirm_import(uploaded, preview) -> None:
         f"Import {preview.valid_row_count:,} record(s)",
         key="import_confirm",
         type="primary",
+        icon=":material/upload_2:",
         help="Validated rows are stored in one transaction. Historical "
         "records never change current stock.",
     ):
@@ -166,19 +194,34 @@ def _render_confirm_import(uploaded, preview) -> None:
 def _render_import_result(result) -> None:
     """Show the spec §14 summary for the file's stored import batch."""
     st.success(
-        f"✅ Import completed — batch #{result.batch_id} "
-        f"({result.created_at})."
+        f"Import completed — batch #{result.batch_id} "
+        f"({result.created_at}).",
+        icon=":material/task_alt:",
     )
     metric_columns = st.columns(4)
-    metric_columns[0].metric("Accepted and stored", f"{result.imported_rows:,}")
+    metric_columns[0].metric(
+        "Accepted and stored",
+        f"{result.imported_rows:,}",
+        icon=":material/check_circle:",
+        border=True,
+    )
     metric_columns[1].metric(
-        "Rejected (invalid)", f"{result.rejected_rows:,}"
+        "Rejected (invalid)",
+        f"{result.rejected_rows:,}",
+        icon=":material/cancel:",
+        border=True,
     )
     metric_columns[2].metric(
-        "Duplicates skipped", f"{result.duplicate_rows:,}"
+        "Duplicates skipped",
+        f"{result.duplicate_rows:,}",
+        icon=":material/compare_arrows:",
+        border=True,
     )
     metric_columns[3].metric(
-        "Other stores", f"{result.out_of_store_rows:,}"
+        "Other stores",
+        f"{result.out_of_store_rows:,}",
+        icon=":material/filter_alt:",
+        border=True,
     )
     date_note = (
         f" · accepted rows span {result.date_range[0]} → "
@@ -193,13 +236,14 @@ def _render_import_result(result) -> None:
     )
     st.info(
         "To import more data, upload a different CSV file. Re-uploading "
-        "this exact file is rejected by its fingerprint (DEC-053)."
+        "this exact file is rejected by its fingerprint (DEC-053).",
+        icon=":material/sync:",
     )
 
 
 def _render_import_history() -> None:
     """Expandable overview of all recorded import batches (TASK-025)."""
-    with st.expander("📚 Previous imports", expanded=False):
+    with st.expander("Previous imports", icon=":material/history:"):
         try:
             summary = import_service.get_import_summary()
         except DatabaseError as error:
@@ -210,7 +254,10 @@ def _render_import_history() -> None:
             f"in total across {len(summary['batches'])} import run(s)."
         )
         if not summary["batches"]:
-            st.info("No imports recorded yet.")
+            st.info(
+                "No imports recorded yet.",
+                icon=":material/history:",
+            )
             return
         import pandas as pd
 
@@ -240,22 +287,28 @@ def _render_validation_examples(preview) -> None:
     """Show capped lists of rejected and duplicate rows (spec §13)."""
     sections = [
         (
-            "❌ Rejected rows",
+            "Rejected rows",
+            ":material/cancel:",
             preview.rejected_rows,
             preview.rejected_truncated,
         ),
         (
-            "🔁 Within-file duplicates",
+            "Within-file duplicates",
+            ":material/compare_arrows:",
             preview.duplicate_rows,
             preview.duplicate_truncated,
         ),
     ]
     expanders = [col.container() for col in st.columns(len(sections))]
-    for container, (title, rows, truncated) in zip(expanders, sections):
+    for container, (title, icon, rows, truncated) in zip(
+        expanders, sections
+    ):
         if not rows:
             continue
         with container:
-            with st.expander(f"{title} ({len(rows)} shown)"):
+            with st.expander(
+                f"{title} ({len(rows)} shown)", icon=icon
+            ):
                 if truncated:
                     st.caption(
                         "Showing the first examples only — see the "

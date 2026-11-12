@@ -25,9 +25,13 @@ from smartstock.pages.products import render as products_render
 from smartstock.pages.restock import render as restock_render
 from smartstock.pages.sales import render as sales_render
 
+APP_ROOT = Path(__file__).resolve().parent
+
 st.set_page_config(
     page_title="SmartStock AI",
-    page_icon="📦",
+    # Streamlit accepts a path to an image as the browser-tab icon; the
+    # SVG brand mark avoids an emoji favicon.
+    page_icon=str(APP_ROOT / "assets" / "favicon.svg"),
     layout="wide",
 )
 
@@ -41,19 +45,24 @@ def dashboard() -> None:
 page = st.navigation(
     {
         "Overview": [
-            st.Page(dashboard, title="Dashboard", icon="🏠", default=True),
+            st.Page(
+                dashboard,
+                title="Dashboard",
+                icon=":material/home:",
+                default=True,
+            ),
         ],
         "Inventory": [
             st.Page(
                 products_render,
                 title="Products & Inventory",
-                icon="🏷️",
+                icon=":material/inventory_2:",
                 url_path="products-and-inventory",
             ),
             st.Page(
                 restock_render,
                 title="Restocking Recommendations",
-                icon="📦",
+                icon=":material/package_2:",
                 url_path="restocking-recommendations",
             ),
         ],
@@ -61,13 +70,13 @@ page = st.navigation(
             st.Page(
                 sales_render,
                 title="Sales Management",
-                icon="🧾",
+                icon=":material/receipt_long:",
                 url_path="sales-management",
             ),
             st.Page(
                 analytics_render,
                 title="Sales Analytics",
-                icon="📊",
+                icon=":material/insights:",
                 url_path="sales-analytics",
             ),
         ],
@@ -75,7 +84,7 @@ page = st.navigation(
             st.Page(
                 forecast_render,
                 title="Demand Forecast",
-                icon="🔮",
+                icon=":material/query_stats:",
                 url_path="demand-forecast",
             ),
         ],
@@ -83,7 +92,7 @@ page = st.navigation(
             st.Page(
                 imports_render,
                 title="Data Import",
-                icon="📥",
+                icon=":material/upload_file:",
                 url_path="data-import",
             ),
         ],

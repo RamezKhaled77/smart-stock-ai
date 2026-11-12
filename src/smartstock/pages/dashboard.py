@@ -12,17 +12,23 @@ import pandas as pd
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
-from smartstock.pages.ui import show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import dashboard_service
 
 
 def render() -> None:
     """Render the Dashboard page."""
-    st.title("🏠 Dashboard")
-    st.caption(
+    page_header(
+        "dashboard",
+        "Dashboard",
         "Snapshot of the current inventory and sales situation. All "
         "windows end at today (UTC); restocking advice stays advisory "
-        "(DEC-031)."
+        "(DEC-031).",
     )
 
     show_flash()
@@ -53,39 +59,59 @@ def _render_metrics(data: dict) -> None:
     """DEC-061 metric rows."""
     top = st.columns(3)
     top[0].metric(
-        "Active products", data["total_active_products"]
+        "Active products",
+        data["total_active_products"],
+        icon=":material/inventory:",
+        border=True,
     )
-    top[1].metric("Total stock", data["total_stock"])
+    top[1].metric(
+        "Total stock",
+        data["total_stock"],
+        icon=":material/package:",
+        border=True,
+    )
     top[2].metric(
         "Products needing reorder",
         data["products_needing_reorder"],
         help="Current stock at or below the reorder point (BR-022). "
         "Products without sales history are not counted yet.",
+        icon=":material/priority_high:",
+        border=True,
     )
 
     recent = data["recent_sales"]
     bottom = st.columns(3)
     bottom[0].metric(
-        "Units sold (last 7 days)", recent["units_sold"]
+        "Units sold (last 7 days)",
+        recent["units_sold"],
+        icon=":material/shopping_cart:",
+        border=True,
     )
     bottom[1].metric(
-        "Sales recorded (last 7 days)", recent["sale_count"]
+        "Sales recorded (last 7 days)",
+        recent["sale_count"],
+        icon=":material/receipt:",
+        border=True,
     )
     bottom[2].metric(
         "Top seller (30 days)",
         data["top_products"][0]["units_sold"] if data["top_products"] else 0,
         help="Units sold by the best-selling product of the last 30 "
         "days.",
+        icon=":material/trophy:",
+        border=True,
     )
 
 
 def _render_trend(data: dict, trend_days: int) -> None:
     """TASK-038: daily sales trend for the selected window."""
-    st.subheader(f"📈 Sales trend — last {trend_days} days")
+    section("insights", f"Sales trend — last {trend_days} days")
     if not data["trend"]:
-        st.info(
-            "No sales recorded in this window yet. Record sales on "
-            "the Sales Management page to see trends."
+        empty_state(
+            "No sales in this window",
+            "Record sales on the Sales Management page to see trends "
+            "here.",
+            icon="insights",
         )
         return
     frame = pd.DataFrame(
@@ -102,9 +128,14 @@ def _render_trend(data: dict, trend_days: int) -> None:
 
 def _render_top_products(data: dict) -> None:
     """DEC-061: best sellers of the last 30 days."""
-    st.subheader("🏆 Top sellers — last 30 days")
+    section("trophy", "Top sellers — last 30 days")
     if not data["top_products"]:
-        st.info("No sales recorded in the last 30 days.")
+        empty_state(
+            "No sales in the last 30 days",
+            "Once sales are recorded, the best-selling products appear "
+            "here.",
+            icon="trophy",
+        )
         return
     table = pd.DataFrame(
         [
@@ -131,10 +162,13 @@ def _render_top_products(data: dict) -> None:
 
 def _render_low_stock(data: dict) -> None:
     """TASK-039: products meeting the approved low-stock conditions."""
-    st.subheader("⚠️ Low-stock overview")
+    section("warning", "Low-stock overview")
     low_stock = data["low_stock"]
     if not low_stock:
-        st.success("All products are In Stock.")
+        st.success(
+            "All products are In Stock.",
+            icon=":material/check_circle:",
+        )
         return
     st.warning(
         f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
@@ -172,17 +206,20 @@ def _render_low_stock(data: dict) -> None:
 def _render_forecast_readiness(data: dict) -> None:
     """DEC-061: forecast-readiness line (DEC-060 links)."""
     ready = data["forecast_ready"]
-    st.subheader("🔮 Forecast readiness")
+    section("rocket_launch", "Forecast readiness")
     if ready["total"] == 0:
-        st.info(
-            "No active products yet. Add products to start forecasting."
+        empty_state(
+            "No active products yet",
+            "Add products to start forecasting.",
+            icon="inventory_2",
         )
         return
     if ready["linked"] == 0:
         st.info(
             "No product is linked to a dataset item yet, so nothing is "
             "forecastable. Link items on the Products & Inventory page "
-            "(DEC-060), then open Demand Forecast."
+            "(DEC-060), then open Demand Forecast.",
+            icon=":material/link_off:",
         )
         return
     st.caption(

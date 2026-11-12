@@ -13,18 +13,24 @@ Inventory page; the decision to order stays with the user.
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
-from smartstock.pages.ui import show_flash
+from smartstock.pages.ui import (
+    empty_state,
+    page_header,
+    section,
+    show_flash,
+)
 from smartstock.services import restock_service
 from smartstock.utils.export import to_csv
 
 
 def render() -> None:
     """Render the restocking recommendations page."""
-    st.title("📦 Restocking Recommendations")
-    st.caption(
+    page_header(
+        "package_2",
+        "Restocking Recommendations",
         "Advisory only — nothing is ordered automatically. Demand is "
         "the average daily sold quantity up to the most recent sale "
-        "(days without sales count as zero)."
+        "(days without sales count as zero).",
     )
 
     show_flash()
@@ -36,9 +42,11 @@ def render() -> None:
         return
 
     if not recommendations:
-        st.info(
-            "No active products yet. Add products on the Products & "
-            "Inventory page to receive restocking recommendations."
+        empty_state(
+            "No active products yet",
+            "Add products on the Products & Inventory page to receive "
+            "restocking recommendations.",
+            icon="inventory_2",
         )
         return
 
@@ -54,30 +62,43 @@ def render() -> None:
 
     columns = st.columns(3)
     columns[0].metric(
-        "Products needing reorder", len(needs_attention)
+        "Products needing reorder",
+        len(needs_attention),
+        icon=":material/priority_high:",
+        border=True,
     )
-    columns[1].metric("Recommendations available", len(available))
+    columns[1].metric(
+        "Recommendations available",
+        len(available),
+        icon=":material/fact_check:",
+        border=True,
+    )
     columns[2].metric(
-        "Without enough data", len(unavailable),
+        "Without enough data",
+        len(unavailable),
         help="No sales history or no stock level recorded yet.",
+        icon=":material/pending:",
+        border=True,
     )
 
     if needs_attention:
-        st.subheader("🛒 Consider restocking")
+        section("shopping_cart", "Consider restocking")
         _render_recommendation_table(needs_attention)
         _render_explanations(needs_attention)
         _download_recommendations(needs_attention)
     else:
         st.success(
-            "No product is at or below its reorder point right now."
+            "No product is at or below its reorder point right now.",
+            icon=":material/check_circle:",
         )
 
     if unavailable:
-        st.subheader("ℹ️ Not available yet")
+        section("info", "Not available yet")
         for row in unavailable:
             st.info(
                 f"**{row['product_name']}** ({row['product_sku']}): "
-                f"{row['unavailable_reason']}"
+                f"{row['unavailable_reason']}",
+                icon=":material/info:",
             )
 
 
@@ -94,11 +115,12 @@ def _download_recommendations(rows: list) -> None:
         "stock_status",
     ]
     st.download_button(
-        "⬇️ Export recommendations (CSV)",
+        "Export recommendations (CSV)",
         data=to_csv(rows, columns),
         file_name="restocking-recommendations.csv",
         mime="text/csv",
         key="export_recommendations",
+        icon=":material/download:",
     )
 
 
@@ -138,6 +160,7 @@ def _render_explanations(rows: list) -> None:
     for row in rows:
         with st.expander(
             f"{row['product_name']} ({row['product_sku']}) — "
-            f"order {row['recommended_order_quantity']} unit(s)"
+            f"order {row['recommended_order_quantity']} unit(s)",
+            icon=":material/lightbulb:",
         ):
             st.markdown(row["explanation"])

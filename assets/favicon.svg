@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- SmartStock AI brand mark: a package cube on the brand-blue tile -->
+  <rect width="64" height="64" rx="14" fill="#2563eb"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M32 12 L52 22 V42 L32 52 L12 42 V22 Z"/>
+    <path d="M12 22 L32 32 L52 22"/>
+    <path d="M32 32 V52"/>
+    <path d="M22 17 L42 27"/>
+  </g>
+</svg>
