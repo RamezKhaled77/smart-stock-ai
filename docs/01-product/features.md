@@ -56,10 +56,6 @@ Unless explicitly approved in the project decision log, features in this documen
 
 **Status:** Accepted (TASK-037/038/039, 2026-11-10/11 — DEC-061 metric set)
 
-**Priority:** Core
-
-**Status:** Proposed
-
 ### Description
 
 The Dashboard provides a summarized view of the business's inventory and sales activity.
@@ -102,7 +98,7 @@ The exact metrics must be finalized during UI and business-rule design.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (implemented in Phases 2–3; products pages + service, DEC-047/048/050/051/060)
 
 ### Description
 
@@ -156,7 +152,7 @@ See `../02-architecture/database-schema.md`.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (implemented — stock adjustments and exact-stock corrections, DEC-034/047)
 
 ### Description
 
@@ -201,7 +197,7 @@ The system should maintain consistency between:
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (implemented — manual sales entry with atomic insufficient-stock rejection, immutable history, DEC-035/049/050/051)
 
 ### Description
 
@@ -252,7 +248,7 @@ The final storage approach must support the forecasting requirements.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (implemented — historical-sales import with fingerprint rejection and all-or-nothing batches, DEC-052/053/054/055)
 
 ### Description
 
@@ -410,7 +406,7 @@ These are candidates, not final model selections.
 
 **Priority:** Core
 
-**Status:** Proposed
+**Status:** Accepted (implemented — BR-008 statuses on the inventory listing, dashboard low-stock overview, and restocking page; the warning threshold is the DEC-032 reorder point)
 
 ### Description
 

@@ -938,7 +938,7 @@ Completion record (2026-11-11, **partially complete — human pass pending**): m
 ### TASK-048: Review Documentation Consistency
 
 - Priority: P0
-- Status: Not Started
+- Status: Verified
 - Dependencies: Core implementation
 
 Description:
@@ -950,6 +950,8 @@ Evidence:
 - Outdated instructions are corrected.
 - Implemented behavior is documented.
 - Open decisions and limitations remain visible.
+
+Completion record (2026-11-11): systematic review of README, features, user flows, testing strategy, and setup guide against the implemented application. Fixes: (1) `README.md` — status line, §9 Current Status, and the footer still claimed "documentation and planning phase / implementation not started"; now describe the implemented v1 (seven pages, DEC-057 model integrated, DEC-060 mapping), and §11 Getting Started gained real run/test commands instead of "will be added"; the §2 future-tense model-selection sentence updated to the measured DEC-027/057 outcome. (2) `features.md` — F-001 had a duplicated status block (removed); F-002 Product Management, F-003 Inventory Management, F-004 Sales Management, F-005 CSV Import, and F-008 Low-Stock Alerts were still "Proposed" despite being implemented and decision-pinned — all updated to Accepted with the governing decisions cited. (3) `user-flows.md` §10 — the demand-forecast flow now carries the v1 implementation notes (product-driven via DEC-060 link, DEC-058 fallback caption, DEC-062 stored evaluation display). (4) `testing-strategy.md` §12 and `setup-guide.md` — test commands corrected to the actually used `PYTHONPATH=src python -m pytest` and the flat `tests/` layout documented (no `tests/unit` dir; `tests/integration` holds the TASK-044 tests). Open limitations remain visible where they belong: F-011's untracked stock-warning history is noted on the analytics page and in its feature entry; F-006's revenue-analytics limitation is stated on the page and feature; DEC records and the decisions table are current through DEC-062. Suite still 430/430 after the doc edits.
 
 ---
 

@@ -298,25 +298,28 @@ Open that URL in a browser.
 
 With the virtual environment active:
 
-Run the full test suite:
+Run the full test suite (the package lives under `src/`, so the path
+must be on `PYTHONPATH`):
 
 ```
-python -m pytest
+PYTHONPATH=src python -m pytest
 ```
 
-Run unit tests:
+Run one file or class while developing:
 
 ```
-python -m pytest tests/unit
+PYTHONPATH=src python -m pytest tests/test_services_analytics.py
 ```
 
-Run integration tests:
+Integration tests (real `app.py` startup and end-to-end workflows):
 
 ```
-python -m pytest tests/integration
+PYTHONPATH=src python -m pytest tests/integration
 ```
 
-Use the actual test directory structure defined by the project.
+Note: the repository has no separate `tests/unit` layout — tests are
+organized flat under `tests/` by layer (repositories, database, domain,
+ML, services, pages, integration).
 
 ## 12. Recommended Development Workflow
 

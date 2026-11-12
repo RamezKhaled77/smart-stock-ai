@@ -6,7 +6,7 @@ SmartStock AI is a web-based inventory management and demand forecasting system 
 
 The project combines traditional inventory management with machine learning to support data-driven business decisions.
 
-> Project status: Documentation and planning phase.
+> Project status: v1 implementation complete (all seven pages, ML model trained and integrated); documentation and manual UI pass finishing.
 
 ---
 
@@ -23,7 +23,7 @@ These methods can make it difficult to:
 
 SmartStock AI aims to address these problems through a simple inventory management application supported by demand forecasting.
 
-The system will allow users to manage products and sales, analyze historical data, receive demand predictions, and view restocking recommendations.
+The system allows users to manage products and sales, analyze historical data, receive demand predictions, and view restocking recommendations.
 
 ## 2. Main Objectives
 
@@ -107,7 +107,7 @@ Potential models include:
 - Linear Regression.
 - Random Forest Regressor.
 
-The final model will be selected based on evaluation results, not assumptions.
+The final model was selected on measured evaluation results, not assumptions (DEC-027/DEC-057; see `docs/04-machine-learning/model-evaluation.md`).
 
 See `docs/04-machine-learning/` for the complete ML documentation.
 
@@ -147,20 +147,20 @@ See:
 
 ## 9. Current Project Status
 
-The project is currently in the documentation and planning phase.
-
-The documentation is being prepared before application implementation.
+Version 1 is implemented: the Streamlit application has seven pages
+(Dashboard, Products & Inventory, Restocking Recommendations, Sales
+Management, Sales Analytics, Demand Forecast, Data Import) backed by a
+layered service architecture, and the demand-forecasting model
+(Random Forest, DEC-057) is trained, artifact-persisted, and integrated
+behind the product ↔ dataset-item mapping (DEC-060).
 
 Current priorities:
 
-- Define the product and its requirements.
-- Investigate the proposed dataset.
-- Finalize technical decisions.
-- Design the database and system architecture.
-- Define the forecasting approach.
-- Prepare a practical implementation roadmap.
+- Owner walk-through of the manual test checklist
+  (`docs/06-development/manual-test-plan.md`).
+- Optional advanced features (TASK-049 export reports; further v2 ideas).
 
-The current status and completed work should be tracked in:
+The current status and completed work are tracked in:
 
 `docs/07-project-management/progress.md`
 
@@ -179,9 +179,19 @@ The current status and completed work should be tracked in:
 
 ## 11. Getting Started
 
-The application setup instructions will be added when the implementation structure and technology choices are finalized.
+Full setup instructions live in `docs/06-development/setup-guide.md`
+(virtual environment, dependencies, dataset, database). The short
+version, from the repository root:
 
-For now, start by reading:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+.venv/bin/python -m streamlit run app.py     # app.py adds src/ to sys.path itself
+PYTHONPATH=src .venv/bin/python -m pytest    # full automated suite (430 tests)
+```
+
+For background reading, start with:
 
 1. `AGENTS.md`
 2. `docs/00-foundation/project-overview.md`
@@ -193,10 +203,10 @@ For now, start by reading:
 
 ## Project Status
 
-**Phase:** Documentation and Planning
+**Phase:** v1 implemented — verification and documentation finishing
 
-**Implementation:** Not started
+**Implementation:** Seven pages, services/domain/ML layers, trained model integrated (see `docs/07-project-management/progress.md`)
 
-**Documentation:** In progress
+**Documentation:** Kept synchronized with implementation (TASK-048)
 
 **Development Workflow:** Autonomous with Guardrails

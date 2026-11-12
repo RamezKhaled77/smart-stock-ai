@@ -639,31 +639,32 @@ Test fixtures must be small enough to run quickly.
 
 ## 12. Test Execution
 
-The proposed basic test command is:
+The basic test command (the package lives under `src/`, so the path
+must be on `PYTHONPATH`; tests are organized flat under `tests/` by
+layer — there is no separate `tests/unit` layout):
 
 ```
-python -m pytest
+PYTHONPATH=src python -m pytest
 ```
 
-To run a specific test directory:
+To run one test file while developing:
 
 ```
-python -m pytest tests/unit
+PYTHONPATH=src python -m pytest tests/test_services_analytics.py
 ```
 
-To run integration tests:
+To run the integration tests (real `app.py` startup and end-to-end
+workflows):
 
 ```
-python -m pytest tests/integration
+PYTHONPATH=src python -m pytest tests/integration
 ```
 
 If coverage is installed:
 
 ```
-python -m pytest --cov
+PYTHONPATH=src python -m pytest --cov
 ```
-
-Use the actual test configuration and project structure when these commands are implemented.
 
 ## 13. Failure Handling
 

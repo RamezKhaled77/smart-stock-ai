@@ -666,3 +666,20 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new.
 - Blockers: The manual pass itself requires the project owner (agent cannot judge UI feel/wording); everything else proceeds.
 - Next Steps: TASK-048 documentation consistency review and TASK-049 export reports (independent of the manual pass); the checklist can be walked whenever the owner has time.
+
+### Documentation Consistency Review Completed (TASK-048)
+
+- Date: 2026-11-11/12.
+- Status: Documentation now matches the implemented application; all outdated statements corrected.
+- Work Completed:
+  - README.md: status corrected from "documentation and planning phase / implementation not started" to the implemented v1 state; Getting Started gained real run/test commands; model-selection wording updated to the measured DEC-027/057 outcome.
+  - features.md: F-001 duplicate status block removed; F-002/F-003/F-004/F-005/F-008 updated from "Proposed" to Accepted with governing decisions cited.
+  - user-flows.md §10: demand-forecast flow annotated with the v1 implementation notes (DEC-060 link, DEC-058 fallback, DEC-062 evaluation display).
+  - testing-strategy.md §12 + setup-guide.md: test commands corrected to `PYTHONPATH=src python -m pytest`; flat tests/ layout documented.
+  - Open limitations remain visible (F-011 untracked warning history, F-006 revenue limitation, DEC table current through DEC-062).
+- Tests Executed: full pytest suite after doc edits (docs-only changes verified not to break anything).
+- Test Results: 430/430 passed.
+- Tasks Updated: TASK-048 → Verified.
+- Decisions Made: None new.
+- Blockers: None recorded.
+- Next Steps: TASK-049 export reports (P2, optional for core), then phase wrap-up.

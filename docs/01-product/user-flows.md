@@ -281,6 +281,14 @@ Allow the user to view future demand predictions.
 8. System validates prediction outputs.
 9. System displays the results.
 
+**Implementation notes (v1):** forecasting is product-driven — the
+product must be linked to a dataset item (DEC-060) and predictions are
+computed from that item's imported history only. Items with fewer than
+31 observed days use the documented MA-7 fallback path (DEC-058), shown
+in the method caption; items with no history get an explicit
+explanation instead of a forecast. The page also displays the stored
+training-time evaluation metrics (DEC-062).
+
 ### Possible Outcomes
 
 **Successful Forecast:**
