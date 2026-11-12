@@ -105,125 +105,130 @@ def _render_metrics(data: dict) -> None:
 
 def _render_trend(data: dict, trend_days: int) -> None:
     """TASK-038: daily sales trend for the selected window."""
-    section("insights", f"Sales trend — last {trend_days} days")
-    if not data["trend"]:
-        empty_state(
-            "No sales in this window",
-            "Record sales on the Sales Management page to see trends "
-            "here.",
-            icon="insights",
+    with st.container(border=True):
+        section("insights", f"Sales trend — last {trend_days} days")
+        if not data["trend"]:
+            empty_state(
+                "No sales in this window",
+                "Record sales on the Sales Management page to see "
+                "trends here.",
+                icon="insights",
+            )
+            return
+        frame = pd.DataFrame(
+            {
+                "date": sorted(data["trend"]),
+                "Units sold": [
+                    data["trend"][day] for day in sorted(data["trend"])
+                ],
+            }
         )
-        return
-    frame = pd.DataFrame(
-        {
-            "date": sorted(data["trend"]),
-            "Units sold": [
-                data["trend"][day] for day in sorted(data["trend"])
-            ],
-        }
-    )
-    frame = frame.set_index(pd.to_datetime(frame["date"]))
-    st.line_chart(frame["Units sold"], width="stretch")
+        frame = frame.set_index(pd.to_datetime(frame["date"]))
+        st.line_chart(frame["Units sold"], width="stretch")
 
 
 def _render_top_products(data: dict) -> None:
     """DEC-061: best sellers of the last 30 days."""
-    section("trophy", "Top sellers — last 30 days")
-    if not data["top_products"]:
-        empty_state(
-            "No sales in the last 30 days",
-            "Once sales are recorded, the best-selling products appear "
-            "here.",
-            icon="trophy",
+    with st.container(border=True):
+        section("trophy", "Top sellers — last 30 days")
+        if not data["top_products"]:
+            empty_state(
+                "No sales in the last 30 days",
+                "Once sales are recorded, the best-selling products "
+                "appear here.",
+                icon="trophy",
+            )
+            return
+        table = pd.DataFrame(
+            [
+                {
+                    "Rank": index + 1,
+                    "Name": row["name"],
+                    "SKU": row["sku"],
+                    "Units sold": row["units_sold"],
+                }
+                for index, row in enumerate(data["top_products"])
+            ]
         )
-        return
-    table = pd.DataFrame(
-        [
-            {
-                "Rank": index + 1,
-                "Name": row["name"],
-                "SKU": row["sku"],
-                "Units sold": row["units_sold"],
-            }
-            for index, row in enumerate(data["top_products"])
-        ]
-    )
-    st.dataframe(
-        table,
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Units sold": st.column_config.NumberColumn(
-                "Units sold", format="%d",
-            ),
-        },
-    )
+        st.dataframe(
+            table,
+            hide_index=True,
+            width="stretch",
+            column_config={
+                "Units sold": st.column_config.NumberColumn(
+                    "Units sold", format="%d",
+                ),
+            },
+        )
 
 
 def _render_low_stock(data: dict) -> None:
     """TASK-039: products meeting the approved low-stock conditions."""
-    section("warning", "Low-stock overview")
-    low_stock = data["low_stock"]
-    if not low_stock:
-        st.success(
-            "All products are In Stock.",
-            icon=":material/check_circle:",
+    with st.container(border=True):
+        section("warning", "Low-stock overview")
+        low_stock = data["low_stock"]
+        if not low_stock:
+            st.success(
+                "All products are In Stock.",
+                icon=":material/check_circle:",
+            )
+            return
+        st.warning(
+            f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
+            "(current stock at or below the reorder point, BR-008).",
+            icon=":material/warning:",
         )
-        return
-    st.warning(
-        f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
-        "(current stock at or below the reorder point, BR-008)."
-    )
-    table = pd.DataFrame(
-        [
-            {
-                "Name": row["product_name"],
-                "SKU": row["product_sku"],
-                "Stock": row["current_stock"],
-                "Avg daily demand": row["average_daily_demand"],
-                "Reorder point": row["reorder_point"],
-                "Suggested order": row["recommended_order_quantity"],
-            }
-            for row in low_stock
-        ]
-    )
-    st.dataframe(
-        table,
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Avg daily demand": st.column_config.NumberColumn(
-                "Avg daily demand", format="%.2f",
-            ),
-        },
-    )
-    st.caption(
-        "Order suggestions are advisory (DEC-031). Review details on "
-        "the Restocking Recommendations page."
-    )
+        table = pd.DataFrame(
+            [
+                {
+                    "Name": row["product_name"],
+                    "SKU": row["product_sku"],
+                    "Stock": row["current_stock"],
+                    "Avg daily demand": row["average_daily_demand"],
+                    "Reorder point": row["reorder_point"],
+                    "Suggested order": row["recommended_order_quantity"],
+                }
+                for row in low_stock
+            ]
+        )
+        st.dataframe(
+            table,
+            hide_index=True,
+            width="stretch",
+            column_config={
+                "Avg daily demand": st.column_config.NumberColumn(
+                    "Avg daily demand", format="%.2f",
+                ),
+            },
+        )
+        st.caption(
+            "Order suggestions are advisory (DEC-031). Review details "
+            "on the Restocking Recommendations page."
+        )
 
 
 def _render_forecast_readiness(data: dict) -> None:
     """DEC-061: forecast-readiness line (DEC-060 links)."""
     ready = data["forecast_ready"]
-    section("rocket_launch", "Forecast readiness")
-    if ready["total"] == 0:
-        empty_state(
-            "No active products yet",
-            "Add products to start forecasting.",
-            icon="inventory_2",
+    with st.container(border=True):
+        section("rocket_launch", "Forecast readiness")
+        if ready["total"] == 0:
+            empty_state(
+                "No active products yet",
+                "Add products to start forecasting.",
+                icon="inventory_2",
+            )
+            return
+        if ready["linked"] == 0:
+            st.info(
+                "No product is linked to a dataset item yet, so "
+                "nothing is forecastable. Link items on the Products "
+                "& Inventory page (DEC-060), then open Demand Forecast.",
+                icon=":material/link_off:",
+            )
+            return
+        st.caption(
+            f"{ready['linked']} of {ready['total']} active products "
+            "are linked to a dataset item and can be forecast on the "
+            "Demand Forecast page."
         )
-        return
-    if ready["linked"] == 0:
-        st.info(
-            "No product is linked to a dataset item yet, so nothing is "
-            "forecastable. Link items on the Products & Inventory page "
-            "(DEC-060), then open Demand Forecast.",
-            icon=":material/link_off:",
-        )
-        return
-    st.caption(
-        f"{ready['linked']} of {ready['total']} active products are "
-        "linked to a dataset item and can be forecast on the Demand "
-        "Forecast page."
-    )

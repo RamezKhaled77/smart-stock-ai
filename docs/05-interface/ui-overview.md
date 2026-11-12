@@ -114,18 +114,23 @@ parameters with names validated against Streamlit's icon whitelist.
 
 ### Colors — native theme (`.streamlit/config.toml`)
 
-| Token | Value | Use |
-|---|---|---|
-| Primary | `#2563eb` | Primary actions, links, chart lead color |
-| Background | `#ffffff` | Content area |
-| Secondary background | `#f1f5f9` | Sidebar and secondary surfaces |
-| Text | `#0f172a` | Body text |
-| Border | `#e2e8f0` | Widget and table borders |
-| Green | `#16a34a` | Success / In Stock |
-| Orange | `#ea580c` | Attention / Low Stock |
-| Yellow | `#ca8a04` | Warning |
-| Red | `#dc2626` | Error / Out of Stock |
-| Chart palette | brand-led categorical set | All charts |
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| Primary | `#2563eb` | `#3b82f6` | Primary actions, links, chart lead color |
+| Background | `#ffffff` | `#0f172a` | Content area |
+| Secondary background | `#f1f5f9` | `#1e293b` | Secondary surfaces |
+| Sidebar background | `#e9eef7` | `#131f36` | Navigation rail |
+| Text | `#0f172a` | `#e2e8f0` | Body text |
+| Border | `#d3dbe7` | `#334155` | Widget, card, and table borders |
+| Green | `#16a34a` | `#4ade80` | Success / In Stock |
+| Orange | `#ea580c` | `#fb923c` | Attention / Low Stock |
+| Yellow | `#ca8a04` | `#facc15` | Warning |
+| Red | `#dc2626` | `#f87171` | Error / Out of Stock |
+| Chart palette | brand-led categorical set | brightened set | All charts |
+
+The dark theme (`[theme.dark]`) ships with the app; users switch with
+Streamlit's built-in theme toggle (app menu → Settings → Theme: Light /
+Dark / Use system setting) — no code or configuration changes needed.
 
 Semantic usage:
 
@@ -137,12 +142,31 @@ Semantic usage:
 Color communicates meaning rather than decoration; there are no
 gradients and no decorative styling.
 
+### Visual hierarchy — identify elements by eye
+
+Each interface element type has a distinct, consistent visual shape:
+
+| Element | How it is recognized |
+|---|---|
+| Primary action | Filled brand-blue button (one per view) |
+| Secondary actions | Bordered buttons with icons |
+| Navigation | Sidebar rail in a distinct tone, icon + label entries |
+| Information cards | Bordered metric cards and bordered dashboard panels |
+| Data tables | Banded header row in a distinct background |
+| Forms | Bordered field group with a filled primary submit |
+| Page position | Icon + title header, section subheaders beneath |
+
+Typography reinforces the hierarchy: heading weights 800/700/600 for
+title/section/subsection levels against regular body text, and bolder
+metric values.
+
 ### Typography and spacing
 
 Streamlit's default Source Sans family with a 16 px base size; titles,
 subheaders, and captions provide the hierarchy (title → subheader →
 body/caption). Metric cards use bordered cards with icons; sections are
-separated by consistent subheaders. Dark theme is not provided in v1.
+separated by consistent subheaders; dashboard sections sit inside
+bordered panels.
 
 ---
 
@@ -319,7 +343,9 @@ Resolved (see §6 and DEC-064):
 - Application logo or icon — `assets/favicon.svg` (package mark on the
   brand-blue tile).
 - Exact navigation layout — `st.navigation` with five sidebar groups.
-- Whether a dark theme is required — not in v1.
+- Whether a dark theme is required — yes, provided since 2026-11-12
+  (`[theme.dark]` in `.streamlit/config.toml`, switched with Streamlit's
+  built-in theme toggle).
 - Detailed chart configurations — Streamlit built-in charts with the
   themed categorical palette.
 - Whether table filtering and sorting require custom controls — Streamlit

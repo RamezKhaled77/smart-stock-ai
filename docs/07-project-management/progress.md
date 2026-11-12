@@ -730,6 +730,22 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: Browser-based visual inspection is unavailable in this environment — client-side rendering is verified from the installed Streamlit code paths (markdown/icon rendering and font ligatures) rather than screenshots; the owner's manual pass (TASK-047 checklist) provides visual confirmation.
 - Next Steps: Owner manual UI pass (TASK-047); any further visual feedback from the owner rides on the existing maintenance rhythm.
 
+### Dark Theme and Visual-Hierarchy Pass (DEC-064 amendment)
+
+- Date: 2026-11-12.
+- Status: Dark theme available in v1; every element type recognizable by eye.
+- Work Completed (owner-directed follow-up):
+  - `[theme.dark]` added to `.streamlit/config.toml`: full dark palette (slate-900 surfaces, brightened brand blue, dark semantic state tints, brightened chart palette) switching through Streamlit's built-in Settings → Theme toggle; no code changes needed to switch.
+  - Light-theme hierarchy strengthened: sidebar rail given its own deeper tone; borders deepened so cards/tables/widgets read as surfaces; button radius tightened to 0.375rem vs. 0.625rem cards (shape distinction); heading weights pinned 800/700/600; metric values bolded to 600.
+  - Dashboard content sections (trend, top sellers, low-stock, forecast readiness) now render inside bordered panels, so information cards are visually distinct from buttons and navigation.
+  - Element-archetype table added to `ui-overview.md` §6 (button vs. rail vs. card vs. table vs. form, each with its eye-readable signature).
+- Tests Executed: full pytest suite; headless smoke test with the new config (HTTP 200, health 200; no config warnings).
+- Test Results: 435/435 passed.
+- Tasks Updated: none (recorded here and as a DEC-064 amendment).
+- Decisions Made: DEC-064 amended — dark theme now in v1; hierarchy rules documented.
+- Blockers: Same limitation as the main pass — no browser screenshots in this environment; visual confirmation via the owner's manual pass.
+- Next Steps: Owner reviews the dark/light toggle and hierarchy; TASK-047 manual pass continues.
+
 ### Documentation Consistency Review Completed (TASK-048)
 
 - Date: 2026-11-11/12.

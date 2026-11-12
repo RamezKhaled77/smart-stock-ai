@@ -1,10 +1,18 @@
-# Streamlit configuration — SmartStock AI design system (UI task, 2026-11-12).
+# Streamlit configuration — SmartStock AI design system.
 #
 # The palette is defined with Streamlit's native theme engine so buttons,
 # widgets, alerts, tables, and charts share one visual language without
-# custom CSS. Semantic colors follow docs/05-interface/ui-overview.md §6:
-# green = healthy, orange/yellow = attention, red = critical.
+# custom CSS. Light is the default; the dark variant ([theme.dark]) is
+# picked up by Streamlit's built-in theme switcher (app menu → Settings
+# → Theme: Light / Dark / Use system setting).
 #
+# Visual hierarchy by eye (DEC-064/065):
+# - Primary actions = filled brand-blue buttons (unmistakable).
+# - Secondary actions = white/dark bordered buttons with icons.
+# - Navigation = sidebar tabs with icons (left rail, distinct tone).
+# - Information cards = bordered metric cards and bordered panels.
+# - Data tables = banded headers with a distinct header background.
+# - Forms = bordered field groups with clearly filled primary submit.
 # Icons use Streamlit's bundled Material Symbols Rounded font via
 # ":material/name:" shortcodes (see docs/05-interface/ui-overview.md §6).
 
@@ -14,21 +22,28 @@ base = "light"
 # Brand: calm, professional blue used for primary actions and accents.
 primaryColor = "#2563eb"
 
-# Surfaces: white content area, cool gray sidebar and secondary surfaces.
+# Surfaces: white content area; the sidebar gets a cooler, slightly
+# deeper tone so the navigation rail reads as its own region.
 backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#f1f5f9"
+sidebar.backgroundColor = "#e9eef7"
 textColor = "#0f172a"
-borderColor = "#e2e8f0"
+borderColor = "#d3dbe7"
 
-# Shapes and sizing: slightly rounded cards and buttons, visible widget
-# borders for clear form affordances.
+# Shapes and sizing: cards are rounded; buttons are tighter so
+# containers and buttons read differently by shape as well as color.
 baseRadius = "0.625rem"
-buttonRadius = "0.5rem"
+buttonRadius = "0.375rem"
 showWidgetBorder = true
 baseFontSize = 16
 
+# Typography hierarchy: heavier titles than body text, and slightly
+# bolder metric values, so title → section → body scanning is obvious.
+headingFontWeights = [800, 700, 600]
+metricValueFontWeight = 600
+
 # Tables: quiet borders with a soft header row.
-dataframeBorderColor = "#e2e8f0"
+dataframeBorderColor = "#d3dbe7"
 dataframeHeaderBackgroundColor = "#f8fafc"
 dataframeHeaderTextColor = "#334155"
 
@@ -69,4 +84,64 @@ chartCategoricalColors = [
     "#10b981",
     "#ef4444",
     "#64748b",
+]
+
+# ---------------------------------------------------------------------------
+# Dark theme — same structure, adjusted luminance. Users switch with
+# Streamlit's built-in theme toggle; no code changes required.
+# ---------------------------------------------------------------------------
+
+[theme.dark]
+primaryColor = "#3b82f6"
+
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+sidebar.backgroundColor = "#131f36"
+textColor = "#e2e8f0"
+borderColor = "#334155"
+
+baseRadius = "0.625rem"
+buttonRadius = "0.375rem"
+showWidgetBorder = true
+
+headingFontWeights = [800, 700, 600]
+
+dataframeBorderColor = "#334155"
+dataframeHeaderBackgroundColor = "#1e293b"
+dataframeHeaderTextColor = "#cbd5e1"
+
+greenBackgroundColor = "#052e16"
+greenColor = "#4ade80"
+greenTextColor = "#bbf7d0"
+
+redBackgroundColor = "#450a0a"
+redColor = "#f87171"
+redTextColor = "#fecaca"
+
+orangeBackgroundColor = "#431407"
+orangeColor = "#fb923c"
+orangeTextColor = "#fed7aa"
+
+yellowBackgroundColor = "#422006"
+yellowColor = "#facc15"
+yellowTextColor = "#fef08a"
+
+blueBackgroundColor = "#172554"
+blueColor = "#60a5fa"
+blueTextColor = "#bfdbfe"
+
+grayBackgroundColor = "#1e293b"
+grayColor = "#94a3b8"
+grayTextColor = "#cbd5e1"
+
+linkColor = "#60a5fa"
+
+chartCategoricalColors = [
+    "#3b82f6",
+    "#38bdf8",
+    "#a78bfa",
+    "#fbbf24",
+    "#34d399",
+    "#f87171",
+    "#94a3b8",
 ]
