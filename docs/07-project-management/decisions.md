@@ -70,46 +70,52 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-006: User Interface Framework
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use Streamlit for the initial web interface.
 - Context: Streamlit reduces frontend development effort and allows the project to focus on Python, data processing, and ML.
-- Confirmation Required: Verify against the final technology stack.
+- Confirmation: The implemented v1 interface is a seven-page Streamlit application (see DEC-040); no alternative framework was introduced.
 
 ### DEC-007: Data Processing Libraries
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use Pandas and NumPy for data processing.
 - Context: They provide suitable tools for tabular data and numerical operations.
+- Confirmation: Used throughout preprocessing, feature building, and services (pandas 3.1.1 / numpy 2.5.4).
 
 ### DEC-008: Machine Learning Library
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use Scikit-learn for the initial forecasting implementation.
 - Context: It provides CPU-friendly regression models and evaluation utilities.
+- Confirmation: scikit-learn 1.9.1; RandomForestRegressor trained per DEC-057, evaluated per DEC-027.
 
 ### DEC-009: Database
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use SQLite for operational application data.
 - Context: SQLite is lightweight and does not require a separate database server.
+- Confirmation: Single-file SQLite database with guarded `CREATE TABLE IF NOT EXISTS` migrations.
 
 ### DEC-010: Visualization
 
-- Status: Proposed
+- Status: Amended (2026-11-12 sync)
 - Decision: Use Plotly for interactive charts where appropriate.
 - Context: The application needs sales and forecasting visualizations.
+- Amendment: v1 charts use Streamlit's built-in chart elements (rendered with Vega-Lite), so no direct Plotly import was needed; Plotly remains a declared dependency available for richer charts if a future need appears.
 
 ### DEC-011: Model Persistence
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use Joblib to save and load trained model artifacts.
 - Context: Normal application usage should not require retraining the model.
+- Confirmation: `ml/model_artifacts.py` persists and reloads the model and its metadata with joblib; the app never retrains at request time.
 
 ### DEC-012: Testing Framework
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use pytest for automated tests.
 - Context: Business logic, data processing, and ML components should be tested independently.
+- Confirmation: 435 pytest tests across the layered structure, run with `PYTHONPATH=src python -m pytest`.
 
 ---
 
@@ -117,11 +123,11 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-013: Historical Dataset
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use the Kaggle Store Item Demand Forecasting Competition dataset as the initial historical sales dataset.
 - Source: https://www.kaggle.com/competitions/demand-forecasting-kernels-only/data
 - Context: It contains historical daily sales for multiple stores and products.
-- Confirmation Required: Inspect the actual downloaded files and verify suitability.
+- Confirmation: `data/raw/train.csv` imported through the DEC-052…DEC-055 pipeline; one store selected per DEC-015.
 
 ### DEC-014: Operational Data Separation
 
@@ -266,31 +272,33 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-018: Forecasting Granularity
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use daily demand forecasting per product.
 - Context: The proposed historical dataset contains daily sales records.
-- Confirmation Required: Confirm the final aggregation and entity mapping.
+- Confirmation: One row per (item, date) after import; features are daily; horizon counted in days (DEC-026).
 
 ### DEC-019: Baseline Models
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Implement simple baselines before evaluating more complex ML models.
 - Candidates:
   - Naive forecasting.
   - Historical average.
 - Context: Baselines provide a reference for measuring whether ML adds value.
+- Confirmation: Naive and 7-day moving-average baselines were implemented and measured (validation MAE 10.27 / 8.077); they set the DEC-027 acceptance floor, and MA-7 doubles as the DEC-058 low-history fallback. The "historical average" candidate was realized as the moving-average baseline.
 
 ### DEC-020: Candidate ML Models
 
-- Status: Proposed
+- Status: Accepted (closed by DEC-057, 2026-11-12 sync)
 - Candidates:
   - Linear Regression.
   - RandomForestRegressor.
 - Decision Rule: Select the final model based on evaluation results rather than assuming one candidate is best.
+- Confirmation: Both candidates were evaluated chronologically per DEC-027; RandomForestRegressor was selected (DEC-057).
 
 ### DEC-021: Candidate Features
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Features:
   - Day of week.
   - Month.
@@ -300,6 +308,7 @@ A proposed decision must not be treated as accepted.
   - Rolling mean 7.
   - Rolling mean 30.
 - Context: These features provide calendar and historical demand information.
+- Confirmation: All seven features implemented exactly as listed in `ml/features.py`, with a one-step shift preventing leakage.
 
 ### DEC-022: Rolling Feature Leakage Prevention
 
@@ -309,9 +318,10 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-023: Evaluation Metrics
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use MAE and RMSE as the primary evaluation metrics.
 - Context: They provide understandable measures of prediction error.
+- Confirmation: MAE/RMSE used for baselines (DEC-019), model selection (DEC-027), the stored evaluation display (DEC-062), and all reported metrics.
 
 ### DEC-024: Time-Aware Evaluation
 
@@ -471,13 +481,14 @@ A proposed decision must not be treated as accepted.
 
 ### DEC-039: Interface Style
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Decision: Use a simple dashboard-style interface.
 - Context: The application should prioritize readability and ease of use.
+- Confirmation: Implemented as metric cards, tables, and plain-language messages across the seven pages (DEC-061 metric groups).
 
 ### DEC-040: Initial Navigation
 
-- Status: Proposed
+- Status: Accepted (confirmed by implementation, 2026-11-12 sync)
 - Proposed pages:
   - Dashboard.
   - Products & Inventory.
@@ -485,13 +496,14 @@ A proposed decision must not be treated as accepted.
   - Sales Analytics.
   - AI Forecasting.
   - CSV Import.
-- Confirmation Required: Finalize navigation after reviewing implementation needs.
+- Confirmation: All proposed pages implemented; v1 also adds Restocking Recommendations, and "AI Forecasting" shipped as the Demand Forecast page.
 
 ### DEC-041: Initial Store Workflow
 
-- Status: Proposed
+- Status: Accepted (absorbed by DEC-015, 2026-11-12 sync)
 - Decision: Prioritize a single-store workflow.
 - Context: The initial project should avoid unnecessary multi-branch complexity.
+- Confirmation: DEC-015 fixed one store for the imported dataset; no multi-branch concepts exist in v1 (F-014 remains future scope).
 
 ---
 

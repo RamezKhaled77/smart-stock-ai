@@ -697,6 +697,21 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: None.
 - Next Steps: Await the owner's manual pass and any scope requests; the rhythm moves to maintenance — every future change keeps the commit-per-checkpoint discipline with the full suite green before each push.
 
+### Decision-Log Documentation Sync (2026-11-12)
+
+- Date: 2026-11-12.
+- Status: The decision record now reflects reality — no decisions are marked open that were already settled by implemented, tested behavior.
+- Work Completed (requested by the project owner before proceeding):
+  - `decisions.md`: 16 early decisions that were still marked `Proposed` but had been implemented and validated were flipped with explicit confirmation notes — DEC-006 (Streamlit), 007 (pandas/NumPy), 008 (scikit-learn), 009 (SQLite), 011 (joblib), 012 (pytest), 013 (Kaggle dataset), 018 (daily per-product granularity), 019 (baselines), 021 (feature list, verified against `ml/features.py`), 023 (MAE/RMSE), 039 (dashboard style), 040 (navigation), 041 (single store, absorbed by DEC-015); DEC-020 was closed by DEC-057's model selection. **DEC-010 (Plotly) was recorded as Amended, not Accepted**: v1 charts use Streamlit built-ins (Vega-Lite), so Plotly is declared but never imported — the amendment documents that honestly rather than claiming usage.
+  - `requirements.md` §8: the six questions still listed as "Still open" were closed with pointers to their de facto resolutions (no prices in v1 per F-006; individual immutable transactions per DEC-049; no adjustment log per F-011; DEC-058 forecasting ladder; no authentication — local single-user app; currency moot without prices). "Still open" now reads None.
+  - `project-overview.md` §14: the stale "must not treat as accepted" table replaced with a resolution table pointing at the governing decisions.
+- Tests Executed: none required (documentation-only change; the codebase was not touched).
+- Test Results: N/A — last full-suite result stands at 435/435.
+- Tasks Updated: none (record-keeping only).
+- Decisions Made: none new — statuses corrected to match decisions already in force.
+- Blockers: None.
+- Next Steps: The only open item remains TASK-047's owner manual pass; future-scope features await explicit approval.
+
 ### Documentation Consistency Review Completed (TASK-048)
 
 - Date: 2026-11-11/12.

@@ -248,22 +248,24 @@ Detailed measurable acceptance criteria will be maintained in `../01-product/acc
 
 ## 14. Current Assumptions and Open Questions
 
-The following items are not yet fully confirmed:
+All items formerly listed here as proposed or open were resolved during
+implementation and are recorded in
+`../07-project-management/decisions.md` (DEC-001…DEC-063):
 
-| Item | Current Status | Notes |
-|---|---|---|
-| Streamlit | Proposed | Evaluate interface suitability |
-| SQLite | Proposed | Confirm database requirements |
-| Kaggle Store Item Demand Dataset | Proposed | Inspect data and competition context |
-| Random Forest | Proposed | Must be compared against baselines |
-| Forecast Horizon | Open Question | Decide how many future days to predict |
-| Inventory Lead Time | Open Question | Determine how lead time is represented |
-| Safety Stock | Open Question | Define calculation and user configuration |
-| Product Categories | Open Question | Decide whether categories are required |
-| Sales Input Method | Proposed | Manual entry and CSV import |
-| Currency | Open Question | Define whether prices and monetary reporting are required |
+| Item | Resolution |
+|---|---|
+| Streamlit | Accepted and implemented (DEC-006) |
+| SQLite | Accepted and implemented (DEC-009) |
+| Kaggle Store Item Demand Dataset | Inspected, imported, accepted (DEC-013, DEC-015) |
+| Random Forest | Selected against baselines per DEC-027 (DEC-057) |
+| Forecast Horizon | User-selectable 7/14/30 days, default 7 (DEC-026) |
+| Inventory Lead Time | Manual per-product field, default 3 days (DEC-037) |
+| Safety Stock | Manually configured per product, default 0 (DEC-036) |
+| Product Categories | Optional free-text label on products; not required (v1 schema) |
+| Sales Input Method | Manual entry plus historical CSV import (DEC-052…DEC-055) |
+| Currency | Not applicable in v1: no monetary fields (features.md F-006) |
 
-The agent must not treat these items as accepted decisions.
+New open questions are added to `decisions.md` when they arise.
 
 ## 15. Related Documentation
 

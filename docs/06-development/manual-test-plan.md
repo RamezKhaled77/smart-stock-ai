@@ -27,31 +27,31 @@ in `docs/07-project-management/progress.md`.
 
 ### 1. Startup & navigation
 
-- [ ] App opens on the Dashboard without errors.
-- [ ] Sidebar shows five groups: Overview (Dashboard), Inventory
+- [x] App opens on the Dashboard without errors.
+- [x] Sidebar shows five groups: Overview (Dashboard), Inventory
       (Products & Inventory, Restocking Recommendations), Sales
       (Sales Management, Sales Analytics), Forecasting (Demand
       Forecast), Data (Data Import).
-- [ ] Switching between all seven pages never shows an exception box.
+- [x] Switching between all seven pages never shows an exception box.
 
 ### 2. Products & Inventory
 
-- [ ] Add product: required-field validation messages appear inline
+- [x] Add product: required-field validation messages appear inline
       (empty name, empty SKU).
-- [ ] Add product with opening stock → appears in the listing with the
+- [x] Add product with opening stock → appears in the listing with the
       correct stock status.
-- [ ] Edit product: change lead time / safety stock / linked dataset
+- [x] Edit product: change lead time / safety stock / linked dataset
       item → saved, flash message shown.
-- [ ] Duplicate SKU rejected with a clear message.
-- [ ] Stock tab: add units → stock increases; remove too many →
+- [x] Duplicate SKU rejected with a clear message.
+- [x] Stock tab: add units → stock increases; remove too many →
       negative-stock rejection message (DEC-034).
-- [ ] Set exact stock → stock overwritten (correction).
-- [ ] Deactivate product (with confirmation tick) → disappears from
+- [x] Set exact stock → stock overwritten (correction).
+- [x] Deactivate product (with confirmation tick) → disappears from
       listings; reactivate → returns.
 
 ### 3. Sales Management
 
-- [ ] Record sale: positive quantity, today's date → stock decreases,
+- [x] Record sale: positive quantity, today's date → stock decreases,
       success flash, sale appears in history.
 - [ ] Sale exceeding stock → rejected atomically (stock unchanged).
 - [ ] Future date rejected; backdated date accepted (DEC-050/051).

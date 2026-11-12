@@ -343,6 +343,7 @@ It does not imply that the application itself has been implemented.
 - [DEC-063] Export reports: CSV only on Sales Analytics + Restocking Recommendations; PDF deferred.
 - [TASK-049] CSV export buttons implemented on both pages (ranking, performance, monthly, restocking advice); suite at 435 passing tests. All core phase tasks now Verified; remaining: TASK-047 human UI pass.
 - [Wrap-up] v1 core complete: all 16 phases' core tasks (TASK-001…TASK-049) Verified; 435 tests passing; owner's manual UI checklist ready; future-scope features (TASK-050+) require explicit approval.
+- [Docs sync] Decision log synced with implementation: 15 early Proposed decisions confirmed as Accepted/absorbed (DEC-006…013, 018–021, 023, 039–041), DEC-010 (Plotly) honestly recorded as Amended (Streamlit built-ins used); requirements.md §8 open questions all closed; project-overview.md §14 stale table replaced.
 - [M-004/M-005/M-006 Completed] Product & inventory (TASK-016…019), sales management (TASK-020/021), and CSV import (TASK-022…025) milestones marked Completed in progress.md §6; CSV import summary per spec §14 (result panel, batch history) at 205 passing tests. Next: forecasting/ML phase (TASK-026…), with the train/validation/test split dates to be decided during implementation.
 
 ## 6. Future Entry Template

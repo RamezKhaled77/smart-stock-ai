@@ -558,15 +558,19 @@ Resolved on 2026-11-04 (see `../07-project-management/decisions.md`):
 5. ~~How will safety stock be calculated?~~ → Manually configured per product, optional, default 0 (DEC-036).
 6. ~~What is the default forecast horizon?~~ → User-selectable 7/14/30 days, default 7 (DEC-026).
 
+Resolved on 2026-11-12 (documentation sync — each was already settled by an implemented, tested choice; recorded here so the list tells the truth):
+
+1. ~~Will product prices be included?~~ → No in v1: products carry no monetary fields, so revenue metrics are out of scope (features.md F-006 limitation).
+2. ~~Will sales records store individual transactions or daily aggregated quantities?~~ → Individual transactions: each sale records its own quantity and date, and sales are immutable (DEC-049).
+3. ~~Will inventory adjustments have a history log?~~ → No log in v1: stock changes are direct updates; low-stock warnings are advisory snapshots, not logged events (features.md F-011).
+7. ~~Will the system forecast every product or only products with sufficient historical data?~~ → Per DEC-058: Random Forest needs ≥31 observed days, a 7-day moving-average fallback covers 1–30 days, and 0 days yields an explicit "no suitable history" message.
+8. ~~Will authentication be required?~~ → No in v1: the application is a local, single-user Streamlit app.
+9. ~~Will the initial version support only one currency?~~ → Not applicable in v1: with no prices (item 1) there are no monetary fields to denominate.
+10. ~~Will restocking recommendations include incoming stock?~~ → No in v1: inventory position equals current stock, per DEC-031 and BR-022.
+
 Still open:
 
-1. Will product prices be included?
-2. Will sales records store individual transactions or daily aggregated quantities?
-3. Will inventory adjustments have a history log?
-7. Will the system forecast every product or only products with sufficient historical data?
-8. Will authentication be required?
-9. Will the initial version support only one currency?
-10. Will restocking recommendations include incoming stock? (No in v1 — inventory position equals current stock, per DEC-031 and BR-022.)
+None. Any new question is recorded as a decision (or open decision) in `../07-project-management/decisions.md` when it arises.
 
 ## 9. Requirement Change Management
 
