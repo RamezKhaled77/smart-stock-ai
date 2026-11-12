@@ -121,3 +121,9 @@ class TestAnalyticsPage:
         monthly = tables[2].value
         assert monthly["Month"].tolist() == ["2026-01", "2026-02"]
         assert monthly["Units sold"].tolist() == [33, 5]
+        # TASK-049/DEC-063: CSV export buttons for the three tables.
+        downloads = list(app_test.download_button)
+        labels = {d.label for d in downloads}
+        assert any("sales by product" in text for text in labels)
+        assert any("product performance" in text for text in labels)
+        assert any("monthly totals" in text for text in labels)

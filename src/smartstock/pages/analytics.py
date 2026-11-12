@@ -14,6 +14,7 @@ from smartstock.database.connection import DatabaseError
 from smartstock.pages.ui import show_flash
 from smartstock.services import analytics_service, product_service
 from smartstock.utils.dates import utc_today_iso
+from smartstock.utils.export import to_csv
 
 ALL_PRODUCTS = "All products"
 
@@ -173,6 +174,27 @@ def _render_per_product(data: dict) -> None:
         ]
     )
     st.dataframe(table, hide_index=True, width="stretch")
+    _download_button(
+        "⬇️ Export sales by product (CSV)",
+        data["per_product"],
+        ["name", "sku", "units_sold", "sale_count", "share_of_units"],
+        "sales-by-product.csv",
+        key="export_per_product",
+    )
+
+
+def _download_button(
+    label: str, rows: list, columns: list, file_name: str, key: str
+) -> None:
+    """CSV download button for a service row list (TASK-049, DEC-063)."""
+    csv_text = to_csv(rows, columns)
+    st.download_button(
+        label,
+        data=csv_text,
+        file_name=file_name,
+        mime="text/csv",
+        key=key,
+    )
 
 
 def _render_performance(
@@ -220,6 +242,14 @@ def _render_performance(
         "differs by ≥ 15%. Stock-warning frequency is not tracked in "
         "v1 — warnings are advisory snapshots, not logged events."
     )
+    _download_button(
+        "⬇️ Export product performance (CSV)",
+        rows,
+        ["name", "sku", "units_sold", "avg_units_per_day",
+         "first_sale", "last_sale", "trend"],
+        "product-performance.csv",
+        key="export_performance",
+    )
 
 
 def _render_monthly(data: dict) -> None:
@@ -234,3 +264,14 @@ def _render_monthly(data: dict) -> None:
         }
     )
     st.dataframe(table, hide_index=True, width="stretch")
+    monthly_rows = [
+        {"month": month, "units_sold": data["monthly"][month]}
+        for month in months
+    ]
+    _download_button(
+        "⬇️ Export monthly totals (CSV)",
+        monthly_rows,
+        ["month", "units_sold"],
+        "monthly-totals.csv",
+        key="export_monthly",
+    )

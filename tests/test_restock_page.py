@@ -87,6 +87,12 @@ class TestRestockPage:
         assert row["Order"] == 86
         assert row["Lead time (days)"] == 5
         assert row["Safety stock"] == 2
+        # TASK-049/DEC-063: CSV export of the recommendations.
+        downloads = [
+            d for d in app_test.download_button
+            if "recommendations" in d.label
+        ]
+        assert downloads, "recommendations export button missing"
 
     def test_no_reorder_needed_success_state(self, app_db) -> None:
         stocked = product_service.create_product(

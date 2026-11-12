@@ -530,7 +530,7 @@ Interpretation must be based on valid data.
 
 **Priority:** Advanced
 
-**Status:** Proposed
+**Status:** Accepted (TASK-049, 2026-11-12 — DEC-063: CSV exports on Sales Analytics and Restocking Recommendations; PDF deferred to future scope)
 
 Allows users to export selected information.
 

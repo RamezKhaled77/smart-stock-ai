@@ -15,6 +15,7 @@ import streamlit as st
 from smartstock.database.connection import DatabaseError
 from smartstock.pages.ui import show_flash
 from smartstock.services import restock_service
+from smartstock.utils.export import to_csv
 
 
 def render() -> None:
@@ -65,6 +66,7 @@ def render() -> None:
         st.subheader("🛒 Consider restocking")
         _render_recommendation_table(needs_attention)
         _render_explanations(needs_attention)
+        _download_recommendations(needs_attention)
     else:
         st.success(
             "No product is at or below its reorder point right now."
@@ -77,6 +79,27 @@ def render() -> None:
                 f"**{row['product_name']}** ({row['product_sku']}): "
                 f"{row['unavailable_reason']}"
             )
+
+
+def _download_recommendations(rows: list) -> None:
+    """CSV export of the restocking advice (TASK-049, DEC-063).
+
+    Serializes the raw service rows so the file matches source data;
+    unavailable rows carry their reason in ``unavailable_reason``.
+    """
+    columns = [
+        "product_name", "product_sku", "current_stock",
+        "average_daily_demand", "lead_time_days", "safety_stock",
+        "reorder_point", "target_stock", "recommended_order_quantity",
+        "stock_status",
+    ]
+    st.download_button(
+        "⬇️ Export recommendations (CSV)",
+        data=to_csv(rows, columns),
+        file_name="restocking-recommendations.csv",
+        mime="text/csv",
+        key="export_recommendations",
+    )
 
 
 def _render_recommendation_table(rows: list) -> None:

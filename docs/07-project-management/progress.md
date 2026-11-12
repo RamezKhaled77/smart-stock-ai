@@ -665,7 +665,21 @@ It does not claim that the documentation has been created as local files or that
 - Tasks Updated: TASK-047 → In Progress (human pass pending).
 - Decisions Made: None new.
 - Blockers: The manual pass itself requires the project owner (agent cannot judge UI feel/wording); everything else proceeds.
-- Next Steps: TASK-048 documentation consistency review and TASK-049 export reports (independent of the manual pass); the checklist can be walked whenever the owner has time.
+- Next Steps: TASK-049 export reports (P2, optional for core), then phase wrap-up.
+
+### CSV Export Reports Implemented (TASK-049)
+
+- Date: 2026-11-12.
+- Status: Users can download the analytics tables and the restocking advice as CSV files.
+- Work Completed:
+  - DEC-063 accepted with the owner: CSV only, on Sales Analytics and Restocking Recommendations; PDF deferred (F-012 future scope).
+  - `utils/export.py::to_csv` (built-in csv module, RFC 4180, raw service rows → files always match source data); `st.download_button` on the three analytics tables and the restock advice table.
+- Tests Executed: 5 helper tests + download-button assertions in the analytics/restock page tests; full pytest suite.
+- Test Results: 435/435 passed.
+- Tasks Updated: TASK-049 → Verified.
+- Decisions Made: DEC-063 (with project owner).
+- Blockers: None recorded.
+- Next Steps: All 16 planned phases' core tasks are now Verified except TASK-047's human pass; phase wrap-up — final phase summary in progress.md, then the project is ready for the owner's manual UI walk-through.
 
 ### Documentation Consistency Review Completed (TASK-048)
 

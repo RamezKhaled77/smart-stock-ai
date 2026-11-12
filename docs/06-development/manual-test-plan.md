@@ -74,6 +74,8 @@ in `docs/07-project-management/progress.md`.
 - [ ] Daily trend chart, weekday pattern chart render.
 - [ ] Product performance table shows units, avg/day, first/last sale,
       trend labels.
+- [ ] The three "Export … (CSV)" buttons download files matching the
+      displayed tables (DEC-063).
 
 ### 6. Restocking Recommendations
 
@@ -82,6 +84,8 @@ in `docs/07-project-management/progress.md`.
       time, safety stock, DEC-033 order quantity).
 - [ ] Products without enough history show "not available yet" with a
       reason, never crash.
+- [ ] "Export recommendations (CSV)" downloads a file matching the
+      displayed advice (DEC-063).
 
 ### 7. Data Import
 

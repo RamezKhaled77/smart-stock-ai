@@ -962,12 +962,14 @@ These tasks are not required for the initial core implementation.
 ### TASK-049: Export Reports
 
 - Priority: P2
-- Status: Not Started
+- Status: Verified
 - Dependencies: Relevant analytics features
 
 Description:
 
 Allow users to export selected reports.
+
+Completion record (2026-11-12): **DEC-063 accepted with the owner** — v1 exports are CSV only, on the two pages where users already consume tables: Sales Analytics (sales-by-product ranking, product performance, monthly totals) and Restocking Recommendations (the full advice table with all inputs and stock status; unavailable products carry their reason). PDF export was considered and deferred to F-012's future scope: it needs a report library and adds little for v1's tables (dependency rules). Implementation: new `utils/export.py::to_csv(rows, columns)` — built-in `csv` module, RFC 4180 output (CRLF, quoting), serializing the raw service rows so a downloaded file always matches source data rather than a re-parsed display table; `st.download_button` wired into the three analytics tables and the restock table. Tests: 5 helper tests (column order, empty-cell handling, header-only empty export, quoting/CRLF, extra-key exclusion) + download-button assertions added to the analytics and restock page tests. Suite 435/435.
 
 ### TASK-050: Supplier Management
 

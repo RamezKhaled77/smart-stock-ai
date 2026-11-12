@@ -178,6 +178,13 @@ A proposed decision must not be treated as accepted.
 - Context: The historical import is what the forecasting phase needs (TASK-022–025). An operational import would first require its own decisions — whether it reduces stock, whether insufficient stock blocks the file, record immutability limits, source identification — per CSV Import Specification §10; deferring avoids inventing that policy now. It may be re-proposed later with a superseding decision.
 - Method: Chosen with the project owner from documented options (2026-11-07, CSV import phase).
 
+### DEC-063: Export Reports Format and Scope
+
+- Status: Accepted
+- Decision: v1 report exports are CSV only, offered where users already consume tables: the Sales Analytics page (sales-by-product ranking, product performance, monthly totals) and the Restocking Recommendations page (the full advice table). PDF export is deferred to future scope (F-012).
+- Context: PDF generation needs a new report dependency and adds little value for v1's tabular reports; CSV opens natively in every spreadsheet tool the target users already have. Exports serialize the raw service output rows (not re-parsed display tables), so files always match source data.
+- Method: Chosen with the project owner from documented options (2026-11-12, TASK-049): CSV on two pages (chosen) vs. CSV on three pages (adding sales history) vs. deferring TASK-049.
+
 ### DEC-062: Actual-vs-Predicted Display Uses Stored Evaluation Metrics Only
 
 - Status: Accepted
@@ -596,6 +603,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-060 | Product ↔ dataset-item mapping | Nullable products.dataset_item_id; forecast from the linked item's imported history only |
 | DEC-061 | Dashboard metrics | Six groups: products, stock, needing-reorder, 7-day sales, top-3 sellers (30 d), forecast readiness |
 | DEC-062 | Actual-vs-predicted display | Stored training-time evaluation metrics only; no new predictions, test window one-touch |
+| DEC-063 | Export reports | CSV exports on Sales Analytics and Restocking Recommendations; PDF deferred |
 
 ---
 
