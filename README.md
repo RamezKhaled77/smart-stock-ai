@@ -6,7 +6,7 @@ SmartStock AI is a web-based inventory management and demand forecasting system 
 
 The project combines traditional inventory management with machine learning to support data-driven business decisions.
 
-> Project status: v1 implementation complete (all seven pages, ML model trained and integrated); documentation and manual UI pass finishing.
+> Project status: v1 core complete — all 16 phases implemented, 435 automated tests passing; owner's manual UI walk-through pending (checklist ready).
 
 ---
 

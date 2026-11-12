@@ -1042,3 +1042,15 @@ All tasks begin as:
 The actual status should be updated during implementation.
 
 This document does not claim that any task has already been completed.
+
+**Status as of 2026-11-12 (phase wrap-up):** every core task
+TASK-001…TASK-049 is `Verified` — all 16 planned phases complete —
+except **TASK-047 (manual application testing), which is `In
+Progress`**: the machine-verified server smoke is done and the owner's
+click-through checklist is ready at
+`docs/06-development/manual-test-plan.md`. Tasks TASK-050+ (supplier
+management, multi-branch, purchase orders, POS integration, AI
+assistant, user roles, automated reordering) are future-scope P3
+features requiring explicit owner approval before any work starts.
+Final state: 435 automated tests passing; decisions DEC-001…DEC-063
+recorded and summarized in `docs/07-project-management/decisions.md`.

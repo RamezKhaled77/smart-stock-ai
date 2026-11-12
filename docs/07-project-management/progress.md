@@ -681,6 +681,22 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: None recorded.
 - Next Steps: All 16 planned phases' core tasks are now Verified except TASK-047's human pass; phase wrap-up — final phase summary in progress.md, then the project is ready for the owner's manual UI walk-through.
 
+## Phase Wrap-Up: v1 Core Complete (2026-11-12)
+
+- Date: 2026-11-12.
+- Status: All 16 phases of the implementation plan are complete — every core task TASK-001…TASK-049 is Verified, except TASK-047's human UI pass (In Progress; checklist ready).
+- What was delivered across the project:
+  - **Data & persistence:** SQLite schema with guarded migrations, dataset exploration, preprocessing pipeline, CSV historical-sales import (fingerprint rejection, all-or-nothing batches).
+  - **Domain & services:** product/inventory/sales layers with the approved business rules (negative stock forbidden, immutable sales, soft delete), restocking calculations (DEC-032/033/036–038/059), analytics and dashboard composition.
+  - **Machine learning:** evidence-based path from exploration → baselines → features → chronological splits (DEC-056) → model selection (DEC-057 Random Forest, validation MAE 6.033 vs baselines 8.077/10.27) → persisted artifact → inference with the DEC-058 fallback ladder — all metrics measured, never invented.
+  - **Interface:** seven Streamlit pages (Dashboard, Products & Inventory, Restocking Recommendations, Sales Management, Sales Analytics, Demand Forecast, Data Import) with graceful error handling and CSV exports.
+  - **Quality:** 435 automated tests passing (~80–110 s), end-to-end integration tests, documentation reviewed for consistency.
+- Open items for the owner:
+  1. Walk `docs/06-development/manual-test-plan.md` and record findings (TASK-047 completion).
+  2. Approve or decline future-scope features (TASK-050+; F-013…F-019) — no work starts without explicit approval.
+- Blockers: None.
+- Next Steps: Await the owner's manual pass and any scope requests; the rhythm moves to maintenance — every future change keeps the commit-per-checkpoint discipline with the full suite green before each push.
+
 ### Documentation Consistency Review Completed (TASK-048)
 
 - Date: 2026-11-11/12.
