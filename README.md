@@ -78,7 +78,7 @@ The following technologies are currently proposed:
 | Web Application | Streamlit |
 | Data Processing | Pandas, NumPy |
 | Machine Learning | Scikit-learn |
-| Data Visualization | Plotly |
+| Data Visualization | Streamlit built-in charts |
 | Database | SQLite |
 | Model Persistence | Joblib |
 | Testing | Pytest |

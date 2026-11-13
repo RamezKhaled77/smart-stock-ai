@@ -830,3 +830,39 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: Browser-based visual confirmation still rides on the
   owner's in-flight manual UI pass (dark/light toggle check).
 - Next Steps: Owner visual pass; then TASK-047 → Verified.
+
+### Plotly Removal and Import-Sample Files (owner-directed, 2026-11-13)
+
+- Date: 2026-11-13.
+- Status: Complete.
+- Work Completed:
+  - Owner answered the open items: keep `user-manual-AR.md`; add
+    Arabic language support to the app later as an EN/AR toggle
+    (decision recorded with the i18n task); remove unused Plotly;
+    dummy CSV files wanted for the manual Data Import test.
+  - Plotly removed from `requirements.txt` (never imported anywhere;
+    charts use Streamlit built-ins). DEC-010 amendment updated; the
+    tech-stack, project-overview, glossary, deployment-guide,
+    setup-guide, and README references corrected. Historical
+    install/verification records in progress/task-breakdown left as-is
+    (they record what was true then).
+  - New `data/samples/` with three seeded dummy CSVs in the exact
+    import format: `sample_1_clean_3items.csv` (369 valid rows, items
+    1–3, 123 days each with a weekend bump), `sample_2_problems_demo.csv`
+    (out-of-scope store row, 4 invalid rows, 1 duplicate → exercises
+    the rejection report), `sample_3_short_history.csv` (10 days →
+    DEC-058 MA-7 fallback), plus `README.md` with the expected outcome
+    per file.
+  - Verified: validator run against all three files returned exactly
+    the documented counts (clean 369/0/0; problems 3 valid + 1
+    out-of-scope + 4 rejected + 1 duplicate; short 10 valid).
+- Tests Executed: full pytest suite for the code-repo state before the
+  docs-only edits (`6b590d6`); no code changed by this task.
+- Test Results: 435/435 passing (unchanged).
+- Tasks Updated: none (maintenance).
+- Decisions Made: Plotly removal confirmed under the DEC-010
+  amendment; EN/AR app toggle deferred to its own decision when the
+  i18n task starts.
+- Blockers: None.
+- Next Steps: Sync the Arabic manual for DEC-065 wording; start the
+  EN/AR toggle build (infrastructure first, then page by page).

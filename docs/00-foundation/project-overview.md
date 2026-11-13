@@ -156,7 +156,7 @@ The initial technical direction is:
 | Programming | Python |
 | Data Processing | Pandas, NumPy |
 | Machine Learning | Scikit-learn |
-| Visualization | Plotly |
+| Visualization | Streamlit built-in charts (Vega-Lite) |
 | Database | SQLite |
 | Model Persistence | Joblib |
 | Testing | Pytest |

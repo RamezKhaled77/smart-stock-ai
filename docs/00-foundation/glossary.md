@@ -279,7 +279,10 @@ A Python library for numerical computing and array operations.
 
 ### Plotly
 
-A Python visualization library used to create interactive charts.
+A Python visualization library for interactive charts. Considered
+early (DEC-010) but not used: the app charts with Streamlit's built-in
+chart elements instead, and the dependency was removed from
+`requirements.txt`.
 
 ### Joblib
 

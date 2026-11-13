@@ -121,8 +121,6 @@ Expected libraries may include:
     
 - scikit-learn
     
-- plotly
-    
 - joblib
     
 - pytest

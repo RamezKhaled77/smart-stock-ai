@@ -101,7 +101,7 @@ A proposed decision must not be treated as accepted.
 - Status: Amended (2026-11-12 sync)
 - Decision: Use Plotly for interactive charts where appropriate.
 - Context: The application needs sales and forecasting visualizations.
-- Amendment: v1 charts use Streamlit's built-in chart elements (rendered with Vega-Lite), so no direct Plotly import was needed; Plotly remains a declared dependency available for richer charts if a future need appears.
+- Amendment: v1 charts use Streamlit's built-in chart elements (rendered with Vega-Lite), so no direct Plotly import was needed. On 2026-11-13 the unused dependency was removed from `requirements.txt` entirely (owner-approved); re-adding it for a future need would be a small documented decision.
 
 ### DEC-011: Model Persistence
 

@@ -57,7 +57,7 @@ The application is expected to contain the following components:
 | Python | Application runtime |
 | Pandas / NumPy | Data processing |
 | Scikit-learn | Machine learning functionality |
-| Plotly | Data visualization |
+| Streamlit built-in charts | Data visualization |
 | SQLite | Initial application database |
 | Joblib | Model serialization |
 | CSV files | Data import and export |

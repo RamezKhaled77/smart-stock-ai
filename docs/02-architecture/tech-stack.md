@@ -80,18 +80,16 @@ Potential responsibilities:
 
 The final model selection will depend on validation results.
 
-### 2.6 Plotly
+### 2.6 Plotly (removed 2026-11-13)
 
-**Status:** Proposed
+**Status:** Removed — was Proposed, then recorded as Amended (DEC-010),
+then dropped from the dependencies entirely.
 
-Plotly will be used for interactive charts and visualizations.
-
-Potential use cases:
-- Historical sales trends.
-- Demand forecasts.
-- Actual versus predicted demand.
-- Product performance.
-- Inventory analytics.
+v1 charts use Streamlit's built-in chart elements (``st.line_chart``,
+rendered with Vega-Lite); Plotly was declared but never imported, so it
+was removed from ``requirements.txt`` to keep the dependency list
+honest. If a future need appears that the built-in charts cannot serve,
+re-adding it is a small, documented decision.
 
 ### 2.7 SQLite
 
