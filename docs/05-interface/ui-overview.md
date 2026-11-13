@@ -184,6 +184,12 @@ with right-to-left direction. Key facts:
   service-layer messages (validation errors, restocking
   explanations, unavailable reasons) and domain values (stock-status
   names), like SKUs — they are data, not chrome.
+- The RTL stylesheet targets Streamlit's own containers explicitly
+  (app shell, sidebar, headings, metrics, alerts, widgets) rather
+  than relying on `html` inheritance — bare inheritance left headings
+  left-aligned in the owner's review. Text/number/date inputs,
+  charts, and data frames stay LTR so SKUs, dates, and numerals keep
+  reading left-to-right.
 
 ### Visual hierarchy — identify elements by eye
 

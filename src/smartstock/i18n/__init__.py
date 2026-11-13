@@ -110,6 +110,59 @@ def language_switcher() -> None:
         st.rerun()
 
 
+# Right-to-left stylesheet for Arabic sessions (DEC-066).
+#
+# A bare `html { direction: rtl; }` is not enough in practice: it relies
+# on plain CSS inheritance, and Streamlit's own containers/headings do
+# not visibly pick it up in every browser (the owner's review showed
+# headings still rendering left-aligned). So the direction is set
+# explicitly on the app shell, the sidebar, and every text-bearing
+# Streamlit element, with `text-align: right` where it matters, and the
+# numeric content (text/number/date inputs, charts, data frames) is
+# pinned back to LTR so SKUs, dates, and numerals stay readable.
+_RTL_CSS = """
+html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"],
+[data-testid="stMain"], [data-testid="stMainBlockContainer"],
+[data-testid="stSidebar"], [data-testid="stSidebarContent"],
+[data-testid="stMarkdownContainer"],
+[data-testid="stHeading"], [data-testid="stHeadingWithActions"],
+[data-testid="stMetric"], [data-testid="stMetricValue"],
+[data-testid="stMetricLabel"], [data-testid="stAlert"],
+[data-testid="stExpander"], [data-testid="stTabs"],
+[data-testid="stTabContainer"], [data-testid="stRadio"],
+[data-testid="stCheckbox"], [data-testid="stSelectbox"],
+[data-testid="stTextInput"], [data-testid="stDateInput"],
+[data-testid="stNumberInput"], [data-testid="stButton"],
+[data-testid="stDownloadButton"], [data-testid="stForm"],
+[data-testid="stFileUploader"], [data-testid="stCaptionContainer"],
+[data-testid="stColumns"], [data-testid="stColumn"] {
+    direction: rtl !important;
+}
+h1, h2, h3, h4, [data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] strong,
+[data-testid="stMetricLabel"], [data-testid="stMetricValue"],
+[data-testid="stAlert"], [data-testid="stCaptionContainer"],
+[data-testid="stExpander"] summary {
+    text-align: right;
+}
+/* Numbers, dates, and SKUs stay Western/LTR inside input fields. */
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stDateInput"] input,
+[data-testid="stFileUploader"] input {
+    direction: ltr;
+    text-align: left;
+}
+/* Charts and data frames stay LTR: dates and numerals read left to
+   right there regardless of interface language (DEC-066). */
+[data-testid="stDataFrame"],
+[data-testid="stLineChart"], [data-testid="stBarChart"],
+[data-testid="stVegaLiteChart"], [data-testid="stArrowVegaLiteChart"] {
+    direction: ltr;
+}
+"""
+
+
 def apply_direction() -> None:
     """Apply right-to-left page direction for Arabic (DEC-066).
 
@@ -118,10 +171,7 @@ def apply_direction() -> None:
     """
     if not is_rtl():
         return
-    st.markdown(
-        "<style>html { direction: rtl; }</style>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"<style>{_RTL_CSS}</style>", unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------

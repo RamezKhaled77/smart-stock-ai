@@ -946,3 +946,17 @@ It does not claim that the documentation has been created as local files or that
   pass (Streamlit widget RTL rendering needs eyeballing).
 - Next Steps: Owner visual review of the Arabic UI; i18n feature
   complete unless review findings require fixes.
+
+#### RTL Hardening (owner review finding, 2026-11-13)
+
+- The owner's visual review showed headings and titles still rendering
+  left-aligned in Arabic: a bare `html { direction: rtl; }` relies on
+  CSS inheritance alone, which Streamlit's own containers do not pick
+  up reliably. `apply_direction()` now emits a targeted stylesheet:
+  explicit `direction: rtl` on the app shell, sidebar, headings,
+  metrics, alerts, widgets, and expanders, with `text-align: right`
+  on text-bearing elements, while text/number/date inputs, charts,
+  and data frames stay pinned LTR so SKUs, dates, and numerals keep
+  reading left-to-right (DEC-066).
+- The RTL test now pins the heading selectors and the LTR exceptions,
+  not just any "direction" string. Full suite still 444/444.

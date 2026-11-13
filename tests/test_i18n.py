@@ -115,6 +115,14 @@ class TestArabicRendering:
             if "direction: rtl" in value
         ]
         assert styles, "Arabic session must emit the RTL style block"
+        # The block must target Streamlit's own heading containers
+        # explicitly (bare html inheritance left headings LTR in the
+        # owner's visual review), right-align text, and keep
+        # numeric inputs and charts LTR.
+        block = "\n".join(styles)
+        assert 'stHeading' in block
+        assert "text-align: right" in block
+        assert "direction: ltr" in block  # inputs/charts stay LTR
 
     def test_english_session_emits_no_rtl_block(self) -> None:
         from streamlit.testing.v1 import AppTest
