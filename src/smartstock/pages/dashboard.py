@@ -6,12 +6,18 @@ forecast readiness, the sales-trend chart (TASK-038), and the
 low-stock overview (TASK-039). All data comes from the dashboard
 service — no SQL and no business rules here. Charting approach:
 Streamlit's built-in ``st.line_chart`` (no extra dependency).
+
+Interface text comes from the bilingual string table via
+:func:`smartstock.i18n.t` (F-020, DEC-066); English remains the
+default language, so the approved pinned English strings are
+unchanged in a fresh session.
 """
 
 import pandas as pd
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.pages.ui import (
     empty_state,
     page_header,
@@ -20,23 +26,29 @@ from smartstock.pages.ui import (
 )
 from smartstock.services import dashboard_service
 
+# Radio choices for the sales-trend window; the format labels need
+# separate keys because Arabic handles the two plural forms differently.
+_TREND_CHOICES = {7: "dashboard.last_7_days", 30: "dashboard.last_30_days"}
+_TREND_SECTIONS = {
+    7: "dashboard.trend_section_7",
+    30: "dashboard.trend_section_30",
+}
+
 
 def render() -> None:
     """Render the Dashboard page."""
     page_header(
         "dashboard",
-        "Dashboard",
-        "Snapshot of the current inventory and sales situation. All "
-        "windows end at today (UTC); restocking advice stays advisory "
-        "(DEC-031).",
+        t("dashboard.title"),
+        t("dashboard.description"),
     )
 
     show_flash()
 
     trend_days = st.radio(
-        "Sales trend window",
+        t("dashboard.trend_window"),
         [7, 30],
-        format_func=lambda days: f"Last {days} days",
+        format_func=lambda days: t(_TREND_CHOICES[days]),
         index=0,
         horizontal=True,
         key="dashboard_trend_window",
@@ -45,7 +57,7 @@ def render() -> None:
     try:
         data = dashboard_service.get_dashboard_data(trend_days=trend_days)
     except (ValueError, DatabaseError) as error:
-        st.error(f"Could not load the dashboard: {error}")
+        st.error(t("dashboard.load_error", error=error))
         return
 
     _render_metrics(data)
@@ -59,22 +71,21 @@ def _render_metrics(data: dict) -> None:
     """DEC-061 metric rows."""
     top = st.columns(3)
     top[0].metric(
-        "Active products",
+        t("dashboard.metric_active_products"),
         data["total_active_products"],
         icon=":material/inventory:",
         border=True,
     )
     top[1].metric(
-        "Total stock",
+        t("dashboard.metric_total_stock"),
         data["total_stock"],
         icon=":material/package:",
         border=True,
     )
     top[2].metric(
-        "Products needing reorder",
+        t("dashboard.metric_needs_reorder"),
         data["products_needing_reorder"],
-        help="Current stock at or below the reorder point (BR-022). "
-        "Products without sales history are not counted yet.",
+        help=t("dashboard.metric_needs_reorder_help"),
         icon=":material/priority_high:",
         border=True,
     )
@@ -82,22 +93,21 @@ def _render_metrics(data: dict) -> None:
     recent = data["recent_sales"]
     bottom = st.columns(3)
     bottom[0].metric(
-        "Units sold (last 7 days)",
+        t("dashboard.metric_units_sold_7"),
         recent["units_sold"],
         icon=":material/shopping_cart:",
         border=True,
     )
     bottom[1].metric(
-        "Sales recorded (last 7 days)",
+        t("dashboard.metric_sales_count_7"),
         recent["sale_count"],
         icon=":material/receipt:",
         border=True,
     )
     bottom[2].metric(
-        "Top seller (30 days)",
+        t("dashboard.metric_top_seller"),
         data["top_products"][0]["units_sold"] if data["top_products"] else 0,
-        help="Units sold by the best-selling product of the last 30 "
-        "days.",
+        help=t("dashboard.metric_top_seller_help"),
         icon=":material/trophy:",
         border=True,
     )
@@ -106,46 +116,47 @@ def _render_metrics(data: dict) -> None:
 def _render_trend(data: dict, trend_days: int) -> None:
     """TASK-038: daily sales trend for the selected window."""
     with st.container(border=True):
-        section("insights", f"Sales trend — last {trend_days} days")
+        section("insights", t(_TREND_SECTIONS[trend_days]))
         if not data["trend"]:
             empty_state(
-                "No sales in this window",
-                "Record sales on the Sales Management page to see "
-                "trends here.",
+                t("dashboard.trend_empty_title"),
+                t("dashboard.trend_empty_message"),
                 icon="insights",
             )
             return
         frame = pd.DataFrame(
             {
                 "date": sorted(data["trend"]),
-                "Units sold": [
+                t("dashboard.column_units_sold"): [
                     data["trend"][day] for day in sorted(data["trend"])
                 ],
             }
         )
         frame = frame.set_index(pd.to_datetime(frame["date"]))
-        st.line_chart(frame["Units sold"], width="stretch")
+        st.line_chart(
+            frame[t("dashboard.column_units_sold")], width="stretch"
+        )
 
 
 def _render_top_products(data: dict) -> None:
     """DEC-061: best sellers of the last 30 days."""
     with st.container(border=True):
-        section("trophy", "Top sellers — last 30 days")
+        section("trophy", t("dashboard.top_section"))
         if not data["top_products"]:
             empty_state(
-                "No sales in the last 30 days",
-                "Once sales are recorded, the best-selling products "
-                "appear here.",
+                t("dashboard.top_empty_title"),
+                t("dashboard.top_empty_message"),
                 icon="trophy",
             )
             return
+        units_label = t("dashboard.column_units_sold")
         table = pd.DataFrame(
             [
                 {
-                    "Rank": index + 1,
-                    "Name": row["name"],
-                    "SKU": row["sku"],
-                    "Units sold": row["units_sold"],
+                    t("dashboard.column_rank"): index + 1,
+                    t("dashboard.column_name"): row["name"],
+                    t("dashboard.column_sku"): row["sku"],
+                    units_label: row["units_sold"],
                 }
                 for index, row in enumerate(data["top_products"])
             ]
@@ -155,8 +166,8 @@ def _render_top_products(data: dict) -> None:
             hide_index=True,
             width="stretch",
             column_config={
-                "Units sold": st.column_config.NumberColumn(
-                    "Units sold", format="%d",
+                units_label: st.column_config.NumberColumn(
+                    units_label, format="%d",
                 ),
             },
         )
@@ -165,28 +176,32 @@ def _render_top_products(data: dict) -> None:
 def _render_low_stock(data: dict) -> None:
     """TASK-039: products meeting the approved low-stock conditions."""
     with st.container(border=True):
-        section("warning", "Low-stock overview")
+        section("warning", t("dashboard.low_section"))
         low_stock = data["low_stock"]
         if not low_stock:
             st.success(
-                "All products are In Stock.",
+                t("dashboard.low_all_ok"),
                 icon=":material/check_circle:",
             )
             return
         st.warning(
-            f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
-            "(current stock at or below the reorder point, BR-008).",
+            t("dashboard.low_warning", count=len(low_stock)),
             icon=":material/warning:",
         )
+        demand_label = t("dashboard.column_avg_demand")
         table = pd.DataFrame(
             [
                 {
-                    "Name": row["product_name"],
-                    "SKU": row["product_sku"],
-                    "Stock": row["current_stock"],
-                    "Avg daily demand": row["average_daily_demand"],
-                    "Reorder point": row["reorder_point"],
-                    "Suggested order": row["recommended_order_quantity"],
+                    t("dashboard.column_name"): row["product_name"],
+                    t("dashboard.column_sku"): row["product_sku"],
+                    t("dashboard.column_stock"): row["current_stock"],
+                    demand_label: row["average_daily_demand"],
+                    t("dashboard.column_reorder_point"): row[
+                        "reorder_point"
+                    ],
+                    t("dashboard.column_suggested_order"): row[
+                        "recommended_order_quantity"
+                    ],
                 }
                 for row in low_stock
             ]
@@ -196,39 +211,36 @@ def _render_low_stock(data: dict) -> None:
             hide_index=True,
             width="stretch",
             column_config={
-                "Avg daily demand": st.column_config.NumberColumn(
-                    "Avg daily demand", format="%.2f",
+                demand_label: st.column_config.NumberColumn(
+                    demand_label, format="%.2f",
                 ),
             },
         )
-        st.caption(
-            "Order suggestions are advisory (DEC-031). Review details "
-            "on the Restocking Recommendations page."
-        )
+        st.caption(t("dashboard.low_caption"))
 
 
 def _render_forecast_readiness(data: dict) -> None:
     """DEC-061: forecast-readiness line (DEC-060 links)."""
     ready = data["forecast_ready"]
     with st.container(border=True):
-        section("rocket_launch", "Forecast readiness")
+        section("rocket_launch", t("dashboard.readiness_section"))
         if ready["total"] == 0:
             empty_state(
-                "No active products yet",
-                "Add products to start forecasting.",
+                t("dashboard.readiness_empty_title"),
+                t("dashboard.readiness_empty_message"),
                 icon="inventory_2",
             )
             return
         if ready["linked"] == 0:
             st.info(
-                "No product is linked to a dataset item yet, so "
-                "nothing is forecastable. Link items on the Products "
-                "& Inventory page (DEC-060), then open Demand Forecast.",
+                t("dashboard.readiness_none_linked"),
                 icon=":material/link_off:",
             )
             return
         st.caption(
-            f"{ready['linked']} of {ready['total']} active products "
-            "are linked to a dataset item and can be forecast on the "
-            "Demand Forecast page."
+            t(
+                "dashboard.readiness_caption",
+                linked=ready["linked"],
+                total=ready["total"],
+            )
         )

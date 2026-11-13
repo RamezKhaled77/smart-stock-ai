@@ -866,3 +866,45 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: None.
 - Next Steps: Sync the Arabic manual for DEC-065 wording; start the
   EN/AR toggle build (infrastructure first, then page by page).
+
+### Bilingual Interface Phase 1 — i18n Infrastructure + Dashboard Pilot (DEC-066)
+
+- Date: 2026-11-13.
+- Status: Phase 1 complete (owner-approved F-020; approach chosen:
+  EN/AR language toggle, English default).
+- Work Completed:
+  - New `src/smartstock/i18n/` package: two-language string table with
+    namespaced keys, `t()` translation with English fallback then key,
+    `set_language()` validation, sidebar `language_switcher()`, and
+    `apply_direction()` RTL CSS for Arabic sessions. No new
+    dependency — plain dictionaries, consistent with the educational
+    goals.
+  - `app.py`: sidebar language switcher (top of navigation) and all
+    navigation groups/titles translated; URL paths stay English so
+    links never change language.
+  - Dashboard page (pilot) fully translated — every label, metric
+    help text, empty state, warning, and table column goes through
+    `t()`. English strings are verbatim copies of the pinned literals,
+    so the approved page tests are untouched.
+  - RTL: Arabic sessions flip the app direction via a style block
+    injected from the shared design-system layer; English emits
+    nothing.
+  - New `tests/test_i18n.py` (9 tests): en/ar string parity (both
+    directions), placeholder parity, explicit-language translation,
+    English-fallback-then-key behavior, placeholder filling, invalid
+    language rejection, Arabic dashboard rendering end-to-end, RTL
+    block present for Arabic / absent for English.
+  - Docs: DEC-066 recorded; F-020 added to features.md (owner-approved,
+    phased); "Languages" section added to ui-overview §6.
+- Tests Executed: full pytest suite.
+- Test Results: 444/444 passing (435 existing unmodified + 9 new),
+  suite warning-free.
+- Tasks Updated: none yet (phase 1 of the F-020 rollout).
+- Decisions Made: DEC-066 (accepted — owner-directed approach).
+- Blockers: Arabic layout needs visual review (browser inspection
+  unavailable here) — rides on the owner's in-flight manual pass;
+  Streamlit widgets may have minor RTL rough edges to tune in review.
+- Next Steps: Phases 2+ — translate the remaining pages one per pass:
+  Sales Management, Products & Inventory, Restocking Recommendations,
+  Sales Analytics, Demand Forecast, Data Import. Sidebar stays
+  fully bilingual from phase 1.

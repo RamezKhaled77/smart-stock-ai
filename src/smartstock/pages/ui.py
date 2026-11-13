@@ -36,6 +36,8 @@ import html
 
 import streamlit as st
 
+from smartstock.i18n import apply_direction
+
 # Reused alert icons so every page signals state the same way.
 SUCCESS_ICON = ":material/check_circle:"
 INFO_ICON = ":material/info:"
@@ -209,6 +211,9 @@ def inject_design_system() -> None:
     tokens = _TONE_TOKENS[_theme_variant()]
     css = _CSS_TEMPLATE.format(**tokens)
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    # The Arabic interface flips the app to right-to-left (DEC-066);
+    # English sessions emit nothing.
+    apply_direction()
 
 
 def page_header(icon: str, title: str, description: str = "") -> None:

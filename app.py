@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import streamlit as st
 
+from smartstock.i18n import language_switcher, t
 from smartstock.pages.analytics import render as analytics_render
 from smartstock.pages.dashboard import render as dashboard_render
 from smartstock.pages.forecast import render as forecast_render
@@ -42,56 +43,61 @@ def dashboard() -> None:
     dashboard_render()
 
 
+# The language switcher lives at the top of the sidebar so it is
+# reachable from every page; picking the other language reruns the app
+# (DEC-066). URL paths stay English so links never change language.
+language_switcher()
+
 page = st.navigation(
     {
-        "Overview": [
+        t("nav.overview"): [
             st.Page(
                 dashboard,
-                title="Dashboard",
+                title=t("nav.dashboard"),
                 icon=":material/home:",
                 default=True,
             ),
         ],
-        "Inventory": [
+        t("nav.inventory"): [
             st.Page(
                 products_render,
-                title="Products & Inventory",
+                title=t("nav.products"),
                 icon=":material/inventory_2:",
                 url_path="products-and-inventory",
             ),
             st.Page(
                 restock_render,
-                title="Restocking Recommendations",
+                title=t("nav.restock"),
                 icon=":material/package_2:",
                 url_path="restocking-recommendations",
             ),
         ],
-        "Sales": [
+        t("nav.sales"): [
             st.Page(
                 sales_render,
-                title="Sales Management",
+                title=t("nav.sales_management"),
                 icon=":material/receipt_long:",
                 url_path="sales-management",
             ),
             st.Page(
                 analytics_render,
-                title="Sales Analytics",
+                title=t("nav.analytics"),
                 icon=":material/insights:",
                 url_path="sales-analytics",
             ),
         ],
-        "Forecasting": [
+        t("nav.forecasting"): [
             st.Page(
                 forecast_render,
-                title="Demand Forecast",
+                title=t("nav.forecast"),
                 icon=":material/query_stats:",
                 url_path="demand-forecast",
             ),
         ],
-        "Data": [
+        t("nav.data"): [
             st.Page(
                 imports_render,
-                title="Data Import",
+                title=t("nav.imports"),
                 icon=":material/upload_file:",
                 url_path="data-import",
             ),

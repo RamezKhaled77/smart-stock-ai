@@ -556,8 +556,11 @@ The following capabilities are outside the initial implementation scope.
 | F-017 | AI Assistant | Answer questions about inventory and sales |
 | F-018 | Advanced User Roles | Support multiple permission levels |
 | F-019 | Automated Reordering | Automatically initiate replenishment workflows |
+| F-020 | Bilingual Interface (EN/AR) | Language toggle: English default, full Arabic translation with right-to-left direction (DEC-066) |
 
-These features require explicit scope approval.
+F-020 is owner-approved (2026-11-13) and being implemented in phases
+(string table and infrastructure, then pages one by one, Dashboard
+first); the rest require explicit scope approval.
 
 ---
 

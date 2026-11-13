@@ -165,6 +165,23 @@ Product-table status cells combine the state tint with matching bold
 state text. No decorative styling exists; every color and size maps to
 a meaning listed above.
 
+### Languages — English default, Arabic toggle (F-020, DEC-066)
+
+The interface is bilingual: English is the default language, and a
+sidebar switcher (top of the navigation) flips every page to Arabic
+with right-to-left direction. Key facts:
+
+- Switching language is an explicit user action; a fresh session is
+  always English, so shared links and the approved test pins stay
+  stable.
+- All interface strings come from one table in `smartstock/i18n`;
+  a test (`tests/test_i18n.py`) enforces that both languages define
+  every key, so a half-translated screen cannot happen silently.
+- Numerals, SKUs, and decision-reference codes (DEC-xxx, BR-xxx) stay
+  in Western digits in v1; URLs stay English regardless of language.
+- Rollout is page by page (Dashboard first); a not-yet-translated page
+  still renders fully in English in both languages until its pass.
+
 ### Visual hierarchy — identify elements by eye
 
 Each interface element type has a distinct, consistent visual shape:
