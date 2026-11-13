@@ -5,12 +5,19 @@ Historical dataset import per DEC-052/DEC-055: uploads are validated
 and previewed before anything is stored, and historical imports never
 modify operational inventory (BR-014, DEC-016). The page contains no
 business rules and no SQL.
+
+Interface text comes from the bilingual string table via
+:func:`smartstock.i18n.t` (F-020, DEC-066); English remains the
+default language. Row-level validation reasons come from the CSV
+import validator and the service layer's duplicate/rejection messages
+stay in English in v1.
 """
 
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
 from smartstock.domain.csv_import import CsvFileError, CsvStructureError
+from smartstock.i18n import t
 from smartstock.pages.ui import (
     empty_state,
     flash,
@@ -33,25 +40,21 @@ def render() -> None:
     """Render the Data Import page."""
     page_header(
         "upload_file",
-        "Data Import",
-        "Historical CSV import for forecasting (format: date, store, "
-        "item, sales). Rows are filtered to store 1 per the project's "
-        "single-store decision. Imports never change current stock — "
-        "they only feed analysis and forecasting.",
+        t("imports.title"),
+        t("imports.description"),
     )
 
     show_flash()
 
     uploaded = st.file_uploader(
-        "Historical sales CSV *",
+        t("imports.uploader_label"),
         type=["csv"],
         key="import_file",
     )
     if uploaded is None:
         empty_state(
-            "Nothing uploaded yet",
-            "Upload a CSV file to validate it and preview the records "
-            "before importing. Nothing is stored until you confirm.",
+            t("imports.empty_title"),
+            t("imports.empty_message"),
             icon="upload",
         )
         _render_import_history()
@@ -61,7 +64,7 @@ def render() -> None:
         preview = import_service.preview_import(uploaded)
     except (CsvFileError, CsvStructureError) as error:
         st.error(
-            f"The file cannot be imported: {error}",
+            t("imports.error_file", error=error),
             icon=":material/error:",
         )
         return
@@ -74,10 +77,14 @@ def _render_preview(uploaded, preview) -> None:
     """Render the validation summary for one uploaded file (spec §8)."""
     already_imported = _is_current_file_imported(preview)
 
-    section("fact_check", "Preview")
+    section("fact_check", t("imports.section_preview"))
     st.caption(
-        f"{preview.filename} — {preview.file_size_bytes:,} bytes · "
-        f"fingerprint {preview.sha256_fingerprint[:16]}…"
+        t(
+            "imports.caption_file",
+            filename=preview.filename,
+            size=preview.file_size_bytes,
+            fingerprint=preview.sha256_fingerprint[:16],
+        )
     )
 
     if already_imported:
@@ -91,25 +98,25 @@ def _render_preview(uploaded, preview) -> None:
 
     store_rows = st.columns(4)
     store_rows[0].metric(
-        "Rows in file",
+        t("imports.metric_rows"),
         f"{preview.total_rows:,}",
         icon=":material/description:",
         border=True,
     )
     store_rows[1].metric(
-        "Valid for store 1",
+        t("imports.metric_valid"),
         f"{preview.valid_row_count:,}",
         icon=":material/check_circle:",
         border=True,
     )
     store_rows[2].metric(
-        "Rejected (invalid)",
+        t("imports.metric_rejected"),
         f"{preview.invalid_in_scope_rows:,}",
         icon=":material/cancel:",
         border=True,
     )
     store_rows[3].metric(
-        "Other stores",
+        t("imports.metric_other_stores"),
         f"{preview.out_of_store_rows:,}",
         icon=":material/filter_alt:",
         border=True,
@@ -118,18 +125,21 @@ def _render_preview(uploaded, preview) -> None:
     if preview.date_range is not None:
         first_date, last_date = preview.date_range
         st.caption(
-            f"Date range of accepted rows: {first_date} → {last_date}; "
-            f"{preview.duplicate_row_count:,} within-file duplicate(s)."
+            t(
+                "imports.caption_date_range",
+                first=first_date,
+                last=last_date,
+                duplicates=preview.duplicate_row_count,
+            )
         )
     else:
-        st.caption("No rows are in scope for store 1.")
+        st.caption(t("imports.caption_no_rows"))
 
     _render_validation_examples(preview)
 
     if not preview.importable:
         st.warning(
-            "Nothing to import: the file contains no valid rows for "
-            "store 1.",
+            t("imports.warning_nothing"),
             icon=":material/warning:",
         )
         return
@@ -137,7 +147,7 @@ def _render_preview(uploaded, preview) -> None:
     if preview.sample_rows:
         import pandas as pd
 
-        st.write("Sample of accepted records:")
+        st.write(t("imports.sample_caption"))
         st.dataframe(
             pd.DataFrame(preview.sample_rows),
             hide_index=True,
@@ -158,12 +168,11 @@ def _is_current_file_imported(preview) -> bool:
 def _render_confirm_import(uploaded, preview) -> None:
     """Confirm step: persist the accepted rows (DEC-054)."""
     if st.button(
-        f"Import {preview.valid_row_count:,} record(s)",
+        t("imports.button_import", count=preview.valid_row_count),
         key="import_confirm",
         type="primary",
         icon=":material/upload_2:",
-        help="Validated rows are stored in one transaction. Historical "
-        "records never change current stock.",
+        help=t("imports.button_import_help"),
     ):
         try:
             result = import_service.execute_import(uploaded)
@@ -172,11 +181,11 @@ def _render_confirm_import(uploaded, preview) -> None:
             st.error(str(error))
             return
         except ImportRejectedError as error:
-            st.error(f"Nothing was imported: {error}")
+            st.error(t("imports.error_rejected", error=error))
             return
         except DatabaseError as error:
             # DEC-054: a failed import leaves no partial data behind.
-            st.error(f"The import failed and nothing was stored: {error}")
+            st.error(t("imports.error_failed", error=error))
             return
         st.session_state[LAST_IMPORT_KEY] = {
             "result": result,
@@ -184,9 +193,12 @@ def _render_confirm_import(uploaded, preview) -> None:
         }
         flash(
             "success",
-            f"Imported {result.imported_rows:,} historical record(s) "
-            f"from '{result.filename}' (batch #{result.batch_id}). "
-            "Current stock was not changed.",
+            t(
+                "imports.success_imported",
+                count=result.imported_rows,
+                filename=result.filename,
+                batch_id=result.batch_id,
+            ),
         )
         st.rerun()
 
@@ -194,68 +206,82 @@ def _render_confirm_import(uploaded, preview) -> None:
 def _render_import_result(result) -> None:
     """Show the spec §14 summary for the file's stored import batch."""
     st.success(
-        f"Import completed — batch #{result.batch_id} "
-        f"({result.created_at}).",
+        t(
+            "imports.result_success",
+            batch_id=result.batch_id,
+            created_at=result.created_at,
+        ),
         icon=":material/task_alt:",
     )
     metric_columns = st.columns(4)
     metric_columns[0].metric(
-        "Accepted and stored",
+        t("imports.result_metric_stored"),
         f"{result.imported_rows:,}",
         icon=":material/check_circle:",
         border=True,
     )
     metric_columns[1].metric(
-        "Rejected (invalid)",
+        t("imports.metric_rejected"),
         f"{result.rejected_rows:,}",
         icon=":material/cancel:",
         border=True,
     )
     metric_columns[2].metric(
-        "Duplicates skipped",
+        t("imports.result_metric_duplicates"),
         f"{result.duplicate_rows:,}",
         icon=":material/compare_arrows:",
         border=True,
     )
     metric_columns[3].metric(
-        "Other stores",
+        t("imports.metric_other_stores"),
         f"{result.out_of_store_rows:,}",
         icon=":material/filter_alt:",
         border=True,
     )
     date_note = (
-        f" · accepted rows span {result.date_range[0]} → "
-        f"{result.date_range[1]}"
+        t(
+            "imports.result_date_note",
+            first=result.date_range[0],
+            last=result.date_range[1],
+        )
         if result.date_range is not None
         else ""
     )
     st.caption(
-        f"Historical dataset import, store {result.store} · file "
-        f"'{result.filename}' ({result.total_rows:,} rows "
-        f"processed){date_note}. Current inventory was not changed."
+        t(
+            "imports.result_caption",
+            store=result.store,
+            filename=result.filename,
+            rows=result.total_rows,
+            date_note=date_note,
+        )
     )
     st.info(
-        "To import more data, upload a different CSV file. Re-uploading "
-        "this exact file is rejected by its fingerprint (DEC-053).",
+        t("imports.result_reupload_info"),
         icon=":material/sync:",
     )
 
 
 def _render_import_history() -> None:
     """Expandable overview of all recorded import batches (TASK-025)."""
-    with st.expander("Previous imports", icon=":material/history:"):
+    with st.expander(
+        t("imports.history_title"), icon=":material/history:"
+    ):
         try:
             summary = import_service.get_import_summary()
         except DatabaseError as error:
-            st.error(f"Import history could not be read: {error}")
+            st.error(t("imports.history_error", error=error))
             return
         st.caption(
-            f"{summary['total_records']:,} historical record(s) stored "
-            f"in total across {len(summary['batches'])} import run(s)."
+            t(
+                "imports.history_caption",
+                records=summary["total_records"],
+                count=len(summary["batches"]),
+            )
         )
         if not summary["batches"]:
             st.info(
-                "No imports recorded yet.",
+                t("imports.history_empty"),
                 icon=":material/history:",
             )
             return
@@ -263,18 +289,20 @@ def _render_import_history() -> None:
 
         rows = [
             {
-                "Batch": batch["id"],
-                "File": batch["source_filename"],
-                "Imported": batch["imported_rows"],
-                "Duplicates skipped": batch["duplicate_rows"],
-                "Rejected": batch["rejected_rows"],
-                "Other stores": batch["out_of_store_rows"],
-                "Date range": (
+                t("imports.column_batch"): batch["id"],
+                t("imports.column_file"): batch["source_filename"],
+                t("imports.column_imported"): batch["imported_rows"],
+                t("imports.column_duplicates"): batch["duplicate_rows"],
+                t("imports.column_rejected"): batch["rejected_rows"],
+                t("imports.column_other_stores"): batch[
+                    "out_of_store_rows"
+                ],
+                t("imports.column_date_range"): (
                     f"{batch['first_date']} → {batch['last_date']}"
                     if batch["first_date"]
                     else "—"
                 ),
-                "When (UTC)": batch["created_at"],
+                t("imports.column_when"): batch["created_at"],
             }
             for batch in summary["batches"]
         ]
@@ -287,13 +315,13 @@ def _render_validation_examples(preview) -> None:
     """Show capped lists of rejected and duplicate rows (spec §13)."""
     sections = [
         (
-            "Rejected rows",
+            t("imports.expander_rejected"),
             ":material/cancel:",
             preview.rejected_rows,
             preview.rejected_truncated,
         ),
         (
-            "Within-file duplicates",
+            t("imports.expander_duplicates"),
             ":material/compare_arrows:",
             preview.duplicate_rows,
             preview.duplicate_truncated,
@@ -307,12 +335,12 @@ def _render_validation_examples(preview) -> None:
             continue
         with container:
             with st.expander(
-                f"{title} ({len(rows)} shown)", icon=icon
+                f"{title} {t('imports.shown_suffix', count=len(rows))}",
+                icon=icon,
             ):
                 if truncated:
-                    st.caption(
-                        "Showing the first examples only — see the "
-                        "totals in the metrics above."
-                    )
+                    st.caption(t("imports.truncated_caption"))
                 for number, reason in rows:
-                    st.markdown(f"- Row {number}: {reason}")
+                    st.markdown(
+                        t("imports.row_line", number=number, reason=reason)
+                    )

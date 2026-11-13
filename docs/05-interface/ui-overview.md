@@ -179,8 +179,11 @@ with right-to-left direction. Key facts:
   every key, so a half-translated screen cannot happen silently.
 - Numerals, SKUs, and decision-reference codes (DEC-xxx, BR-xxx) stay
   in Western digits in v1; URLs stay English regardless of language.
-- Rollout is page by page (Dashboard first); a not-yet-translated page
-  still renders fully in English in both languages until its pass.
+- Every page is translated (Dashboard pilot first, then the remaining
+  six). Two content kinds stay English in both languages on purpose:
+  service-layer messages (validation errors, restocking
+  explanations, unavailable reasons) and domain values (stock-status
+  names), like SKUs — they are data, not chrome.
 
 ### Visual hierarchy — identify elements by eye
 

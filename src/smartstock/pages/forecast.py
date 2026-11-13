@@ -5,11 +5,17 @@ imported history, and shows the demand forecast for a chosen horizon
 (7/14/30 days, DEC-026). Predictions come from the inference module
 through the forecast service — this page is purely rendering and input
 collection, read-only like every other page (prediction-logic §12).
+
+Interface text comes from the bilingual string table via
+:func:`smartstock.i18n.t` (F-020, DEC-066); English remains the
+default language. Horizon and model names map to string-table keys so
+their labels translate; the model codes themselves stay English.
 """
 
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.ml import model_artifacts
 from smartstock.ml.inference import DEFAULT_HORIZON_DAYS, SUPPORTED_HORIZONS
 from smartstock.pages.ui import (
@@ -26,18 +32,16 @@ from smartstock.services import (
     product_service,
 )
 
+# Display-label keys; the horizon/model codes stay language-independent.
 HORIZON_LABELS = {
-    7: "Next 7 days",
-    14: "Next 14 days",
-    30: "Next 30 days",
+    7: "forecast.horizon_7",
+    14: "forecast.horizon_14",
+    30: "forecast.horizon_30",
 }
 
 MODEL_LABELS = {
-    "random_forest": "Random Forest model (needs ≥ 31 days of history)",
-    "moving_average_7": (
-        "Trailing 7-day average fallback (history under 31 days, "
-        "DEC-058)"
-    ),
+    "random_forest": "forecast.model_rf",
+    "moving_average_7": "forecast.model_ma7",
 }
 
 
@@ -45,10 +49,8 @@ def render() -> None:
     """Render the Forecast page."""
     page_header(
         "query_stats",
-        "Demand Forecast",
-        "Advisory demand estimates per product, based on the linked "
-        "dataset item's imported sales history. Forecasts are "
-        "estimates — not guaranteed outcomes.",
+        t("forecast.title"),
+        t("forecast.description"),
     )
 
     show_flash()
@@ -56,12 +58,12 @@ def render() -> None:
     try:
         products = product_service.list_products()  # active only
     except DatabaseError as error:
-        st.error(f"Could not load products: {error}")
+        st.error(t("forecast.load_products_error", error=error))
         return
     if not products:
         empty_state(
-            "No active products yet",
-            "Add products on the Products & Inventory page first.",
+            t("forecast.empty_title"),
+            t("forecast.empty_message"),
             icon="inventory_2",
         )
         _render_evaluation()
@@ -72,12 +74,12 @@ def render() -> None:
         for product in products
     }
     selection = st.selectbox(
-        "Product", list(options), key="forecast_product"
+        t("forecast.filter_product"), list(options), key="forecast_product"
     )
     horizon = st.radio(
-        "Forecast horizon",
+        t("forecast.horizon_label"),
         list(SUPPORTED_HORIZONS),
-        format_func=HORIZON_LABELS.__getitem__,
+        format_func=lambda days: t(HORIZON_LABELS[days]),
         index=SUPPORTED_HORIZONS.index(DEFAULT_HORIZON_DAYS),
         horizontal=True,
         key="forecast_horizon",
@@ -87,7 +89,7 @@ def render() -> None:
     _render_link_status(product)
 
     if st.button(
-        "Generate forecast",
+        t("forecast.button_generate"),
         key="forecast_generate",
         type="primary",
         icon=":material/rocket_launch:",
@@ -105,24 +107,18 @@ def _render_evaluation() -> None:
     one-touch test-window discipline intact. The numbers are the
     measured values from model selection, never illustrative ones.
     """
-    section("monitoring", "How accurate is the model?")
+    section("monitoring", t("forecast.section_accuracy"))
     try:
         summary = evaluation_service.get_evaluation_summary()
     except model_artifacts.ArtifactError as error:
         st.info(
-            "Evaluation metrics become available after the model is "
-            "trained — run ``scripts/train_model.py`` first.",
+            t("forecast.eval_not_available"),
             icon=":material/speed:",
         )
         st.caption(str(error))
         return
 
-    st.caption(
-        "Measured during model selection on held-out evaluation data "
-        "(MAE/RMSE in units per product-day — lower is better). No "
-        "predictions are generated here, so the one-time 2017 test "
-        "window stays untouched (DEC-056)."
-    )
+    st.caption(t("forecast.eval_caption"))
     windows = summary["windows"]
     if windows:
         columns = st.columns(len(windows))
@@ -130,27 +126,29 @@ def _render_evaluation() -> None:
             columns[index].metric(
                 window["label"],
                 f"MAE {window['mae']}",
-                help=(
-                    f"RMSE {window['rmse']} over "
-                    f"{window['predictions']:,} product-days."
+                help=t(
+                    "forecast.eval_window_help",
+                    rmse=window["rmse"],
+                    predictions=window["predictions"],
                 ),
                 icon=":material/monitoring:",
                 border=True,
             )
     if summary["baselines"]:
+        baselines_text = "; ".join(
+            f"{row['label']} {row['mae']}"
+            for row in summary["baselines"]
+        )
         st.caption(
-            "Context — simple baselines on the same validation data: "
-            + "; ".join(
-                f"{row['label']} {row['mae']}"
-                for row in summary["baselines"]
-            )
-            + ". The model must beat these to be selected (DEC-027) — "
-            "and it did."
+            t("forecast.eval_baselines", baselines=baselines_text)
         )
     st.caption(
-        f"Model: {summary['model_name']} v{summary['model_version']}, "
-        f"trained {summary['trained_at']}. Forecasts are estimates — "
-        "actual demand can differ (prediction-logic §11)."
+        t(
+            "forecast.eval_model_caption",
+            name=summary["model_name"],
+            version=summary["model_version"],
+            trained_at=summary["trained_at"],
+        )
     )
 
 
@@ -159,15 +157,12 @@ def _render_link_status(product: dict) -> None:
     linked = product.get("dataset_item_id")
     if linked is None:
         st.info(
-            f"'{product['name']}' has no dataset item linked yet. Set "
-            "'Linked dataset item' in the product's edit form "
-            "(Replenishing → Edit product) to enable forecasting "
-            "(DEC-060).",
+            t("forecast.no_link_info", name=product["name"]),
             icon=":material/link_off:",
         )
     else:
         st.markdown(
-            f":material/link: Linked dataset item: "
+            f":material/link: {t('forecast.linked_label')}: "
             f"{strong(str(linked))}",
             unsafe_allow_html=True,
         )
@@ -182,8 +177,7 @@ def _render_forecast(product_id: int, horizon: int) -> None:
         return
     except model_artifacts.ArtifactError as error:
         st.warning(
-            "The forecasting model artifact is not available — run "
-            "``scripts/train_model.py`` first.",
+            t("forecast.artifact_warning"),
             icon=":material/pending:",
         )
         st.caption(str(error))
@@ -191,39 +185,55 @@ def _render_forecast(product_id: int, horizon: int) -> None:
     except forecast_service.ForecastError as error:
         # e.g. the DEC-058 "No suitable history exists" state or an
         # unsupported horizon: understandable conditions, not crashes.
-        st.info(f"Forecast not available: {error}", icon=":material/info:")
+        st.info(
+            t("forecast.error_not_available", error=error),
+            icon=":material/info:",
+        )
         return
     except (DatabaseError, ValueError) as error:
-        st.error(f"Could not generate the forecast: {error}")
+        st.error(t("forecast.error_generation_failed", error=error))
         return
 
-    section("insights", f"Forecast for {result['product']['name']} ({result['product']['sku']})")
+    section(
+        "insights",
+        t(
+            "forecast.section_result",
+            name=result["product"]["name"],
+            sku=result["product"]["sku"],
+        ),
+    )
     # Yellow pill = the estimate/caution tone (DEC-065): every number
     # below is an estimate, not a guaranteed outcome.
     st.markdown(
-        f'{pill("Estimate", "caution")} These are demand estimates — '
-        "actual demand can differ.",
+        f'{pill(t("forecast.pill_estimate"), "caution")} '
+        + t("forecast.pill_note"),
         unsafe_allow_html=True,
     )
-    st.caption(f"Method: {MODEL_LABELS.get(result['model_used'], result['model_used'])}")
+    method_code = result["model_used"]
+    method_label = (
+        t(MODEL_LABELS[method_code])
+        if method_code in MODEL_LABELS
+        else method_code
+    )
+    st.caption(t("forecast.method_caption", method=method_label))
 
     rows = result["rows"]
     total = sum(row["predicted_demand"] for row in rows)
     columns = st.columns(3)
     columns[0].metric(
-        f"Total demand ({result['horizon_days']} days)",
+        t("forecast.metric_total", days=result["horizon_days"]),
         f"{total:.1f}",
         icon=":material/trending_up:",
         border=True,
     )
     columns[1].metric(
-        "Average per day",
+        t("forecast.metric_avg_per_day"),
         f"{total / len(rows):.1f}",
         icon=":material/calendar_month:",
         border=True,
     )
     columns[2].metric(
-        "Dataset item",
+        t("forecast.metric_dataset_item"),
         result["dataset_item_id"],
         icon=":material/dataset:",
         border=True,
@@ -231,11 +241,13 @@ def _render_forecast(product_id: int, horizon: int) -> None:
 
     import pandas as pd
 
+    date_label = t("forecast.column_date")
+    demand_label = t("forecast.column_predicted")
     table = pd.DataFrame(
         [
             {
-                "Date": row["forecast_date"],
-                "Predicted demand": row["predicted_demand"],
+                date_label: row["forecast_date"],
+                demand_label: row["predicted_demand"],
             }
             for row in rows
         ]
@@ -245,12 +257,9 @@ def _render_forecast(product_id: int, horizon: int) -> None:
         hide_index=True,
         width="stretch",
         column_config={
-            "Predicted demand": st.column_config.NumberColumn(
-                "Predicted demand", format="%.1f",
+            demand_label: st.column_config.NumberColumn(
+                demand_label, format="%.1f",
             ),
         },
     )
-    st.caption(
-        "Raw predictions are rounded for display only; restocking "
-        "formulas use their own approved demand rule (DEC-059)."
-    )
+    st.caption(t("forecast.rounding_caption"))

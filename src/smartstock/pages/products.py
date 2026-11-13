@@ -8,6 +8,12 @@ Data always comes from the application services — the page contains no
 SQL and no business rules, only rendering, input collection, and error
 display. Validation messages come from the services (ValueError) and
 the database layer (DatabaseError) and are shown without changes.
+
+Interface text comes from the bilingual string table via
+:func:`smartstock.i18n.t` (F-020, DEC-066); English remains the
+default language. The "All" filter sentinel and the stock-status
+domain values stay language-independent — only their displayed labels
+are translated — so filter comparisons work in both languages.
 """
 
 import streamlit as st
@@ -18,6 +24,7 @@ from smartstock.domain.inventory import (
     STATUS_LOW_STOCK,
     STATUS_OUT_OF_STOCK,
 )
+from smartstock.i18n import t
 from smartstock.pages.ui import (
     empty_state,
     flash,
@@ -27,7 +34,7 @@ from smartstock.pages.ui import (
 )
 from smartstock.services import inventory_service, product_service
 
-ALL = "All"
+ALL = "All"  # sentinel option value; displayed via "common.all"
 
 # Semantic styling for the status column of the product table: a
 # light background tint plus a matching bold text color, so In Stock /
@@ -49,10 +56,8 @@ def render() -> None:
     """Render the Products & Inventory page."""
     page_header(
         "inventory_2",
-        "Products & Inventory",
-        "Active products with their current stock and stock status "
-        "(reorder point = average daily demand of the last 30 days × "
-        "lead time + safety stock).",
+        t("products.title"),
+        t("products.description"),
     )
 
     # Feedback messages survive the st.rerun() a successful action
@@ -60,7 +65,12 @@ def render() -> None:
     show_flash()
 
     tab_list, tab_add, tab_edit, tab_stock = st.tabs(
-        ["Product list", "Add product", "Edit product", "Adjust stock"]
+        [
+            t("products.tab_list"),
+            t("products.tab_add"),
+            t("products.tab_edit"),
+            t("products.tab_stock"),
+        ]
     )
     with tab_list:
         _render_listing()
@@ -80,14 +90,13 @@ def _render_listing() -> None:
     try:
         overview = inventory_service.get_stock_overview()
     except DatabaseError as error:
-        st.error(f"Could not load products: {error}")
+        st.error(t("products.load_error", error=error))
         return
 
     if not overview:
         empty_state(
-            "No products yet",
-            "Create your first product in the **Add product** tab "
-            "above to start tracking stock and demand.",
+            t("products.no_products_title"),
+            t("products.no_products_list_message"),
             icon="inventory_2",
         )
         return
@@ -95,7 +104,7 @@ def _render_listing() -> None:
     overview = _apply_filters(overview, len(overview))
     if not overview:
         st.warning(
-            "No products match the current search and filters.",
+            t("products.no_match_warning"),
             icon=":material/search_off:",
         )
         return
@@ -106,9 +115,9 @@ def _render_listing() -> None:
 def _apply_filters(overview: list, total_products: int) -> list:
     """Search and filter widgets, returning the filtered rows."""
     search = st.text_input(
-        "Search products",
-        placeholder="Type a product name or SKU…",
-        help="Filters by product name or SKU, case-insensitive.",
+        t("products.search_label"),
+        placeholder=t("products.search_placeholder"),
+        help=t("products.search_help"),
     )
     left, right = st.columns(2)
     categories = sorted(
@@ -116,14 +125,31 @@ def _apply_filters(overview: list, total_products: int) -> list:
     )
     if any(not product["category"] for product in overview):
         categories.append("(no category)")
+
+    def category_label(value: str) -> str:
+        if value == ALL:
+            return t("common.all")
+        return (
+            t("products.no_category")
+            if value == "(no category)"
+            else value
+        )
+
     category = left.selectbox(
-        "Category", [ALL] + categories, index=0, disabled=not categories,
+        t("products.filter_category"),
+        [ALL] + categories,
+        index=0,
+        disabled=not categories,
+        format_func=category_label,
         key="listing_category",
     )
     status = right.selectbox(
-        "Stock status",
+        t("products.filter_status"),
         [ALL, STATUS_IN_STOCK, STATUS_LOW_STOCK, STATUS_OUT_OF_STOCK],
         index=0,
+        format_func=lambda value: (
+            t("common.all") if value == ALL else value
+        ),
         key="listing_status",
     )
 
@@ -145,7 +171,13 @@ def _apply_filters(overview: list, total_products: int) -> list:
         ]
 
     if len(rows) != total_products:
-        st.caption(f"Showing {len(rows)} of {total_products} products.")
+        st.caption(
+            t(
+                "products.caption_showing",
+                shown=len(rows),
+                total=total_products,
+            )
+        )
     return rows
 
 
@@ -153,19 +185,23 @@ def _render_product_table(overview: list) -> None:
     """Render the product list as the main content table."""
     import pandas as pd
 
+    name_label = t("products.column_name")
+    stock_label = t("products.column_stock")
+    demand_label = t("products.column_avg_demand")
+    status_label = t("products.column_status")
     rows = []
     for product in overview:
         rows.append(
             {
-                "Name": product["name"],
-                "SKU": product["sku"],
-                "Category": product["category"] or "—",
-                "Stock": product["current_stock"],
-                "Lead time (days)": product["lead_time_days"],
-                "Safety stock": product["safety_stock"],
-                "Reorder point": product["reorder_point"],
-                "Avg daily demand": product["average_daily_demand"],
-                "Status": product["stock_status"],
+                name_label: product["name"],
+                t("products.column_sku"): product["sku"],
+                t("products.column_category"): product["category"] or "—",
+                stock_label: product["current_stock"],
+                t("products.column_lead_time"): product["lead_time_days"],
+                t("products.column_safety_stock"): product["safety_stock"],
+                t("products.column_reorder_point"): product["reorder_point"],
+                demand_label: product["average_daily_demand"],
+                status_label: product["stock_status"],
             }
         )
 
@@ -179,17 +215,17 @@ def _render_product_table(overview: list) -> None:
             f"color: {STATUS_TEXT.get(status, 'inherit')}; "
             "font-weight: 700;"
         ),
-        subset=["Status"],
+        subset=[status_label],
     )
     st.dataframe(
         style,
         hide_index=True,
         width="stretch",
         column_config={
-            "Name": st.column_config.TextColumn("Name", width="medium"),
-            "Stock": st.column_config.NumberColumn("Stock"),
-            "Avg daily demand": st.column_config.NumberColumn(
-                "Avg daily demand", format="%.2f"
+            name_label: st.column_config.TextColumn(name_label, width="medium"),
+            stock_label: st.column_config.NumberColumn(stock_label),
+            demand_label: st.column_config.NumberColumn(
+                demand_label, format="%.2f"
             ),
         },
     )
@@ -204,8 +240,11 @@ def _render_product_table(overview: list) -> None:
             for product in low_stock
         )
         st.warning(
-            f"{len(low_stock)} product(s) are Out of Stock or Low Stock "
-            f"and may need restocking: {names}.",
+            t(
+                "products.low_stock_warning",
+                count=len(low_stock),
+                names=names,
+            ),
             icon=":material/warning:",
         )
 
@@ -215,29 +254,29 @@ def _render_product_table(overview: list) -> None:
 # ---------------------------------------------------------------------------
 
 def _render_add_form() -> None:
-    section("add_circle", "Add product")
-    st.caption(
-        "Required: name and SKU. Lead time defaults to 3 days and "
-        "safety stock to 0."
-    )
+    section("add_circle", t("products.add_section"))
+    st.caption(t("products.add_caption"))
     with st.form("add_product_form", clear_on_submit=False):
-        name = st.text_input("Name *", key="add_name")
-        sku = st.text_input("SKU *", key="add_sku")
+        name = st.text_input(t("products.field_name"), key="add_name")
+        sku = st.text_input(t("products.field_sku"), key="add_sku")
         category = st.text_input(
-            "Category (optional)", key="add_category"
+            t("products.field_category"), key="add_category"
         )
         left, middle, right = st.columns(3)
         initial_stock = left.number_input(
-            "Initial stock", min_value=0, value=0, step=1, key="add_stock"
+            t("products.field_initial_stock"),
+            min_value=0, value=0, step=1, key="add_stock",
         )
         lead_time_days = middle.number_input(
-            "Lead time (days)", min_value=0, value=3, step=1, key="add_lead"
+            t("products.field_lead_time"),
+            min_value=0, value=3, step=1, key="add_lead",
         )
         safety_stock = right.number_input(
-            "Safety stock", min_value=0, value=0, step=1, key="add_safety"
+            t("products.field_safety_stock"),
+            min_value=0, value=0, step=1, key="add_safety",
         )
         submitted = st.form_submit_button(
-            "Create product",
+            t("products.button_create"),
             type="primary",
             icon=":material/check:",
         )
@@ -254,36 +293,40 @@ def _render_add_form() -> None:
             safety_stock=int(safety_stock),
         )
     except (ValueError, DatabaseError) as error:
-        st.error(f"Product not created: {error}")
+        st.error(t("products.error_not_created", error=error))
         return
     flash(
         "success",
-        f"Created '{product['name']}' ({product['sku']}) with "
-        f"{product['current_stock']} units in stock.",
+        t(
+            "products.success_created",
+            name=product["name"],
+            sku=product["sku"],
+            stock=product["current_stock"],
+        ),
     )
     st.rerun()
 
 
 def _render_edit_form() -> None:
-    section("edit_square", "Edit product")
+    section("edit_square", t("products.edit_section"))
     # All products (including deactivated) so they can be reactivated.
     try:
         products = product_service.list_products(
             active_only=False,
         )
     except DatabaseError as error:
-        st.error(f"Could not load products: {error}")
+        st.error(t("products.load_error", error=error))
         return
     if not products:
         empty_state(
-            "No products to edit yet",
-            "Add a product in the **Add product** tab first.",
+            t("products.no_products_edit_title"),
+            t("products.no_products_first_message"),
             icon="edit_square",
         )
         return
 
     selected_sku = st.selectbox(
-        "Product to edit",
+        t("products.select_to_edit"),
         options=[product["sku"] for product in products],
         format_func=lambda sku: _format_product_label(products, sku),
         key="edit_product",
@@ -292,26 +335,30 @@ def _render_edit_form() -> None:
 
     with st.form(f"edit_form_{product['id']}", clear_on_submit=False):
         name = st.text_input(
-            "Name *", value=product["name"], key=f"edit_name_{product['id']}"
+            t("products.field_name"),
+            value=product["name"],
+            key=f"edit_name_{product['id']}",
         )
         sku = st.text_input(
-            "SKU *", value=product["sku"], key=f"edit_sku_{product['id']}"
+            t("products.field_sku"),
+            value=product["sku"],
+            key=f"edit_sku_{product['id']}",
         )
         category = st.text_input(
-            "Category (optional)",
+            t("products.field_category"),
             value=product["category"],
             key=f"edit_category_{product['id']}",
         )
         left, right = st.columns(2)
         lead_time_days = left.number_input(
-            "Lead time (days)",
+            t("products.field_lead_time"),
             min_value=0,
             value=product["lead_time_days"],
             step=1,
             key=f"edit_lead_{product['id']}",
         )
         safety_stock = right.number_input(
-            "Safety stock",
+            t("products.field_safety_stock"),
             min_value=0,
             value=product["safety_stock"],
             step=1,
@@ -320,7 +367,7 @@ def _render_edit_form() -> None:
         # DEC-060: optional link to the imported dataset's item number,
         # used by the Demand Forecast page.
         dataset_item_id = st.number_input(
-            "Linked dataset item (optional, blank = none)",
+            t("products.field_dataset_item"),
             min_value=1,
             value=product["dataset_item_id"]
             if product["dataset_item_id"] is not None
@@ -329,53 +376,46 @@ def _render_edit_form() -> None:
             key=f"edit_item_{product['id']}",
         )
         link_item = st.checkbox(
-            "Forecast via a linked dataset item",
+            t("products.field_link_item"),
             value=product["dataset_item_id"] is not None,
             key=f"edit_link_{product['id']}",
         )
         submitted = st.form_submit_button(
-            "Save changes",
+            t("products.button_save"),
             type="primary",
             icon=":material/save:",
         )
 
     if product["is_active"]:
-        st.caption(
-            "Removal deactivates the product (soft delete): history is "
-            "kept and the action is reversible (DEC-048)."
-        )
+        st.caption(t("products.caption_soft_delete"))
         confirm = st.checkbox(
-            "I understand this deactivates the product",
+            t("products.confirm_deactivate"),
             key=f"edit_confirm_{product['id']}",
         )
         if st.button(
-            "Deactivate product",
+            t("products.button_deactivate"),
             key=f"edit_discard_{product['id']}",
             icon=":material/inventory_2:",
         ):
             if not confirm:
-                st.error("Tick the confirmation box first.")
+                st.error(t("products.error_confirm_first"))
             else:
                 try:
                     product_service.set_product_active(
                         product["id"], False,
                     )
                 except (ValueError, DatabaseError) as error:
-                    st.error(f"Product not deactivated: {error}")
+                    st.error(t("products.error_not_deactivated", error=error))
                     return
                 flash(
                     "success",
-                    f"'{product['name']}' deactivated. Its sales history "
-                    "is preserved; reactivation is possible.",
+                    t("products.success_deactivated", name=product["name"]),
                 )
                 st.rerun()
     else:
-        st.caption(
-            "This product is currently deactivated (not listed, not "
-            "sold). You can edit it or reactivate it below."
-        )
+        st.caption(t("products.caption_inactive"))
         if st.button(
-            "Reactivate product",
+            t("products.button_reactivate"),
             key=f"edit_reactivate_{product['id']}",
             icon=":material/unarchive:",
         ):
@@ -384,10 +424,11 @@ def _render_edit_form() -> None:
                     product["id"], True,
                 )
             except (ValueError, DatabaseError) as error:
-                st.error(f"Product not reactivated: {error}")
+                st.error(t("products.error_not_reactivated", error=error))
                 return
             flash(
-                "success", f"'{product['name']}' reactivated."
+                "success",
+                t("products.success_reactivated", name=product["name"]),
             )
             st.rerun()
 
@@ -406,18 +447,27 @@ def _render_edit_form() -> None:
             ),
         )
     except (ValueError, DatabaseError) as error:
-        st.error(f"Changes not saved: {error}")
+        st.error(t("products.error_not_saved", error=error))
         return
     flash(
-        "success", f"Updated '{updated['name']}' ({updated['sku']})."
+        "success",
+        t(
+            "products.success_updated",
+            name=updated["name"],
+            sku=updated["sku"],
+        ),
     )
     st.rerun()
 
 
 def _format_product_label(products: list, sku: str) -> str:
     product = _find_by_sku(products, sku)
-    flag = "" if product["is_active"] else " (inactive)"
-    return f"{product['name']} ({product['sku']}){flag}"
+    return t(
+        "products.product_label",
+        name=product["name"],
+        sku=product["sku"],
+        flag="" if product["is_active"] else t("products.inactive_flag"),
+    )
 
 
 def _find_by_sku(products: list, sku: str) -> dict:
@@ -435,45 +485,51 @@ def _find_by_sku(products: list, sku: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _render_stock_panel() -> None:
-    section("package_2", "Adjust stock")
-    st.caption(
-        "**Add / remove units** for receipts, damage, and manual "
-        "changes. **Set exact stock** is a correction that overwrites "
-        "the stored value — use it to fix wrong data."
-    )
+    section("package_2", t("products.stock_section"))
+    st.caption(t("products.stock_caption"))
     try:
         products = product_service.list_products()
     except DatabaseError as error:
-        st.error(f"Could not load products: {error}")
+        st.error(t("products.load_error", error=error))
         return
     if not products:
         empty_state(
-            "No products yet",
-            "Add a product in the **Add product** tab first.",
+            t("products.no_products_title"),
+            t("products.no_products_first_message"),
             icon="package_2",
         )
         return
 
+    # The radio's sentinel values stay language-independent; only the
+    # displayed labels are translated, so the branch below works in
+    # both languages.
+    _MODE_CHANGE = "add-or-remove-units"
+    _MODE_EXACT = "set-exact-stock"
     mode = st.radio(
-        "Operation",
-        ["Add or remove units", "Set exact stock (correction)"],
+        t("products.operation_label"),
+        [_MODE_CHANGE, _MODE_EXACT],
+        format_func=lambda value: (
+            t("products.operation_change")
+            if value == _MODE_CHANGE
+            else t("products.operation_exact")
+        ),
         key="stock_mode",
     )
     selected_sku = st.selectbox(
-        "Product",
+        t("products.stock_filter_product"),
         options=[product["sku"] for product in products],
         format_func=lambda sku: _format_product_label(products, sku),
         key="stock_product",
     )
     product = _find_by_sku(products, selected_sku)
     st.metric(
-        "Current stock",
+        t("products.metric_current_stock"),
         product["current_stock"],
         icon=":material/package:",
         border=True,
     )
 
-    if mode == "Add or remove units":
+    if mode == _MODE_CHANGE:
         _render_adjust_by_change(product)
     else:
         _render_adjust_by_exact_level(product)
@@ -481,13 +537,13 @@ def _render_stock_panel() -> None:
 
 def _render_adjust_by_change(product: dict) -> None:
     change = st.number_input(
-        "Change (+ receive / − remove)",
+        t("products.field_change"),
         value=1,
         step=1,
         key=f"stock_change_{product['id']}",
     )
     if st.button(
-        "Apply adjustment",
+        t("products.button_apply"),
         key=f"stock_apply_{product['id']}",
         icon=":material/sync:",
     ):
@@ -497,30 +553,30 @@ def _render_adjust_by_change(product: dict) -> None:
             )
         except (ValueError, DatabaseError) as error:
             # Includes the DEC-034 negative-stock rejection.
-            st.error(f"Adjustment rejected: {error}")
+            st.error(t("products.error_adjustment_rejected", error=error))
             return
         flash(
             "success",
-            f"Stock adjusted. '{product['name']}' now has "
-            f"{new_stock} units.",
+            t(
+                "products.success_adjusted",
+                name=product["name"],
+                stock=new_stock,
+            ),
         )
         st.rerun()
 
 
 def _render_adjust_by_exact_level(product: dict) -> None:
-    st.warning(
-        "Corrections overwrite the stored stock without a recorded "
-        "explanation. Prefer 'Add or remove units' for regular changes."
-    )
+    st.warning(t("products.exact_warning"))
     exact = st.number_input(
-        "Exact stock count",
+        t("products.field_exact"),
         min_value=0,
         value=product["current_stock"],
         step=1,
         key=f"stock_exact_{product['id']}",
     )
     if st.button(
-        "Set stock level",
+        t("products.button_set"),
         key=f"stock_set_{product['id']}",
         icon=":material/edit:",
     ):
@@ -529,10 +585,14 @@ def _render_adjust_by_exact_level(product: dict) -> None:
                 product["id"], int(exact),
             )
         except (ValueError, DatabaseError) as error:
-            st.error(f"Correction rejected: {error}")
+            st.error(t("products.error_correction_rejected", error=error))
             return
         flash(
             "success",
-            f"Stock set to {new_stock} units for '{product['name']}'.",
+            t(
+                "products.success_set",
+                stock=new_stock,
+                name=product["name"],
+            ),
         )
         st.rerun()

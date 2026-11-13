@@ -908,3 +908,41 @@ It does not claim that the documentation has been created as local files or that
   Sales Management, Products & Inventory, Restocking Recommendations,
   Sales Analytics, Demand Forecast, Data Import. Sidebar stays
   fully bilingual from phase 1.
+
+### Bilingual Interface Phase 2 — All Remaining Pages Translated (DEC-066)
+
+- Date: 2026-11-13.
+- Status: Complete (F-020 rollout finished; every page bilingual).
+- Work Completed:
+  - The remaining six pages now go through `smartstock/i18n.t()`:
+    Sales Management, Products & Inventory, Restocking
+    Recommendations, Sales Analytics, Demand Forecast, and Data
+    Import — every label, metric, help text, empty state, warning,
+    table column, expander, and flash message.
+  - Language-independent sentinels preserved: the "All" filter option
+    values, the stock-status domain values (In Stock / Low Stock /
+    Out of Stock), the stock-operation radio values, and the
+    forecast horizon/model codes stay constant — only their
+    displayed labels translate, so filter comparisons and branching
+    logic work identically in both languages.
+  - The string table grew from ~90 to ~230 keys per language
+    (namespaced: `sales.*`, `products.*`, `restock.*`,
+    `analytics.*`, `forecast.*`, `imports.*`), with the en/ar parity
+    and placeholder-parity tests automatically covering the new keys.
+  - Deliberate v1 boundary, documented in the UI overview: service-
+    layer messages (validation errors, the restocking calculation
+    walk-through, unavailable-reason strings) and stock-status domain
+    values stay English in both languages, like SKUs — they are
+    content generated below the UI layer, not chrome.
+- Tests Executed: full pytest suite.
+- Test Results: 444/444 passing (unchanged; no new tests needed — the
+  phase-1 parity tests cover the expanded table), suite warning-free
+  apart from the known pre-existing upstream Streamlit/pandas
+  deprecation.
+- Tasks Updated: none (maintenance task, no TASK-xxx assigned).
+- Decisions Made: sentinel-translation pattern (values constant,
+  labels translated) for every widget whose value feeds logic.
+- Blockers: Arabic visual review still rides on the owner's manual
+  pass (Streamlit widget RTL rendering needs eyeballing).
+- Next Steps: Owner visual review of the Arabic UI; i18n feature
+  complete unless review findings require fixes.

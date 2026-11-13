@@ -10,6 +10,12 @@ Renders the approved sales workflows:
 Only active products are sellable (DEC-050); the history filter also
 lists inactive products so their preserved records stay reviewable
 (DEC-048). The page contains no SQL and no business rules.
+
+Interface text comes from the bilingual string table via
+:func:`smartstock.i18n.t` (F-020, DEC-066); English remains the
+default language. The "All" history-filter sentinel stays a language-
+independent constant — only its displayed label is translated — so
+the filter logic works in both languages.
 """
 
 from datetime import date, timedelta
@@ -17,6 +23,7 @@ from datetime import date, timedelta
 import streamlit as st
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.pages.ui import (
     empty_state,
     flash,
@@ -27,7 +34,7 @@ from smartstock.pages.ui import (
 from smartstock.services import product_service, sales_service
 from smartstock.utils.dates import utc_today_iso
 
-ALL = "All"
+ALL = "All"  # sentinel option value; displayed via "common.all"
 
 
 def _utc_today() -> date:
@@ -39,16 +46,15 @@ def render() -> None:
     """Render the Sales Management page."""
     page_header(
         "receipt_long",
-        "Sales Management",
-        "Recorded sales reduce stock automatically. Recording is "
-        "rejected when the requested quantity exceeds the available "
-        "stock — the sale is not stored and the inventory stays "
-        "unchanged.",
+        t("sales.title"),
+        t("sales.description"),
     )
 
     show_flash()
 
-    tab_entry, tab_history = st.tabs(["Record sale", "Sales history"])
+    tab_entry, tab_history = st.tabs(
+        [t("sales.tab_record"), t("sales.tab_history")]
+    )
     with tab_entry:
         _render_sale_form()
     with tab_history:
@@ -60,23 +66,22 @@ def render() -> None:
 # ---------------------------------------------------------------------------
 
 def _render_sale_form() -> None:
-    section("shopping_cart", "Record a sale")
+    section("shopping_cart", t("sales.record_section"))
     try:
         products = product_service.list_products()  # active only (DEC-050)
     except DatabaseError as error:
-        st.error(f"Could not load products: {error}")
+        st.error(t("sales.load_products_error", error=error))
         return
     if not products:
         empty_state(
-            "No products yet",
-            "A sale needs a product. Add one on the Products & "
-            "Inventory page first.",
+            t("sales.no_products_title"),
+            t("sales.no_products_entry_message"),
             icon="shopping_cart",
         )
         return
 
     selected_sku = st.selectbox(
-        "Product *",
+        t("sales.field_product"),
         options=[product["sku"] for product in products],
         format_func=lambda sku: _sale_product_label(products, sku),
         key="sale_product",
@@ -84,7 +89,7 @@ def _render_sale_form() -> None:
     product = _find_by_sku(products, selected_sku)
 
     st.metric(
-        "Available stock",
+        t("sales.metric_available_stock"),
         product["current_stock"],
         icon=":material/package:",
         border=True,
@@ -92,27 +97,27 @@ def _render_sale_form() -> None:
 
     left, right = st.columns(2)
     quantity = left.number_input(
-        "Quantity *",
+        t("sales.field_quantity"),
         min_value=1,
         value=1,
         step=1,
         key="sale_quantity",
     )
     sale_date = right.date_input(
-        "Sale date *",
+        t("sales.field_sale_date"),
         value=_utc_today(),
         key="sale_date",
-        help="Backdated entries are allowed; future dates are rejected.",
+        help=t("sales.sale_date_help"),
     )
 
     if st.button(
-        "Record sale",
+        t("sales.button_record"),
         key="sale_submit",
         type="primary",
         icon=":material/check:",
     ):
         if isinstance(sale_date, str):  # no date chosen
-            st.error("Sale date is required.")
+            st.error(t("sales.error_date_required"))
             return
         try:
             sale = sales_service.record_sale(
@@ -123,26 +128,32 @@ def _render_sale_form() -> None:
         except ValueError as error:
             # Includes the insufficient-stock rejection (DEC-035) with
             # requested/available quantities in the message.
-            st.error(f"Sale not recorded: {error}")
+            st.error(t("sales.error_not_recorded", error=error))
             return
         except DatabaseError as error:
-            st.error(f"Sale not recorded: {error}")
+            st.error(t("sales.error_not_recorded", error=error))
             return
         new_stock = product["current_stock"] - sale["quantity"]
         flash(
             "success",
-            f"Recorded sale of {sale['quantity']} unit(s) of "
-            f"'{product['name']}' on {sale['sale_date']}. "
-            f"Remaining stock: {new_stock}.",
+            t(
+                "sales.success_recorded",
+                quantity=sale["quantity"],
+                name=product["name"],
+                date=sale["sale_date"],
+                stock=new_stock,
+            ),
         )
         st.rerun()
 
 
 def _sale_product_label(products: list, sku: str) -> str:
     product = _find_by_sku(products, sku)
-    return (
-        f"{product['name']} ({product['sku']}) — "
-        f"{product['current_stock']} in stock"
+    return t(
+        "sales.product_label",
+        name=product["name"],
+        sku=product["sku"],
+        stock=product["current_stock"],
     )
 
 
@@ -158,45 +169,51 @@ def _find_by_sku(products: list, sku: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _render_sales_history() -> None:
-    section("history", "Sales history")
+    section("history", t("sales.history_section"))
     # Products of any state: deactivated products keep their records
     # visible (DEC-048).
     try:
         products = product_service.list_products(active_only=False)
         sales = None  # populated below after validation
     except DatabaseError as error:
-        st.error(f"Could not load sales history: {error}")
+        st.error(t("sales.load_history_error", error=error))
         return
     if not products:
         empty_state(
-            "No products yet",
-            "Sales history appears here once products and sales exist.",
+            t("sales.no_products_title"),
+            t("sales.no_products_history_message"),
             icon="history",
         )
         return
 
     product_names = {product["id"]: product for product in products}
 
+    def history_label(sku: str) -> str:
+        return t("common.all") if sku == ALL else _sale_product_label(
+            products, sku
+        )
+
     filtered = st.selectbox(
-        "Product",
+        t("sales.filter_product"),
         options=[ALL] + [product["sku"] for product in products],
-        format_func=lambda sku: ALL if sku == ALL else (
-            _sale_product_label(products, sku)
-        ),
+        format_func=history_label,
         key="history_product",
     )
     left, middle, right = st.columns([1, 1, 1.4])
     all_time = left.checkbox(
-        "All time", value=True, key="history_all_time"
+        t("sales.filter_all_time"), value=True, key="history_all_time"
     )
     start_date = middle.date_input(
-        "From",
+        t("sales.filter_from"),
         value=_utc_today() - timedelta(days=30),
         disabled=all_time,
         key="history_start",
     )
     end_date = right.date_input(
-        "To", value=_utc_today(), disabled=all_time, key="history_end",
+        t("sales.filter_to"),
+        value=_utc_today(),
+        disabled=all_time,
+        key="history_end",
     )
 
     product_id = None if filtered == ALL else _find_by_sku(
@@ -207,7 +224,7 @@ def _render_sales_history() -> None:
     else:
         if start_date > end_date:
             st.warning(
-                "The 'From' date is after the 'To' date.",
+                t("sales.warning_date_order"),
                 icon=":material/event_busy:",
             )
             return
@@ -219,24 +236,33 @@ def _render_sales_history() -> None:
             product_id=product_id, start_date=start, end_date=end
         )
     except DatabaseError as error:
-        st.error(f"Could not load sales history: {error}")
+        st.error(t("sales.load_history_error", error=error))
         return
     total_units = sum(sale["quantity"] for sale in sales)
-    st.caption(
-        f"{len(sales)} sale(s), {total_units} unit(s) total"
-        + (" (all time)" if all_time else f" between {start} and {end}")
-        + "."
-    )
+    if all_time:
+        st.caption(
+            t("sales.caption_all_time", count=len(sales), units=total_units)
+        )
+    else:
+        st.caption(
+            t(
+                "sales.caption_between",
+                count=len(sales),
+                units=total_units,
+                start=start,
+                end=end,
+            )
+        )
     if not sales:
         if all_time and filtered == ALL:
             empty_state(
-                "No sales recorded yet",
-                "Record the first sale in the **Record sale** tab.",
+                t("sales.empty_no_sales_title"),
+                t("sales.empty_no_sales_message"),
                 icon="receipt",
             )
         else:
             st.info(
-                "No sales match the current filters.",
+                t("sales.info_no_match"),
                 icon=":material/filter_alt:",
             )
         return
@@ -256,14 +282,14 @@ def _render_sales_table(
         product_label = (
             f"{product['name']} ({product['sku']})"
             if product is not None
-            else f"Product {sale['product_id']}"
+            else t("sales.unknown_product", id=sale["product_id"])
         )
         rows.append(
             {
-                "Product": product_label,
-                "Quantity": sale["quantity"],
-                "Sale date": sale["sale_date"],
-                "Recorded at": sale["created_at"],
+                t("sales.column_product"): product_label,
+                t("sales.column_quantity"): sale["quantity"],
+                t("sales.column_sale_date"): sale["sale_date"],
+                t("sales.column_recorded_at"): sale["created_at"],
             }
         )
     st.dataframe(
