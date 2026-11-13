@@ -762,3 +762,34 @@ It does not claim that the documentation has been created as local files or that
 - Decisions Made: None new.
 - Blockers: None recorded.
 - Next Steps: TASK-049 export reports (P2, optional for core), then phase wrap-up.
+
+### User Manual (v1)
+
+- Date: 2026-11-12.
+- Status: Complete — first full user manual published.
+- Work Completed (owner-directed documentation task):
+  - New guide: `docs/08-user-guide/user-manual.md`, written in plain,
+    non-technical language for app users (no programming knowledge
+    assumed).
+  - Covers: starting the app (install, run, first-time model training,
+    light/dark theme switch), a glossary of everyday terms, a full tour
+    of all seven pages matching the implemented UI (Dashboard,
+    Products & Inventory, Sales Management, Sales Analytics, Demand
+    Forecast, Data Import, Restocking Recommendations), step-by-step
+    recipes for common tasks (first setup, recording a sale, receiving
+    stock, fixing a wrong stock count, deciding an order, and
+    troubleshooting a product that cannot be forecast), the enforced
+    validation rules with the reasoning behind each, how to read app
+    messages, and an FAQ + glossary.
+  - Facts sourced from the actual page implementations and accepted
+    decisions (BR-008/020/022/023/024/035/048/050/051, DEC-026/031/033/
+    036/037/038/052/053/054/058/059/060/063); measured accuracy
+    (validation MAE 6.033, test MAE 6.088 vs. naive 10.512 / MA-7
+    8.378) reported in simple terms — no invented numbers.
+  - Linked from README §11.
+- Tests Executed: documentation-only change; no code paths touched.
+- Tasks Updated: none (documentation).
+- Decisions Made: none — the manual only describes approved behavior.
+- Blockers: None.
+- Next Steps: Owner review of the manual's wording; accuracy feedback
+  can ride along with the ongoing manual UI pass.

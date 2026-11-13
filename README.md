@@ -199,6 +199,10 @@ For background reading, start with:
 4. `docs/01-product/features.md`
 5. `docs/06-development/agent-workflow.md`
 
+**Using the app?** The plain-language user manual lives in
+`docs/08-user-guide/user-manual.md` — it explains every page, every
+feature, and common day-to-day tasks without any technical jargon.
+
 ---
 
 ## Project Status
