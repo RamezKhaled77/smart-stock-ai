@@ -1,0 +1,17 @@
+# Sample Import Files (dummy data for manual testing)
+
+Small dummy CSV files in the exact historical-import format
+(`date,store,item,sales` — Kaggle store-item layout, DEC-052) for
+testing the Data Import page by hand. All rows use store 1 (DEC-015)
+and dates before 2026-11-01. Generated with a seeded script; safe to
+commit (tiny, no real data).
+
+| File | Rows | What it is for | What you should see |
+|---|---|---|---|
+| `sample_1_clean_3items.csv` | 369 (all valid) | The happy path: items 1, 2, 3 with 123 days each (2026-07-01 → 2026-10-31), weekend demand bump. Link a product to item 1/2/3 on the Edit-product tab, then forecast. | All rows accepted; import succeeds. Importing **the same file again** is rejected by the SHA-256 fingerprint check (DEC-053). |
+| `sample_2_problems_demo.csv` | 9 (3 valid) | Sees the rejection report: one store-2 row (out of scope), one negative-sales row, one non-integer row, one wrong date format, one item=0 row, one within-file duplicate (item, date). | Preview shows: 1 skipped as out-of-scope store, 4 rejected with reasons, 1 duplicate skipped, 3 valid rows imported. |
+| `sample_3_short_history.csv` | 10 (all valid) | Short-history path (DEC-058): item 7 with only 10 observed days. Link a product to item 7 and forecast. | Forecast uses the "Trailing 7-day average" fallback method, not the Random Forest (that needs ≥ 31 days). |
+
+Verified against `src/smartstock/domain/csv_import.py` (2026-11-13):
+valid/rejected/duplicate/out-of-scope counts above are the real output
+of the validator, not expectations.
