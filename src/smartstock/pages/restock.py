@@ -15,6 +15,8 @@ import streamlit as st
 from smartstock.database.connection import DatabaseError
 from smartstock.pages.ui import (
     empty_state,
+    formula_box,
+    hero_stat,
     page_header,
     section,
     show_flash,
@@ -156,11 +158,24 @@ def _render_recommendation_table(rows: list) -> None:
 
 
 def _render_explanations(rows: list) -> None:
-    """One expander per product with the formula walk-through."""
+    """One expander per product with the formula walk-through.
+
+    Each expander leads with the suggested order as a hero stat
+    (orange — the "needs attention" tone, DEC-065) and shows the
+    calculation inputs in a monospace formula panel, so the number a
+    decision hangs on and the arithmetic behind it are visually
+    distinct from ordinary text.
+    """
     for row in rows:
         with st.expander(
             f"{row['product_name']} ({row['product_sku']}) — "
             f"order {row['recommended_order_quantity']} unit(s)",
             icon=":material/lightbulb:",
         ):
-            st.markdown(row["explanation"])
+            hero_stat(
+                f"{row['recommended_order_quantity']}",
+                "Suggested order (units) — "
+                f"{row['product_name']} ({row['product_sku']})",
+                tone="warn",
+            )
+            formula_box(row["explanation"])

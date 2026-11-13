@@ -29,12 +29,18 @@ from smartstock.services import inventory_service, product_service
 
 ALL = "All"
 
-# Semantic background tints for the status column of the product table
-# (light shades of the approved green/orange/red state colors).
+# Semantic styling for the status column of the product table: a
+# light background tint plus a matching bold text color, so In Stock /
+# Low Stock / Out of Stock read as states at a glance (DEC-064, DEC-065).
 STATUS_TINT = {
     STATUS_IN_STOCK: "#f0fdf4",  # green-50
     STATUS_LOW_STOCK: "#fff7ed",  # orange-50
     STATUS_OUT_OF_STOCK: "#fef2f2",  # red-50
+}
+STATUS_TEXT = {
+    STATUS_IN_STOCK: "#16a34a",  # green-600
+    STATUS_LOW_STOCK: "#ea580c",  # orange-600
+    STATUS_OUT_OF_STOCK: "#dc2626",  # red-600
 }
 DEFAULT_TINT = "transparent"
 
@@ -164,10 +170,15 @@ def _render_product_table(overview: list) -> None:
         )
 
     frame = pd.DataFrame(rows)
-    # Tint the status cells with the approved state colors so low and
-    # out-of-stock rows stand out without any decorative styling.
+    # Tint the status cells with the approved state colors and show
+    # them in their matching bold state color, so low and out-of-stock
+    # rows stand out without any decorative styling (DEC-065).
     style = frame.style.map(
-        lambda status: f"background-color: {STATUS_TINT.get(status, DEFAULT_TINT)}",
+        lambda status: (
+            f"background-color: {STATUS_TINT.get(status, DEFAULT_TINT)}; "
+            f"color: {STATUS_TEXT.get(status, 'inherit')}; "
+            "font-weight: 700;"
+        ),
         subset=["Status"],
     )
     st.dataframe(

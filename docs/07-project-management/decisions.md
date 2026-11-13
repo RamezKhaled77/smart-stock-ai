@@ -626,6 +626,7 @@ All open decisions have been closed, most recently on 2026-11-07 (CSV import pha
 | DEC-062 | Actual-vs-predicted display | Stored training-time evaluation metrics only; no new predictions, test window one-touch |
 | DEC-063 | Export reports | CSV exports on Sales Analytics and Restocking Recommendations; PDF deferred |
 | DEC-064 | UI design system | Material Symbols icons (Streamlit-native, no emoji), native theme in `.streamlit/config.toml`, SVG favicon; amended same day: dark theme + visual-hierarchy strengthening |
+| DEC-065 | Visual emphasis layer | Important data is visually special: native theme bumps (metric 2.5 rem/700, heading sizes 3/2.25/1.75 rem) + a small theme-aware CSS layer in `pages/ui.py` (hero stats, semantic pills, inline emphasis, monospace formula boxes, sized heading icons). Semantic colors carry reasons only: green = healthy, orange = attention, yellow = estimate/caution, red = danger/rejected, blue = information, gray = muted |
 
 ---
 

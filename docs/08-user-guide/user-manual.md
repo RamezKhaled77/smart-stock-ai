@@ -267,6 +267,8 @@ This page predicts how many units a product will sell in the coming days.
 
 **What you get:**
 
+- A yellow **Estimate** badge (yellow always means "caution — this is
+  an estimate, not a promise").
 - Total expected demand for the window and the average per day.
 - A day-by-day table of predicted demand.
 - The method used, which is one of two:
@@ -359,8 +361,10 @@ average daily demand, lead time, safety stock, reorder point, target
 stock, and the suggested **Order** quantity.
 
 **The reasoning behind every number** — each product has a lightbulb
-expander that walks you through the calculation in words, so you can
-always check the advice instead of trusting it blindly.
+expander that leads with the suggested order in big orange digits
+(orange = this needs your attention) and then walks you through the
+calculation in a step-by-step panel, so you can always check the advice
+instead of trusting it blindly.
 
 **How the advice is calculated (simple version):**
 
@@ -458,7 +462,7 @@ These are not obstacles — they protect your data:
 | Message type | What it means |
 |---|---|
 | Green confirmation | The action succeeded — it tells you exactly what changed. |
-| Orange/yellow warning | Attention needed, nothing broken (e.g., low stock, a correction overwrites data). |
+| Orange/yellow warning | Attention needed, nothing broken (e.g., low stock, a correction overwrites data). Yellow specifically marks **estimates**: forecast numbers and other advisory values. |
 | Red error | The action was **not** performed. Nothing half-happened; fix the problem and retry. |
 | Blue info | A neutral explanation (e.g., a product cannot be forecast yet, and why). |
 

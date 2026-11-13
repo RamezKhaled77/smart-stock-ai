@@ -793,3 +793,40 @@ It does not claim that the documentation has been created as local files or that
 - Blockers: None.
 - Next Steps: Owner review of the manual's wording; accuracy feedback
   can ride along with the ongoing manual UI pass.
+
+### Visual Emphasis and Semantic-Color Pass (DEC-065)
+
+- Date: 2026-11-13.
+- Status: Complete — owner-directed UI refinement.
+- Work Completed:
+  - Owner request: important data, stats, and formulas must be visually
+    special; icon sizes improved; more semantic colors (red, yellow,
+    …) used with explicit reasons.
+  - Native theme bumps (`.streamlit/config.toml`): metric values now
+    2.5 rem / weight 700; heading sizes pinned (3/2.25/1.75 rem) so
+    titles, sections, and numbers form an obvious scan order.
+  - New theme-aware CSS layer in `src/smartstock/pages/ui.py`
+    (`inject_design_system`, called from every page header): hero
+    stats, semantic pills, inline emphasis, monospace formula boxes,
+    and explicit heading-icon sizes. Reads the active light/dark
+    variant via `st.context.theme` each render, so it follows
+    `config.toml` palettes. All helpers escape user data.
+  - Applied where meaning lives: Restocking expanders lead with the
+    suggested order as a large orange hero number + formula panel;
+    Forecast results carry a yellow "Estimate" pill; the linked
+    dataset item id is bold; product-table status cells combine the
+    state tint with matching bold state text (green/orange/red).
+  - Semantic map documented (ui-overview §6): green = healthy,
+    orange = attention, yellow = estimate/caution, red = danger/
+    rejected, blue = information, gray = muted.
+  - Recorded as DEC-065 in decisions.md; user manual updated for the
+    restock expander, the Estimate badge, and yellow's meaning.
+- Tests Executed: full pytest suite (all page AppTests re-rendered
+  through the new layer).
+- Test Results: 435/435 passed, zero test modifications (all pinned
+  widgets and strings preserved; additive rendering only).
+- Tasks Updated: none (refinement of completed UI tasks).
+- Decisions Made: DEC-065 (accepted — owner-directed).
+- Blockers: Browser-based visual confirmation still rides on the
+  owner's in-flight manual UI pass (dark/light toggle check).
+- Next Steps: Owner visual pass; then TASK-047 → Verified.

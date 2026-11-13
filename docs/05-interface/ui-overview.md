@@ -132,15 +132,38 @@ The dark theme (`[theme.dark]`) ships with the app; users switch with
 Streamlit's built-in theme toggle (app menu → Settings → Theme: Light /
 Dark / Use system setting) — no code or configuration changes needed.
 
-Semantic usage:
+Semantic usage (color carries meaning, never decoration):
 
-- Green: healthy or positive status.
-- Yellow or orange: warning or attention required.
-- Red: critical or error state.
-- Neutral colors: general information.
+- Green — healthy or successful: In Stock, an accepted action.
+- Orange — attention required: Low Stock, needs reorder, a missing
+  setup step.
+- Yellow — caution / estimate: forecast values are estimates, not
+  guaranteed outcomes.
+- Red — danger: Out of Stock, an action was rejected (a red message
+  never changes data).
+- Blue — neutral information and guidance.
+- Gray — muted secondary context.
 
-Color communicates meaning rather than decoration; there are no
-gradients and no decorative styling.
+### Emphasis layer (DEC-065)
+
+Important data must be visually special, not buried in prose. On top of
+the native theme, `src/smartstock/pages/ui.py` ships a small
+theme-aware CSS layer (re-reads the active light/dark variant every
+render, so it follows `config.toml`):
+
+| Utility | Purpose |
+|---|---|
+| `hero_stat` | The one most important number on a page, extra large and semantically colored (e.g. the suggested order quantity on Restocking, in orange) |
+| `pill` | Small semantic badge for states and cautions (e.g. the yellow "Estimate" pill on forecast results) |
+| `strong` | Inline bold value inside a sentence (e.g. the linked dataset item id) |
+| `formula_box` | Monospace panel for calculation walk-throughs (restocking expanders) |
+
+Native-side sizing: metric values render at 2.5 rem / weight 700, and
+heading icons get explicit sizes (page title 2.5 rem, section headings
+proportional), so title → section → number → body scanning is obvious.
+Product-table status cells combine the state tint with matching bold
+state text. No decorative styling exists; every color and size maps to
+a meaning listed above.
 
 ### Visual hierarchy — identify elements by eye
 
@@ -157,8 +180,9 @@ Each interface element type has a distinct, consistent visual shape:
 | Page position | Icon + title header, section subheaders beneath |
 
 Typography reinforces the hierarchy: heading weights 800/700/600 for
-title/section/subsection levels against regular body text, and bolder
-metric values.
+title/section/subsection levels against regular body text, larger
+heading sizes (3/2.25/1.75 rem), and metric values at 2.5 rem / weight
+700 so the numbers dominate their cards.
 
 ### Typography and spacing
 

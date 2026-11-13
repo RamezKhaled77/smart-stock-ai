@@ -15,8 +15,10 @@ from smartstock.ml.inference import DEFAULT_HORIZON_DAYS, SUPPORTED_HORIZONS
 from smartstock.pages.ui import (
     empty_state,
     page_header,
+    pill,
     section,
     show_flash,
+    strong,
 )
 from smartstock.services import (
     evaluation_service,
@@ -164,7 +166,11 @@ def _render_link_status(product: dict) -> None:
             icon=":material/link_off:",
         )
     else:
-        st.caption(f":material/link: Linked dataset item: {linked}")
+        st.markdown(
+            f":material/link: Linked dataset item: "
+            f"{strong(str(linked))}",
+            unsafe_allow_html=True,
+        )
 
 
 def _render_forecast(product_id: int, horizon: int) -> None:
@@ -192,6 +198,13 @@ def _render_forecast(product_id: int, horizon: int) -> None:
         return
 
     section("insights", f"Forecast for {result['product']['name']} ({result['product']['sku']})")
+    # Yellow pill = the estimate/caution tone (DEC-065): every number
+    # below is an estimate, not a guaranteed outcome.
+    st.markdown(
+        f'{pill("Estimate", "caution")} These are demand estimates — '
+        "actual demand can differ.",
+        unsafe_allow_html=True,
+    )
     st.caption(f"Method: {MODEL_LABELS.get(result['model_used'], result['model_used'])}")
 
     rows = result["rows"]
