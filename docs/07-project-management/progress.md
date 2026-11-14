@@ -1061,3 +1061,35 @@ It does not claim that the documentation has been created as local files or that
   now moves to real-world use — replace the dummy data with actual
   inventory and run the app for real; future-scope items (TASK-050+)
   remain held pending explicit approval.
+
+### Real-World Use Preparation — Database Reset (owner-approved)
+
+- Date: 2026-11-14.
+- Status: Complete.
+- Work Completed:
+  - With the owner's explicit approval ("Full reset"), the app
+    database was cleared of the manual-test data (2 test products, 1
+    dummy import batch with 369 historical sales, test sales) so real
+    use starts from a clean slate.
+  - Safety: the previous database was kept as a local backup at
+    `data/smartstock.manual-test-backup-2026-11-14.db` (both files are
+    git-ignored `*.db`, so nothing enters version control).
+  - A fresh `data/smartstock.db` was created via
+    `initialize_database` (schema identical, all tables zero rows) and
+    the real `app.py` was booted headless: all 8 routes answered
+    HTTP 200 with no errors in the server log, and the boot created no
+    rows (the app seeds nothing on startup).
+- Tests Executed: route smoke check (all 8 routes), table-count
+  verification.
+- Test Results: 8/8 routes HTTP 200; products/sales/import_batches/
+  historical_sales all 0 rows after boot.
+- Tasks Updated: none (maintenance operation).
+- Decisions Made: owner-approved destructive reset, with backup.
+- Blockers: GitHub push pending — the stored credential is gone from
+  this environment, so the owner must run `git push` once in their
+  terminal to publish the three waiting commits (TASK-047 closure,
+  v1.1 bilingual service messages, this reset record).
+- Next Steps: Real-world use — the owner adds their actual products,
+  records real sales, and (for forecasting) links products to dataset
+  items and imports their real sales history; the trained model
+  artifacts remain in place.
