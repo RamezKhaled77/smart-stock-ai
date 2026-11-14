@@ -202,6 +202,9 @@ For background reading, start with:
 **Using the app?** The plain-language user manual lives in
 `docs/08-user-guide/user-manual.md` — it explains every page, every
 feature, and common day-to-day tasks without any technical jargon.
+For a ready-to-run practice session, follow the demo-data walkthrough
+(`docs/08-user-guide/demo-data-walkthrough.md`) with the included
+realistic dataset (`data/samples/demo_sales_history.csv`).
 
 ---
 

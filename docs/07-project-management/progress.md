@@ -1093,3 +1093,51 @@ It does not claim that the documentation has been created as local files or that
   records real sales, and (for forecasting) links products to dataset
   items and imports their real sales history; the trained model
   artifacts remain in place.
+
+### Realistic Demo Dataset + Walkthrough Guide (owner-requested)
+
+- Date: 2026-11-14.
+- Status: Complete.
+- Work Completed:
+  - `scripts/generate_demo_data.py` (committed, seeded, stdlib-only):
+    generates `data/samples/demo_sales_history.csv` — 1,621 rows of
+    plausible trading history (2025-10-10 → 2026-11-13) for five items
+    chosen to exercise every app path: 10 steady-with-weekend-rhythm,
+    11 high-volume weekly rhythm, 12 summer-seasonal, 13 growing, and
+    14 a 21-day newcomer (the DEC-058 MA-7 fallback demo). Item
+    numbers start at 10 so the file can never collide with the small
+    manual-test samples (items 1/2/3/7) via the UNIQUE (item,
+    sale_date) rule (DEC-053).
+  - Verified against the real validator: 1,621/1,621 accepted, 0
+    rejected, 0 duplicates, 0 other-store rows; measured per-item
+    means and last-30-day demand recorded in the walkthrough (no
+    invented numbers).
+  - `docs/08-user-guide/demo-data-walkthrough.md` (committed): a
+    step-by-step story — import the file, create five products with
+    opening stocks sized to survive the demo sales burst, record ten
+    backdated days of sales, then page-by-page expected results
+    (Dashboard counts, restock advice with approximate formula
+    figures, forecast methods per product, analytics ranking and the
+    "Rising" protein-bars trend) plus a try-it experiments table and
+    housekeeping notes. It also teaches the key data concept:
+    imported history fuels forecasting only; recorded sales drive
+    Dashboard/restock/analytics.
+  - `data/samples/README.md` gained the demo-file row; the root
+    README now links the walkthrough.
+  - `tests/test_demo_data.py` (3 new tests): the committed file stays
+    fully importable through the real validator, the item-profile
+    day-counts match the walkthrough, and the generator is
+    deterministic (regenerating reproduces the committed bytes).
+- Tests Executed: full pytest suite; validator run on the generated
+  file; emoji scan on all touched files.
+- Test Results: 451/451 passing (448 existing + 3 new), zero
+  warnings.
+- Tasks Updated: none (owner-requested utility, no TASK-xxx).
+- Decisions Made: demo dataset is seeded dummy data committed to
+  `data/samples/` (~31 KB, within the small-sample convention);
+  walkthrough figures measured, not estimated.
+- Blockers: GitHub push still pending owner action (three earlier
+  commits + this one wait for one `git push` from the owner's
+  terminal).
+- Next Steps: The owner follows the walkthrough on the freshly reset
+  database, then transitions to real inventory and sales.
