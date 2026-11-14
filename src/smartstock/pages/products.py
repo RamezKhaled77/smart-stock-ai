@@ -24,7 +24,7 @@ from smartstock.domain.inventory import (
     STATUS_LOW_STOCK,
     STATUS_OUT_OF_STOCK,
 )
-from smartstock.i18n import t
+from smartstock.i18n import status_label, t
 from smartstock.pages.ui import (
     empty_state,
     flash,
@@ -147,8 +147,11 @@ def _apply_filters(overview: list, total_products: int) -> list:
         t("products.filter_status"),
         [ALL, STATUS_IN_STOCK, STATUS_LOW_STOCK, STATUS_OUT_OF_STOCK],
         index=0,
+        # Option values stay the domain constants so the comparison
+        # below (and the pinned tests) are language-independent; only
+        # the displayed label translates (DEC-066 sentinel pattern).
         format_func=lambda value: (
-            t("common.all") if value == ALL else value
+            t("common.all") if value == ALL else status_label(value)
         ),
         key="listing_status",
     )
@@ -188,7 +191,7 @@ def _render_product_table(overview: list) -> None:
     name_label = t("products.column_name")
     stock_label = t("products.column_stock")
     demand_label = t("products.column_avg_demand")
-    status_label = t("products.column_status")
+    status_column = t("products.column_status")
     rows = []
     for product in overview:
         rows.append(
@@ -201,21 +204,33 @@ def _render_product_table(overview: list) -> None:
                 t("products.column_safety_stock"): product["safety_stock"],
                 t("products.column_reorder_point"): product["reorder_point"],
                 demand_label: product["average_daily_demand"],
-                status_label: product["stock_status"],
+                # Display value translates; the raw domain value stays
+                # in the data for filters, warnings, and exports.
+                status_column: status_label(product["stock_status"]),
             }
         )
 
     frame = pd.DataFrame(rows)
     # Tint the status cells with the approved state colors and show
     # them in their matching bold state color, so low and out-of-stock
-    # rows stand out without any decorative styling (DEC-065).
+    # rows stand out without any decorative styling (DEC-065). Cells
+    # hold the translated status label (v1.1), so the tint/text maps
+    # are keyed by the label in the active session language.
+    tint_by_label = {
+        status_label(value): color
+        for value, color in STATUS_TINT.items()
+    }
+    text_by_label = {
+        status_label(value): color
+        for value, color in STATUS_TEXT.items()
+    }
     style = frame.style.map(
         lambda status: (
-            f"background-color: {STATUS_TINT.get(status, DEFAULT_TINT)}; "
-            f"color: {STATUS_TEXT.get(status, 'inherit')}; "
+            f"background-color: {tint_by_label.get(status, DEFAULT_TINT)}; "
+            f"color: {text_by_label.get(status, 'inherit')}; "
             "font-weight: 700;"
         ),
-        subset=[status_label],
+        subset=[status_column],
     )
     st.dataframe(
         style,

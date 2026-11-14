@@ -180,10 +180,17 @@ with right-to-left direction. Key facts:
 - Numerals, SKUs, and decision-reference codes (DEC-xxx, BR-xxx) stay
   in Western digits in v1; URLs stay English regardless of language.
 - Every page is translated (Dashboard pilot first, then the remaining
-  six). Two content kinds stay English in both languages on purpose:
-  service-layer messages (validation errors, restocking
-  explanations, unavailable reasons) and domain values (stock-status
-  names), like SKUs — they are data, not chrome.
+  six). As of the v1.1 polish (owner-approved DEC-066 amendment,
+  2026-11-14), the service layer is bilingual too: validation errors,
+  the restocking explanations and unavailable reasons, CSV import
+  messages, analytics trend labels, and the evaluation window labels
+  are built through the same i18n table at raise time, so an Arabic
+  session sees Arabic service content (stock-status values translate
+  for display only — the domain constants stay the internal values,
+  and CSV exports keep the English source values). A small boundary
+  stays English on purpose, like SKUs: internal contract errors (ML
+  layer, developer-facing) and rare database operational failures —
+  they are diagnostics, not interface chrome.
 - The RTL stylesheet targets Streamlit's own containers explicitly
   (app shell, sidebar, headings, metrics, alerts, widgets) rather
   than relying on `html` inheritance — bare inheritance left headings

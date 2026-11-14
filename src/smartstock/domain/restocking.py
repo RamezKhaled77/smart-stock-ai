@@ -30,18 +30,14 @@ from smartstock.domain.inventory import (
     classify_stock,
     demand_window_days_used,
 )
+from smartstock.i18n import t
 
 # Products without history cannot yield a meaningful demand estimate:
 # ADD would be 0.0 for purely arithmetic reasons, which would read as
 # "for sure no reorder" rather than "unknown" (DEC-033 availability).
-UNAVAILABLE_NO_HISTORY = (
-    "No sales are recorded for this product yet, so average daily "
-    "demand cannot be estimated. Add a sale first."
-)
-UNAVAILABLE_NO_STOCK_FIELD = (
-    "This product has no recorded stock level, so the order quantity "
-    "cannot be calculated. Set the stock level first."
-)
+# The reason strings are translated at construction time through the
+# i18n table (``svc.restock.*``), so the active session language
+# decides the wording; see build_restock_recommendation.
 
 
 @dataclass
@@ -97,9 +93,10 @@ def build_restock_recommendation(
     daily_totals = dict(daily_totals)
 
     if product.get("current_stock") is None:
+        no_stock = t("svc.restock.unavailable_no_stock")
         return RestockRecommendation(
             available=False,
-            unavailable_reason=UNAVAILABLE_NO_STOCK_FIELD,
+            unavailable_reason=no_stock,
             current_stock=None,
             lead_time_days=int(product["lead_time_days"]),
             safety_stock=int(product["safety_stock"]),
@@ -110,14 +107,15 @@ def build_restock_recommendation(
             needs_reorder=None,
             target_stock=None,
             recommended_order_quantity=None,
-            explanation=UNAVAILABLE_NO_STOCK_FIELD,
+            explanation=no_stock,
             **base,
         )
 
     if not daily_totals:
+        no_history = t("svc.restock.unavailable_no_history")
         return RestockRecommendation(
             available=False,
-            unavailable_reason=UNAVAILABLE_NO_HISTORY,
+            unavailable_reason=no_history,
             current_stock=int(product["current_stock"]),
             lead_time_days=int(product["lead_time_days"]),
             safety_stock=int(product["safety_stock"]),
@@ -128,10 +126,9 @@ def build_restock_recommendation(
             needs_reorder=None,
             target_stock=None,
             recommended_order_quantity=None,
-            explanation=(
-                f"No sales history: {UNAVAILABLE_NO_HISTORY} A restock "
-                "recommendation appears from the first recorded sale "
-                "(DEC-058 availability policy)."
+            explanation=t(
+                "svc.restock.no_history_explanation",
+                reason=no_history,
             ),
             **base,
         )
@@ -156,17 +153,15 @@ def build_restock_recommendation(
     stock_status = classify_stock(current_stock, reorder_point)
     needs_reorder = current_stock <= reorder_point  # BR-022
 
-    explanation = (
-        f"Average daily demand is {demand:.2f} units/day over the "
-        f"last {window_days} day(s) up to the most recent sale "
-        "(DEC-059). "
-        f"Reorder point = {reorder_point} (ceil(demand × lead time "
-        f"{lead_time_days}) + safety {safety_stock}, DEC-032); "
-        f"target stock = {target_stock} "
-        f"(ceil(demand) × ({lead_time_days} + 7) + safety, DEC-038); "
-        f"order {order_quantity} unit(s) to reach target "
-        "(max(0, target − stock), DEC-033). "
-        "The decision to order stays with you (advisory, DEC-031)."
+    explanation = t(
+        "svc.restock.explanation",
+        demand=demand,
+        window_days=window_days,
+        reorder_point=reorder_point,
+        lead_time_days=lead_time_days,
+        safety_stock=safety_stock,
+        target_stock=target_stock,
+        order_quantity=order_quantity,
     )
 
     return RestockRecommendation(

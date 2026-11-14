@@ -34,6 +34,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
+from smartstock.i18n import t
 from smartstock.ml.features import FEATURE_COLUMNS
 
 DEFAULT_ARTIFACTS_DIR = Path("models") / "artifacts"
@@ -169,11 +170,7 @@ def load_model_metadata(
     artifacts_dir = Path(artifacts_dir)
     metadata_path = artifacts_dir / METADATA_FILE
     if not metadata_path.is_file():
-        raise ArtifactError(
-            "Model metadata not found. Run "
-            "``scripts/train_model.py`` to create one first (the "
-            "artifact files are git-ignored runtime data)."
-        )
+        raise ArtifactError(t("svc.forecast.metadata_missing"))
     try:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:

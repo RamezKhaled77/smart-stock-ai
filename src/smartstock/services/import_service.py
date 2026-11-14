@@ -23,6 +23,7 @@ import config
 from smartstock.database.connection import session
 from smartstock.database.initialization import initialize_database
 from smartstock.domain import csv_import
+from smartstock.i18n import t
 from smartstock.domain.csv_import import (
     CsvFileError,
     CsvStructureError,
@@ -166,8 +167,10 @@ def execute_import(file, db_path: Path | None = None) -> ImportResult:
     preview = _preview_from_analysis(raw, analysis, _file_name(file))
     if not preview.importable:
         raise ImportRejectedError(
-            "Nothing to import: the file contains no valid rows for "
-            f"store {csv_import.DEFAULT_STORE}."
+            t(
+                "svc.imports.nothing_to_import",
+                store=csv_import.DEFAULT_STORE,
+            )
         )
 
     if db_path is None:
@@ -318,4 +321,4 @@ def _file_name(file) -> str:
     name = getattr(file, "name", None)
     if isinstance(name, str) and name:
         return name
-    return "uploaded file"
+    return t("svc.imports.uploaded_file")

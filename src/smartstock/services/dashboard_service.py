@@ -21,6 +21,7 @@ calendar-day view. Read-only: nothing here mutates data.
 import datetime as dt
 from pathlib import Path
 
+from smartstock.domain.inventory import STATUS_IN_STOCK
 from smartstock.services import (
     product_service,
     restock_service,
@@ -90,7 +91,7 @@ def get_dashboard_data(
 
     low_stock = [
         row for row in recommendations if row["stock_status"] is not None
-        and row["stock_status"] != "In Stock"
+        and row["stock_status"] != STATUS_IN_STOCK
     ]
 
     return {

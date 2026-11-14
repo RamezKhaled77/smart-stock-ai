@@ -11,6 +11,7 @@ never deleted; ``set_product_active`` toggles the ``is_active`` flag.
 import sqlite3
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.utils.dates import utc_now_iso
 
 
@@ -25,8 +26,10 @@ def _validate_dataset_item_id(value: int | None) -> None:
         return
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise ValueError(
-            f"Dataset item id must be a positive integer or empty, "
-            f"got {value!r}."
+            t(
+                "svc.products.dataset_item_invalid",
+                value=value,
+            )
         )
 
 
@@ -66,9 +69,9 @@ def create_product(
     """
     _validate_dataset_item_id(dataset_item_id)
     if not isinstance(name, str) or not name.strip():
-        raise ValueError("Product name must be a nonempty string.")
+        raise ValueError(t("svc.products.name_required"))
     if not isinstance(sku, str) or not sku.strip():
-        raise ValueError("Product SKU must be a nonempty string.")
+        raise ValueError(t("svc.products.sku_required"))
     for label, value in (
         ("current_stock", current_stock),
         ("lead_time_days", lead_time_days),
@@ -76,8 +79,11 @@ def create_product(
     ):
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
             raise ValueError(
-                f"Product {label} must be a nonnegative integer, "
-                f"got {value!r}."
+                t(
+                    "svc.products.field_nonnegative",
+                    label=label,
+                    value=value,
+                )
             )
 
     now = utc_now_iso()
@@ -104,7 +110,9 @@ def create_product(
     except sqlite3.IntegrityError as error:
         message = str(error)
         if "UNIQUE" in message.upper() and "sku" in message.lower():
-            raise ValueError(f"SKU '{sku}' already exists.") from error
+            raise ValueError(
+                t("svc.products.sku_exists", sku=sku)
+            ) from error
         raise DatabaseError(
             f"Could not create product: {message}", cause=error
         ) from error
@@ -204,12 +212,12 @@ def update_product(
 
     if name is not None:
         if not isinstance(name, str) or not name.strip():
-            raise ValueError("Product name must be a nonempty string.")
+            raise ValueError(t("svc.products.name_required"))
         assignments.append("name = ?")
         parameters.append(name.strip())
     if sku is not None:
         if not isinstance(sku, str) or not sku.strip():
-            raise ValueError("Product SKU must be a nonempty string.")
+            raise ValueError(t("svc.products.sku_required"))
         assignments.append("sku = ?")
         parameters.append(sku.strip())
     if category is not None:
@@ -225,7 +233,11 @@ def update_product(
             or value < 0
         ):
             raise ValueError(
-                f"{label} must be a nonnegative integer, got {value!r}."
+                t(
+                    "svc.products.field_nonnegative_plain",
+                    label=label,
+                    value=value,
+                )
             )
     if lead_time_days is not None:
         assignments.append("lead_time_days = ?")
@@ -250,7 +262,9 @@ def update_product(
     except sqlite3.IntegrityError as error:
         message = str(error)
         if "UNIQUE" in message.upper() and "sku" in message.lower():
-            raise ValueError(f"SKU '{sku}' already exists.") from error
+            raise ValueError(
+                t("svc.products.sku_exists", sku=sku)
+            ) from error
         raise DatabaseError(
             f"Could not update product {product_id}: {message}",
             cause=error,

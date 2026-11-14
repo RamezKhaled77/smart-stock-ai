@@ -136,3 +136,121 @@ class TestArabicRendering:
             m.value for m in app_test.markdown if "direction: rtl" in m.value
         ]
         assert rtl == []
+
+
+class TestArabicServiceMessages:
+    """v1.1: service-layer messages follow the session language too.
+
+    The services build their messages through ``t()`` at raise time, so
+    an Arabic session sees Arabic validation errors and explanations
+    inside the pages' translated wrappers. English sessions keep the
+    exact pre-existing strings (pinned by the page/service tests).
+    """
+
+    @pytest.fixture
+    def app_db(self, tmp_path, monkeypatch):
+        from smartstock.database.initialization import initialize_database
+
+        import config
+
+        db_path = tmp_path / "i18n_service_test.db"
+        initialize_database(db_path)
+        monkeypatch.setattr(config, "DATABASE_PATH", db_path)
+        return db_path
+
+    @pytest.fixture
+    def product(self, app_db):
+        from smartstock.services import product_service
+
+        return product_service.create_product(
+            name="Coffee Bag 250g",
+            sku="SKU-COF",
+            initial_stock=20,
+            db_path=app_db,
+        )
+
+    def test_insufficient_stock_error_renders_in_arabic(
+        self, app_db, product
+    ) -> None:
+        # The message is built inside a page render, so the check runs
+        # the service through an AppTest script (with the language
+        # preset) rather than clicking through the page: AppTest's
+        # second run() re-invokes format_func widgets in the main
+        # thread, where the session language is invisible (a known
+        # Streamlit-testing limitation, not an app bug — the real
+        # frontend sends back the selected index). The page wrapper
+        # ("sales.error_not_recorded") is parity-checked by the string
+        # table tests above.
+        from streamlit.testing.v1 import AppTest
+
+        script = (
+            "from smartstock.services import sales_service\n"
+            "import streamlit as st\n"
+            "try:\n"
+            "    sales_service.record_sale(1, 25, '2026-01-01')\n"
+            "except Exception as error:\n"
+            "    st.error(str(error))\n"
+        )
+        app_test = AppTest.from_string(script, default_timeout=30)
+        app_test.session_state["language"] = "ar"
+        app_test.run()
+
+        assert app_test.exception == []
+        errors = [error.value for error in app_test.error]
+        assert any("المخزون غير كافٍ" in value for value in errors)
+        assert any("لم تُسجَّل عملية البيع" in value for value in errors)
+        # English service text never leaks into the Arabic session.
+        assert not any("Insufficient stock" in value for value in errors)
+
+    def test_english_session_keeps_pinned_service_text(
+        self, app_db, product
+    ) -> None:
+        """The default language must reproduce the pre-v1.1 wording."""
+        from smartstock.services import sales_service
+
+        with pytest.raises(sales_service.InsufficientStockError) as raised:
+            sales_service.record_sale(product["id"], 25, "2026-01-01")
+        message = str(raised.value)
+        assert message == (
+            "Insufficient stock for product "
+            f"{product['id']}: requested 25, but only 20 available. "
+            "The sale was not recorded."
+        )
+
+    def test_restock_unavailable_reason_renders_in_arabic(
+        self, app_db, product
+    ) -> None:
+        # Same AppTest-script pattern as the sales check above: the
+        # recommendation is built inside an Arabic-session render.
+        from streamlit.testing.v1 import AppTest
+
+        script = (
+            "from smartstock.domain.restocking import "
+            "build_restock_recommendation\n"
+            "from smartstock.services import product_service\n"
+            "import streamlit as st\n"
+            "product = product_service.get_product(1)\n"
+            "recommendation = build_restock_recommendation(product, {})\n"
+            "st.info(recommendation.unavailable_reason)\n"
+        )
+        app_test = AppTest.from_string(script, default_timeout=30)
+        app_test.session_state["language"] = "ar"
+        app_test.run()
+
+        assert app_test.exception == []
+        infos = [info.value for info in app_test.info]
+        assert any(
+            "لا توجد عمليات بيع مسجلة" in value for value in infos
+        )
+        assert not any(
+            "No sales are recorded" in value for value in infos
+        )
+
+    def test_status_labels_translate_for_display(self) -> None:
+        from smartstock.i18n import status_label
+
+        assert status_label("In Stock") == "In Stock"
+        assert status_label("Low Stock", lang="ar") == "مخزون منخفض"
+        assert status_label("Out of Stock", lang="ar") == "نفد المخزون"
+        # Unknown values pass through unchanged (never a raw key).
+        assert status_label("Mystery") == "Mystery"

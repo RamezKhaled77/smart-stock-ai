@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from smartstock.i18n import t
+
 # The Kaggle dataset format (CSV Import Specification §3).
 REQUIRED_COLUMNS = ("date", "store", "item", "sales")
 
@@ -103,28 +105,30 @@ def read_csv_file(file) -> pd.DataFrame:
             keep_default_na=False,
         )
     except pd.errors.EmptyDataError as error:
-        raise CsvFileError("The file contains no CSV data.") from error
+        raise CsvFileError(t("svc.imports.file_empty")) from error
     except UnicodeDecodeError as error:
         raise CsvFileError(
-            "The file is not readable as text (it must be a UTF-8 CSV "
-            "file)."
+            t("svc.imports.file_not_text")
         ) from error
     except pd.errors.ParserError as error:
         raise CsvFileError(
-            f"The file is not a well-formed CSV file: {error}"
+            t("svc.imports.file_malformed", error=error)
         ) from error
     except OSError as error:
-        raise CsvFileError(f"The file could not be read: {error}") from error
+        raise CsvFileError(
+            t("svc.imports.file_unreadable", error=error)
+        ) from error
 
     if frame.empty:
-        raise CsvFileError(
-            "The file has a valid CSV structure but contains no data "
-            "rows."
-        )
+        raise CsvFileError(t("svc.imports.file_no_rows"))
     if frame.columns.duplicated().any():
         raise CsvStructureError(
-            "The file contains duplicated column names: "
-            f"{sorted(set(frame.columns[frame.columns.duplicated()]))}."
+            t(
+                "svc.imports.duplicate_columns",
+                columns=sorted(
+                    set(frame.columns[frame.columns.duplicated()])
+                ),
+            )
         )
     return frame
 
@@ -140,15 +144,20 @@ def validate_file_structure(frame: pd.DataFrame) -> None:
     missing = [column for column in REQUIRED_COLUMNS if column not in frame.columns]
     if missing:
         raise CsvStructureError(
-            f"Missing required columns: {missing}. The historical "
-            "import format needs the columns "
-            f"{list(REQUIRED_COLUMNS)}."
+            t(
+                "svc.imports.missing_columns",
+                missing=missing,
+                required=list(REQUIRED_COLUMNS),
+            )
         )
     extra = [column for column in frame.columns if column not in REQUIRED_COLUMNS]
     if extra:
         raise CsvStructureError(
-            f"Unexpected columns: {extra}. The historical import format "
-            f"supports only {list(REQUIRED_COLUMNS)}."
+            t(
+                "svc.imports.unexpected_columns",
+                extra=extra,
+                required=list(REQUIRED_COLUMNS),
+            )
         )
 
 
@@ -183,10 +192,10 @@ def analyze_rows(
     analysis.rejected_rows = collect_row_problems(
         frame,
         {
-            "date": (date_bad, "not a valid date (expected YYYY-MM-DD)"),
-            "store": (store_bad, "not a valid store number"),
-            "item": (item_bad, "not a valid item number"),
-            "sales": (sales_bad, "not a valid non-negative integer"),
+            "date": (date_bad, t("svc.imports.bad_date")),
+            "store": (store_bad, t("svc.imports.bad_store")),
+            "item": (item_bad, t("svc.imports.bad_item")),
+            "sales": (sales_bad, t("svc.imports.bad_sales")),
         },
     )
 
@@ -203,8 +212,11 @@ def analyze_rows(
     analysis.duplicate_rows = [
         (
             _data_row_number(frame, index),
-            f"duplicate (item, date) within the file: item "
-            f"{candidates['item'][index]}, date {candidates['date'][index]}",
+            t(
+                "svc.imports.duplicate_row",
+                item=candidates["item"][index],
+                date=candidates["date"][index],
+            ),
         )
         for index in candidates[duplicate_mask].index
     ]
@@ -243,9 +255,14 @@ def collect_row_problems(frame: pd.DataFrame, problem_specs: dict) -> list:
             if mask[index]:
                 value = frame[column][index]
                 problems.append(
-                    f"{column} ({value!r} {reason})"
+                    t(
+                        "svc.imports.row_problem",
+                        column=column,
+                        value=value,
+                        reason=reason,
+                    )
                     if value != ""
-                    else f"{column} is missing"
+                    else t("svc.imports.row_missing", column=column)
                 )
         rows.append((_data_row_number(frame, index), "; ".join(problems)))
     return rows

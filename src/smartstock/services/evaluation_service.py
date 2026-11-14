@@ -13,18 +13,23 @@ Read-only; loads model metadata only (no model file needed).
 from pathlib import Path
 
 import config
+from smartstock.i18n import t
 from smartstock.ml import model_artifacts
 
 ARTIFACTS_DIR = Path(config.MODELS_DIR) / "artifacts"
 
+# Maps stored metadata keys to i18n keys; the display label is
+# translated at read time so the active session language decides the
+# wording (v1.1, DEC-066 amendment). An unknown key falls through to
+# the raw key, exactly like the previous English-only behavior.
 WINDOW_LABELS = {
-    "validation_window": "Validation window (2016)",
-    "test_window": "Test window (2017, evaluated once — DEC-056)",
+    "validation_window": "svc.evaluation.window_validation",
+    "test_window": "svc.evaluation.window_test",
 }
 
 BASELINE_LABELS = {
-    "naive_validation": "Naive (last value) — validation MAE",
-    "moving_average_7_validation": "Moving average (7-day) — validation MAE",
+    "naive_validation": "svc.evaluation.baseline_naive",
+    "moving_average_7_validation": "svc.evaluation.baseline_ma7",
 }
 
 
@@ -58,7 +63,7 @@ def get_evaluation_summary(
             continue
         windows.append(
             {
-                "label": WINDOW_LABELS.get(key, key),
+                "label": t(WINDOW_LABELS.get(key, key)),
                 "mae": window.get("mae"),
                 "rmse": window.get("rmse"),
                 "predictions": window.get("predictions"),
@@ -69,7 +74,7 @@ def get_evaluation_summary(
     reference = evaluation.get("baselines_for_reference", {})
     for key, label in BASELINE_LABELS.items():
         if key in reference:
-            baselines.append({"label": label, "mae": reference[key]})
+            baselines.append({"label": t(label), "mae": reference[key]})
 
     return {
         "model_name": metadata["model_name"],

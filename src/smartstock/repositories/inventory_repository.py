@@ -14,6 +14,7 @@ in one place:
 import sqlite3
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.utils.dates import utc_now_iso
 
 
@@ -38,7 +39,9 @@ def get_current_stock(
             cause=error,
         ) from error
     if row is None:
-        raise ValueError(f"Product {product_id} does not exist.")
+        raise ValueError(
+            t("svc.common.product_missing", product_id=product_id)
+        )
     return int(row["current_stock"])
 
 
@@ -69,17 +72,23 @@ def adjust_stock(
         DatabaseError: If the update fails at the database level.
     """
     if isinstance(change, bool) or not isinstance(change, int):
-        raise ValueError(f"Stock change must be an integer, got {change!r}.")
+        raise ValueError(
+            t("svc.inventory.change_integer", value=change)
+        )
     if change == 0:
-        raise ValueError("Stock change must not be zero.")
+        raise ValueError(t("svc.inventory.change_not_zero"))
 
     current = get_current_stock(connection, product_id)
     new_stock = current + change
     if new_stock < 0:
         raise ValueError(
-            f"Adjustment of {change} would take product {product_id} "
-            f"stock to {new_stock}, but negative stock is not allowed "
-            f"(current stock is {current})."
+            t(
+                "svc.inventory.negative_rejected",
+                change=change,
+                product_id=product_id,
+                new_stock=new_stock,
+                current=current,
+            )
         )
 
     try:
@@ -89,7 +98,9 @@ def adjust_stock(
             (new_stock, utc_now_iso(), product_id),
         )
         if cursor.rowcount == 0:
-            raise ValueError(f"Product {product_id} does not exist.")
+            raise ValueError(
+                t("svc.common.product_missing", product_id=product_id)
+            )
         if commit:
             connection.commit()
     except ValueError:
@@ -118,7 +129,7 @@ def set_stock_level(
     """
     if isinstance(stock, bool) or not isinstance(stock, int) or stock < 0:
         raise ValueError(
-            f"Stock level must be a nonnegative integer, got {stock!r}."
+            t("svc.inventory.level_nonnegative", value=stock)
         )
     try:
         cursor = connection.execute(
@@ -127,7 +138,9 @@ def set_stock_level(
             (stock, utc_now_iso(), product_id),
         )
         if cursor.rowcount == 0:
-            raise ValueError(f"Product {product_id} does not exist.")
+            raise ValueError(
+                t("svc.common.product_missing", product_id=product_id)
+            )
         connection.commit()
     except ValueError:
         raise

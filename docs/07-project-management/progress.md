@@ -1001,3 +1001,63 @@ It does not claim that the documentation has been created as local files or that
   require explicit approval before starting. A possible v1.1 polish
   item is translating service-layer messages to Arabic (deliberately
   English in v1, documented in the UI overview).
+
+### v1.1 Polish — Service-Layer Messages Bilingual (DEC-066 amendment)
+
+- Date: 2026-11-14.
+- Status: Complete (owner-directed; the recommended v1.1 polish after
+  TASK-047 closed v1).
+- Work Completed:
+  - Service- and domain-layer user-facing messages now translate at
+    raise time through the same parity-checked i18n table (new
+    `svc.*` namespace, ~60 keys per language): sales validation
+    (quantity/date/product/inactive/insufficient-stock), product
+    validation (name, SKU, nonnegative fields, duplicate SKU, dataset
+    item link), inventory validation (stock change, zero change,
+    negative-stock rejection, stock level), the restocking
+    explanations and unavailable reasons, CSV import file/structure/
+    row-reason messages, duplicate-import and nothing-to-import
+    rejections, forecast gates (inactive, not-linked, no-history) and
+    the model-metadata notice, analytics date validation and the six
+    trend labels, the evaluation window/baseline labels, and the
+    database prepare/open failures.
+  - Stock-status values ("In Stock" / "Low Stock" / "Out of Stock")
+    now translate for display only: the domain constants remain the
+    internal values everywhere (filters compare constants, CSV
+    exports keep the English source values), while the products-page
+    status cells and the status filter labels render the translated
+    names via a `status_label()` helper (same sentinel pattern as the
+    other widgets). The two dashboard/products Arabic warning strings
+    that previously embedded the English status names now use the
+    Arabic names.
+  - Consistency fix found during the pass: `dashboard_service.py`
+    compared the low-stock filter against the hardcoded literal
+    `"In Stock"` instead of the `STATUS_IN_STOCK` domain constant.
+  - English is unchanged byte-for-byte (the pinned tests pass
+    unmodified); Arabic sessions now see Arabic service content in
+    the translated page wrappers.
+  - Deliberate boundary, documented in the UI overview: internal
+    contract errors (ML layer, developer-facing) and database
+    operational error details stay English — diagnostics, not chrome.
+  - New tests (4, in `tests/test_i18n.py`): Arabic insufficient-stock
+    and no-history restock messages verified inside AppTest script
+    runs (the page-widget route is blocked by a known Streamlit
+    AppTest limitation: its second `run()` re-invokes `format_func`
+    in the main thread, where the session language is invisible —
+    a testing-tool quirk, not an app bug), the English default
+    reproduces the exact pre-v1.1 wording, and `status_label` covers
+    translation plus unknown-value pass-through.
+- Tests Executed: full pytest suite.
+- Test Results: 448/448 passing (444 existing + 4 new), apart from
+  the known pre-existing upstream Streamlit/pandas deprecation
+  warning.
+- Tasks Updated: none (maintenance polish, no TASK-xxx assigned);
+  DEC-066 amended.
+- Decisions Made: DEC-066 amendment (owner-directed): service-layer
+  messages bilingual; display-only stock-status translation; English
+  boundary for internal diagnostics.
+- Blockers: none.
+- Next Steps: v1.1 complete. Per the owner's direction, the project
+  now moves to real-world use — replace the dummy data with actual
+  inventory and run the app for real; future-scope items (TASK-050+)
+  remain held pending explicit approval.

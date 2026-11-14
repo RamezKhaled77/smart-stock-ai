@@ -18,6 +18,7 @@ from types import TracebackType
 from typing import Type
 
 from smartstock.database.initialization import initialize_database
+from smartstock.i18n import t
 
 
 class DatabaseError(Exception):
@@ -51,7 +52,11 @@ def connect(db_path: Path) -> sqlite3.Connection:
             initialize_database(db_path)
         except Exception as error:
             raise DatabaseError(
-                f"Could not prepare the database at {db_path}: {error}",
+                t(
+                    "svc.database.prepare_failed",
+                    path=db_path,
+                    error=error,
+                ),
                 cause=error,
             ) from error
 
@@ -59,7 +64,7 @@ def connect(db_path: Path) -> sqlite3.Connection:
         connection = sqlite3.connect(db_path)
     except sqlite3.Error as error:
         raise DatabaseError(
-            f"Could not open the database at {db_path}: {error}",
+            t("svc.database.open_failed", path=db_path, error=error),
             cause=error,
         ) from error
 

@@ -468,6 +468,11 @@ These are not obstacles — they protect your data:
 
 A golden rule of this app: **a red message never changes your data.**
 
+The message text itself follows the interface language: with the
+Arabic language selected in the sidebar, validation errors, stock
+explanations, and status names appear in Arabic (technical codes —
+SKUs, dates, DEC-xxx references — stay in Western form).
+
 ---
 
 ## 8. Frequently asked questions

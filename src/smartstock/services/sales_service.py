@@ -20,6 +20,7 @@ from pathlib import Path
 
 import config
 from smartstock.database.connection import ConnectionContext, session
+from smartstock.i18n import t
 from smartstock.repositories import (
     inventory_repository,
     product_repository,
@@ -41,9 +42,12 @@ class InsufficientStockError(ValueError):
         self.requested = requested
         self.available = available
         super().__init__(
-            f"Insufficient stock for product {product_id}: requested "
-            f"{requested}, but only {available} available. The sale was "
-            "not recorded."
+            t(
+                "svc.sales.insufficient_stock",
+                product_id=product_id,
+                requested=requested,
+                available=available,
+            )
         )
 
 
@@ -91,23 +95,27 @@ def record_sale(
         # non-integer, bad date) never open a transaction.
         if isinstance(quantity, bool) or not isinstance(quantity, int):
             raise ValueError(
-                f"Sale quantity must be an integer, got {quantity!r}."
+                t("svc.sales.quantity_integer", value=quantity)
             )
         if quantity <= 0:
-            raise ValueError("Sale quantity must be positive.")
+            raise ValueError(t("svc.sales.quantity_positive"))
         if not isinstance(sale_date, str) or sale_date > utc_today_iso():
             raise ValueError(
-                f"Sale date must be a 'YYYY-MM-DD' date not in the future, "
-                f"got {sale_date!r}."
+                t("svc.sales.date_invalid", value=sale_date)
             )
 
         product = product_repository.get_product(connection, product_id)
         if product is None:
-            raise ValueError(f"Product {product_id} does not exist.")
+            raise ValueError(
+                t("svc.common.product_missing", product_id=product_id)
+            )
         if not product["is_active"]:
             raise ValueError(
-                f"Product {product_id} ('{product['name']}') is inactive; "
-                "sales cannot be recorded for it."
+                t(
+                    "svc.sales.product_inactive",
+                    product_id=product_id,
+                    name=product["name"],
+                )
             )
 
         available = inventory_repository.get_current_stock(

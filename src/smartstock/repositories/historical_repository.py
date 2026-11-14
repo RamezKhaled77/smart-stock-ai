@@ -16,6 +16,7 @@ other repositories.
 import sqlite3
 
 from smartstock.database.connection import DatabaseError
+from smartstock.i18n import t
 from smartstock.utils.dates import utc_now_iso
 
 
@@ -37,10 +38,11 @@ class DuplicateImportError(ValueError):
         self.original_filename = original_filename
         self.original_created_at = original_created_at
         super().__init__(
-            "This exact file was already imported on "
-            f"{original_created_at} as '{original_filename}', so nothing "
-            "was imported again. Upload a different file if you want to "
-            "import new records."
+            t(
+                "svc.imports.duplicate_batch",
+                created_at=original_created_at,
+                filename=original_filename,
+            )
         )
 
 

@@ -12,6 +12,7 @@ weekday averages include zero-sale days inside the selected range.
 import datetime as dt
 from pathlib import Path
 
+from smartstock.i18n import t
 from smartstock.services import sales_service
 
 WEEKDAY_NAMES = (
@@ -63,8 +64,11 @@ def get_sales_analytics(
         _validate_iso(label, value)
     if start_date > end_date:
         raise ValueError(
-            "Start date must not be after the end date "
-            f"({start_date} > {end_date})."
+            t(
+                "svc.analytics.range_inverted",
+                start=start_date,
+                end=end_date,
+            )
         )
 
     start = dt.date.fromisoformat(start_date)
@@ -123,7 +127,7 @@ def _validate_iso(label: str, value: str) -> None:
         dt.date.fromisoformat(value)
     except (TypeError, ValueError) as error:
         raise ValueError(
-            f"{label} must be a 'YYYY-MM-DD' string, got {value!r}."
+            t("svc.analytics.date_invalid", label=label, value=value)
         ) from error
 
 
@@ -158,8 +162,11 @@ def get_product_performance(
         _validate_iso(label, value)
     if start_date > end_date:
         raise ValueError(
-            "Start date must not be after the end date "
-            f"({start_date} > {end_date})."
+            t(
+                "svc.analytics.range_inverted",
+                start=start_date,
+                end=end_date,
+            )
         )
 
     start = dt.date.fromisoformat(start_date)
@@ -208,7 +215,7 @@ def _trend_direction(
     it reports ``"Steady"`` (nothing to compare).
     """
     if days_in_range < 2:
-        return "Steady"
+        return t("svc.analytics.trend_steady")
     first_days = days_in_range // 2
     first_end = start + dt.timedelta(days=first_days)  # exclusive bound
     first_units = second_units = 0
@@ -224,17 +231,17 @@ def _trend_direction(
     second_avg = second_units / second_days if second_days else 0.0
 
     if first_avg == 0.0 and second_avg == 0.0:
-        return "No sales in range"
+        return t("svc.analytics.trend_no_sales")
     if first_avg == 0.0:
-        return "Rising (new)"
+        return t("svc.analytics.trend_rising_new")
     if second_avg == 0.0:
-        return "Falling (stopped)"
+        return t("svc.analytics.trend_falling_stopped")
     ratio = second_avg / first_avg
     if ratio >= RISING_THRESHOLD:
-        return "Rising"
+        return t("svc.analytics.trend_rising")
     if ratio <= FALLING_THRESHOLD:
-        return "Falling"
-    return "Steady"
+        return t("svc.analytics.trend_falling")
+    return t("svc.analytics.trend_steady")
 
 
 def _weekday_pattern(

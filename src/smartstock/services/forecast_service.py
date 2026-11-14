@@ -14,6 +14,7 @@ import pandas as pd
 
 import config
 from smartstock.database.connection import ConnectionContext, session
+from smartstock.i18n import t
 from smartstock.ml import model_artifacts
 from smartstock.ml.inference import (
     DEFAULT_HORIZON_DAYS,
@@ -104,15 +105,19 @@ def get_forecast(
     with _run(db_path) as connection:
         product = product_repository.get_product(connection, product_id)
         if product is None:
-            raise ValueError(f"Product {product_id} does not exist.")
+            raise ValueError(
+                t("svc.common.product_missing", product_id=product_id)
+            )
         if not product["is_active"]:
-            raise ValueError("Product is inactive and cannot be forecast.")
+            raise ValueError(t("svc.forecast.product_inactive"))
         item = product.get("dataset_item_id")
         if item is None:
             raise ProductNotLinkError(
-                "'{}' ({}) has no dataset item linked yet. Link one on "
-                "the Products & Inventory page to enable forecasts "
-                "(DEC-060).".format(product["name"], product["sku"])
+                t(
+                    "svc.forecast.not_linked",
+                    name=product["name"],
+                    sku=product["sku"],
+                )
             )
         daily_totals = historical_repository.get_daily_sales_for_item(
             connection, item
@@ -120,9 +125,7 @@ def get_forecast(
 
     if not daily_totals:
         raise ForecastError(
-            "No suitable history exists for the linked dataset item "
-            f"{item} (prediction-logic §13): importing historical "
-            "sales for that item is required before forecasting."
+            t("svc.forecast.no_history", item=item)
         )
 
     if model is None or metadata is None:

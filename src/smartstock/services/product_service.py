@@ -18,6 +18,7 @@ from pathlib import Path
 
 import config
 from smartstock.database.connection import ConnectionContext, session
+from smartstock.i18n import t
 from smartstock.repositories import product_repository
 
 
@@ -137,10 +138,7 @@ def update_product(
         DatabaseError: If the update fails at the database level.
     """
     if "current_stock" in fields:
-        raise ValueError(
-            "Stock cannot be changed through update_product; use the "
-            "inventory service for stock changes."
-        )
+        raise ValueError(t("svc.products.stock_immutable"))
     with _run(db_path) as connection:
         return product_repository.update_product(
             connection, product_id, **fields

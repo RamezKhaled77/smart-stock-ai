@@ -92,6 +92,27 @@ def t(key: str, lang: str | None = None, **params) -> str:
     return text
 
 
+# Display-only translation of the stock-status domain values (v1.1).
+# The domain constants (``domain.inventory.STATUS_*``) stay the
+# internal values everywhere — filters, comparisons, CSV exports — and
+# only what is rendered on screen goes through :func:`status_label`,
+# following the same "constant value, translated label" pattern as the
+# page widgets.
+def status_label(value: str, lang: str | None = None) -> str:
+    """Translate a stock-status value for display.
+
+    Unknown values pass through unchanged, so a value introduced later
+    never renders as a raw i18n key.
+    """
+    mapping = {
+        "In Stock": "svc.status.in_stock",
+        "Low Stock": "svc.status.low_stock",
+        "Out of Stock": "svc.status.out_of_stock",
+    }
+    key = mapping.get(value)
+    return t(key, lang) if key is not None else value
+
+
 def language_switcher() -> None:
     """Render the sidebar language control (call once, from app.py).
 
@@ -753,6 +774,190 @@ STRINGS = {
             "metrics above."
         ),
         "imports.row_line": "- Row {number}: {reason}",
+
+        # -----------------------------------------------------------
+        # Service- and domain-layer messages (v1.1, DEC-066 amendment).
+        # These are raised inside the services and surface on the pages
+        # through the {error} wrappers (or directly, for a few exception
+        # types). English strings are byte-identical to the literals
+        # they replaced, so the pinned English tests still pass; the
+        # Arabic session renders the Arabic column instead.
+        # Numerals, field-name codes (e.g. current_stock), DEC-xxx
+        # codes, SKUs, and dates stay Western/English in both columns.
+        # -----------------------------------------------------------
+        "svc.status.in_stock": "In Stock",
+        "svc.status.low_stock": "Low Stock",
+        "svc.status.out_of_stock": "Out of Stock",
+        "svc.common.product_missing": "Product {product_id} does not exist.",
+        "svc.sales.quantity_integer": (
+            "Sale quantity must be an integer, got {value!r}."
+        ),
+        "svc.sales.quantity_positive": "Sale quantity must be positive.",
+        "svc.sales.date_invalid": (
+            "Sale date must be a 'YYYY-MM-DD' date not in the future, "
+            "got {value!r}."
+        ),
+        "svc.sales.product_inactive": (
+            "Product {product_id} ('{name}') is inactive; sales cannot "
+            "be recorded for it."
+        ),
+        "svc.sales.insufficient_stock": (
+            "Insufficient stock for product {product_id}: requested "
+            "{requested}, but only {available} available. The sale was "
+            "not recorded."
+        ),
+        "svc.products.dataset_item_invalid": (
+            "Dataset item id must be a positive integer or empty, got "
+            "{value!r}."
+        ),
+        "svc.products.name_required": (
+            "Product name must be a nonempty string."
+        ),
+        "svc.products.sku_required": (
+            "Product SKU must be a nonempty string."
+        ),
+        "svc.products.field_nonnegative": (
+            "Product {label} must be a nonnegative integer, got "
+            "{value!r}."
+        ),
+        "svc.products.field_nonnegative_plain": (
+            "{label} must be a nonnegative integer, got {value!r}."
+        ),
+        "svc.products.sku_exists": "SKU '{sku}' already exists.",
+        "svc.products.stock_immutable": (
+            "Stock cannot be changed through update_product; use the "
+            "inventory service for stock changes."
+        ),
+        "svc.inventory.change_integer": (
+            "Stock change must be an integer, got {value!r}."
+        ),
+        "svc.inventory.change_not_zero": "Stock change must not be zero.",
+        "svc.inventory.negative_rejected": (
+            "Adjustment of {change} would take product {product_id} "
+            "stock to {new_stock}, but negative stock is not allowed "
+            "(current stock is {current})."
+        ),
+        "svc.inventory.level_nonnegative": (
+            "Stock level must be a nonnegative integer, got {value!r}."
+        ),
+        "svc.restock.unavailable_no_history": (
+            "No sales are recorded for this product yet, so average "
+            "daily demand cannot be estimated. Add a sale first."
+        ),
+        "svc.restock.unavailable_no_stock": (
+            "This product has no recorded stock level, so the order "
+            "quantity cannot be calculated. Set the stock level first."
+        ),
+        "svc.restock.no_history_explanation": (
+            "No sales history: {reason} A restock recommendation "
+            "appears from the first recorded sale (DEC-058 availability "
+            "policy)."
+        ),
+        "svc.restock.explanation": (
+            "Average daily demand is {demand:.2f} units/day over the "
+            "last {window_days} day(s) up to the most recent sale "
+            "(DEC-059). "
+            "Reorder point = {reorder_point} (ceil(demand × lead time "
+            "{lead_time_days}) + safety {safety_stock}, DEC-032); "
+            "target stock = {target_stock} "
+            "(ceil(demand) × ({lead_time_days} + 7) + safety, DEC-038); "
+            "order {order_quantity} unit(s) to reach target "
+            "(max(0, target − stock), DEC-033). "
+            "The decision to order stays with you (advisory, DEC-031)."
+        ),
+        "svc.imports.file_empty": "The file contains no CSV data.",
+        "svc.imports.file_not_text": (
+            "The file is not readable as text (it must be a UTF-8 CSV "
+            "file)."
+        ),
+        "svc.imports.file_malformed": (
+            "The file is not a well-formed CSV file: {error}"
+        ),
+        "svc.imports.file_unreadable": (
+            "The file could not be read: {error}"
+        ),
+        "svc.imports.file_no_rows": (
+            "The file has a valid CSV structure but contains no data "
+            "rows."
+        ),
+        "svc.imports.duplicate_columns": (
+            "The file contains duplicated column names: {columns}."
+        ),
+        "svc.imports.missing_columns": (
+            "Missing required columns: {missing}. The historical "
+            "import format needs the columns {required}."
+        ),
+        "svc.imports.unexpected_columns": (
+            "Unexpected columns: {extra}. The historical import format "
+            "supports only {required}."
+        ),
+        "svc.imports.bad_date": "not a valid date (expected YYYY-MM-DD)",
+        "svc.imports.bad_store": "not a valid store number",
+        "svc.imports.bad_item": "not a valid item number",
+        "svc.imports.bad_sales": "not a valid non-negative integer",
+        "svc.imports.row_problem": "{column} ({value!r} {reason})",
+        "svc.imports.row_missing": "{column} is missing",
+        "svc.imports.duplicate_row": (
+            "duplicate (item, date) within the file: item {item}, "
+            "date {date}"
+        ),
+        "svc.imports.nothing_to_import": (
+            "Nothing to import: the file contains no valid rows for "
+            "store {store}."
+        ),
+        "svc.imports.duplicate_batch": (
+            "This exact file was already imported on {created_at} as "
+            "'{filename}', so nothing was imported again. Upload a "
+            "different file if you want to import new records."
+        ),
+        "svc.imports.uploaded_file": "uploaded file",
+        "svc.forecast.product_inactive": (
+            "Product is inactive and cannot be forecast."
+        ),
+        "svc.forecast.not_linked": (
+            "'{name}' ({sku}) has no dataset item linked yet. Link one "
+            "on the Products & Inventory page to enable forecasts "
+            "(DEC-060)."
+        ),
+        "svc.forecast.no_history": (
+            "No suitable history exists for the linked dataset item "
+            "{item} (prediction-logic §13): importing historical "
+            "sales for that item is required before forecasting."
+        ),
+        "svc.forecast.metadata_missing": (
+            "Model metadata not found. Run "
+            "``scripts/train_model.py`` to create one first (the "
+            "artifact files are git-ignored runtime data)."
+        ),
+        "svc.analytics.date_invalid": (
+            "{label} must be a 'YYYY-MM-DD' string, got {value!r}."
+        ),
+        "svc.analytics.range_inverted": (
+            "Start date must not be after the end date "
+            "({start} > {end})."
+        ),
+        "svc.analytics.trend_rising": "Rising",
+        "svc.analytics.trend_falling": "Falling",
+        "svc.analytics.trend_steady": "Steady",
+        "svc.analytics.trend_rising_new": "Rising (new)",
+        "svc.analytics.trend_falling_stopped": "Falling (stopped)",
+        "svc.analytics.trend_no_sales": "No sales in range",
+        "svc.evaluation.window_validation": "Validation window (2016)",
+        "svc.evaluation.window_test": (
+            "Test window (2017, evaluated once — DEC-056)"
+        ),
+        "svc.evaluation.baseline_naive": (
+            "Naive (last value) — validation MAE"
+        ),
+        "svc.evaluation.baseline_ma7": (
+            "Moving average (7-day) — validation MAE"
+        ),
+        "svc.database.prepare_failed": (
+            "Could not prepare the database at {path}: {error}"
+        ),
+        "svc.database.open_failed": (
+            "Could not open the database at {path}: {error}"
+        ),
     },
     "ar": {
         # Sidebar and navigation (app.py).
@@ -816,9 +1021,9 @@ STRINGS = {
         "dashboard.column_reorder_point": "نقطة إعادة الطلب",
         "dashboard.column_suggested_order": "الكمية المقترح طلبها",
         "dashboard.low_section": "نظرة على المخزون المنخفض",
-        "dashboard.low_all_ok": "جميع المنتجات حالتها In Stock.",
+        "dashboard.low_all_ok": "جميع المنتجات حالتها «متوفر».",
         "dashboard.low_warning": (
-            "{count} منتج حالتها Out of Stock أو Low Stock "
+            "{count} منتج حالتها «نفد المخزون» أو «مخزون منخفض» "
             "(المخزون الحالي عند نقطة إعادة الطلب أو أقل منها، BR-008)."
         ),
         "dashboard.low_caption": (
@@ -946,8 +1151,8 @@ STRINGS = {
         "products.column_avg_demand": "متوسط الطلب اليومي",
         "products.column_status": "الحالة",
         "products.low_stock_warning": (
-            "{count} منتج حالتها Out of Stock أو Low Stock وقد تحتاج "
-            "إعادة تخزين: {names}."
+            "{count} منتج حالتها «نفد المخزون» أو «مخزون منخفض» وقد "
+            "تحتاج إعادة تخزين: {names}."
         ),
         "products.add_section": "إضافة منتج",
         "products.add_caption": (
@@ -1305,5 +1510,184 @@ STRINGS = {
             "بالأعلى."
         ),
         "imports.row_line": "- صف {number}: {reason}",
+
+        # -----------------------------------------------------------
+        # رسائل طبقة الخدمات والمنطق (v1.1، تعديل DEC-066).
+        # الأرقام وأسماء الحقول البرمجية (مثل current_stock) ورموز
+        # DEC-xxx ورموز المنتج SKU والتواريخ تبقى بالأرقام الغربية
+        # وبالإنجليزية في العمودين.
+        # -----------------------------------------------------------
+        "svc.status.in_stock": "متوفر",
+        "svc.status.low_stock": "مخزون منخفض",
+        "svc.status.out_of_stock": "نفد المخزون",
+        "svc.common.product_missing": "المنتج رقم {product_id} غير موجود.",
+        "svc.sales.quantity_integer": (
+            "يجب أن تكون كمية البيع عددًا صحيحًا، والقيمة المُدخلة "
+            "{value!r}."
+        ),
+        "svc.sales.quantity_positive": "يجب أن تكون كمية البيع أكبر من صفر.",
+        "svc.sales.date_invalid": (
+            "يجب أن يكون تاريخ البيع بصيغة 'YYYY-MM-DD' وليس بتاريخ "
+            "مستقبلي، والقيمة المُدخلة {value!r}."
+        ),
+        "svc.sales.product_inactive": (
+            "المنتج رقم {product_id} ('{name}') غير مفعّل؛ لا يمكن "
+            "تسجيل عمليات بيع له."
+        ),
+        "svc.sales.insufficient_stock": (
+            "المخزون غير كافٍ للمنتج رقم {product_id}: الكمية المطلوبة "
+            "{requested}، والمتاح {available} فقط. لم تُسجَّل عملية "
+            "البيع."
+        ),
+        "svc.products.dataset_item_invalid": (
+            "يجب أن يكون معرّف الصنف المرتبط عددًا صحيحًا موجبًا أو "
+            "فارغًا، والقيمة المُدخلة {value!r}."
+        ),
+        "svc.products.name_required": "يجب أن يكون اسم المنتج نصًا غير فارغ.",
+        "svc.products.sku_required": (
+            "يجب أن يكون رمز المنتج (SKU) نصًا غير فارغ."
+        ),
+        "svc.products.field_nonnegative": (
+            "يجب أن يكون الحقل {label} في المنتج عددًا صحيحًا غير سالب، "
+            "والقيمة المُدخلة {value!r}."
+        ),
+        "svc.products.field_nonnegative_plain": (
+            "يجب أن يكون الحقل {label} عددًا صحيحًا غير سالب، والقيمة "
+            "المُدخلة {value!r}."
+        ),
+        "svc.products.sku_exists": "رمز المنتج '{sku}' موجود بالفعل.",
+        "svc.products.stock_immutable": (
+            "لا يمكن تغيير المخزون عبر تحديث المنتج؛ استخدم لوحة "
+            "المخزون لتعديل الكميات."
+        ),
+        "svc.inventory.change_integer": (
+            "يجب أن يكون مقدار تغيير المخزون عددًا صحيحًا، والقيمة "
+            "المُدخلة {value!r}."
+        ),
+        "svc.inventory.change_not_zero": (
+            "يجب ألا يكون مقدار تغيير المخزون صفرًا."
+        ),
+        "svc.inventory.negative_rejected": (
+            "التعديل بمقدار {change} سيجعل مخزون المنتج رقم "
+            "{product_id} {new_stock}، لكن المخزون السالب غير مسموح "
+            "(المخزون الحالي {current})."
+        ),
+        "svc.inventory.level_nonnegative": (
+            "يجب أن يكون مستوى المخزون عددًا صحيحًا غير سالب، والقيمة "
+            "المُدخلة {value!r}."
+        ),
+        "svc.restock.unavailable_no_history": (
+            "لا توجد عمليات بيع مسجلة لهذا المنتج بعد، لذا لا يمكن "
+            "تقدير متوسط الطلب اليومي. سجّل عملية بيع أولًا."
+        ),
+        "svc.restock.unavailable_no_stock": (
+            "لا يوجد مستوى مخزون مسجل لهذا المنتج، لذا لا يمكن حساب "
+            "كمية الطلب. حدّد مستوى المخزون أولًا."
+        ),
+        "svc.restock.no_history_explanation": (
+            "لا يوجد سجل مبيعات: {reason} تظهر توصية إعادة التخزين من "
+            "أول عملية بيع مسجلة (سياسة التوفر DEC-058)."
+        ),
+        "svc.restock.explanation": (
+            "متوسط الطلب اليومي {demand:.2f} وحدة/يوم خلال آخر "
+            "{window_days} يوم حتى أحدث عملية بيع مسجلة (DEC-059). "
+            "نقطة إعادة الطلب = {reorder_point} (ceil(الطلب × مدة "
+            "التوريد {lead_time_days}) + مخزون الأمان {safety_stock}، "
+            "DEC-032)؛ المخزون المستهدف = {target_stock} "
+            "(ceil(الطلب) × ({lead_time_days} + 7) + مخزون الأمان، "
+            "DEC-038)؛ اطلب {order_quantity} وحدة للوصول إلى "
+            "المستهدف (max(0, المستهدف − المخزون)، DEC-033). "
+            "قرار الطلب يبقى لك (توصية إرشادية، DEC-031)."
+        ),
+        "svc.imports.file_empty": "الملف لا يحتوي على بيانات CSV.",
+        "svc.imports.file_not_text": (
+            "لا يمكن قراءة الملف كنص (يجب أن يكون ملف CSV بترميز "
+            "UTF-8)."
+        ),
+        "svc.imports.file_malformed": (
+            "الملف ليس ملف CSV سليم البنية: {error}"
+        ),
+        "svc.imports.file_unreadable": "تعذّرت قراءة الملف: {error}",
+        "svc.imports.file_no_rows": (
+            "بنية الملف سليمة كملف CSV لكنه لا يحتوي على صفوف بيانات."
+        ),
+        "svc.imports.duplicate_columns": (
+            "الملف يحتوي على أسماء أعمدة مكررة: {columns}."
+        ),
+        "svc.imports.missing_columns": (
+            "أعمدة مطلوبة مفقودة: {missing}. يحتاج تنسيق الاستيراد "
+            "التاريخي إلى الأعمدة {required}."
+        ),
+        "svc.imports.unexpected_columns": (
+            "أعمدة غير متوقعة: {extra}. يدعم تنسيق الاستيراد التاريخي "
+            "الأعمدة {required} فقط."
+        ),
+        "svc.imports.bad_date": "ليس تاريخًا صالحًا (المتوقع YYYY-MM-DD)",
+        "svc.imports.bad_store": "ليس رقم متجر صالحًا",
+        "svc.imports.bad_item": "ليس رقم صنف صالحًا",
+        "svc.imports.bad_sales": "ليس عددًا صحيحًا غير سالب",
+        "svc.imports.row_problem": "{column} ({value!r} {reason})",
+        "svc.imports.row_missing": "{column} مفقود",
+        "svc.imports.duplicate_row": (
+            "تكرار (صنف، تاريخ) داخل الملف: الصنف {item}، "
+            "التاريخ {date}"
+        ),
+        "svc.imports.nothing_to_import": (
+            "لا يوجد ما يمكن استيراده: الملف لا يحتوي على صفوف صالحة "
+            "للمتجر رقم {store}."
+        ),
+        "svc.imports.duplicate_batch": (
+            "تم استيراد هذا الملف نفسه بالفعل في {created_at} باسم "
+            "'{filename}'، لذلك لم يتم استيراد شيء جديد. ارفع ملفًا "
+            "مختلفًا إذا أردت استيراد سجلات جديدة."
+        ),
+        "svc.imports.uploaded_file": "ملف مرفوع",
+        "svc.forecast.product_inactive": (
+            "المنتج غير مفعّل ولا يمكن إنشاء توقع له."
+        ),
+        "svc.forecast.not_linked": (
+            "'{name}' ({sku}) غير مرتبط بصنف من بيانات الاستيراد بعد. "
+            "اربطه من صفحة المنتجات والمخزون لتفعيل التوقعات (DEC-060)."
+        ),
+        "svc.forecast.no_history": (
+            "لا يوجد سجل مبيعات مناسب للصنف المرتبط رقم {item} "
+            "(منطق التنبؤ §13): يجب استيراد المبيعات التاريخية لهذا "
+            "الصنف قبل إنشاء التوقعات."
+        ),
+        "svc.forecast.metadata_missing": (
+            "لم يتم العثور على بيانات النموذج. شغّل "
+            "``scripts/train_model.py`` لإنشائها أولًا (ملفات النموذج "
+            "بيانات تشغيل غير متتبعة في git)."
+        ),
+        "svc.analytics.date_invalid": (
+            "يجب أن يكون {label} نصًا بصيغة 'YYYY-MM-DD'، والقيمة "
+            "المُدخلة {value!r}."
+        ),
+        "svc.analytics.range_inverted": (
+            "يجب ألا يكون تاريخ البداية بعد تاريخ النهاية "
+            "({start} > {end})."
+        ),
+        "svc.analytics.trend_rising": "ارتفاع",
+        "svc.analytics.trend_falling": "انخفاض",
+        "svc.analytics.trend_steady": "مستقر",
+        "svc.analytics.trend_rising_new": "ارتفاع (جديد)",
+        "svc.analytics.trend_falling_stopped": "انخفاض (توقف)",
+        "svc.analytics.trend_no_sales": "لا مبيعات في النطاق",
+        "svc.evaluation.window_validation": "نافذة التحقق (2016)",
+        "svc.evaluation.window_test": (
+            "نافذة الاختبار (2017، قُيِّمت مرة واحدة — DEC-056)"
+        ),
+        "svc.evaluation.baseline_naive": (
+            "الأسلوب الساذج (آخر قيمة) — متوسط الخطأ المطلق للتحقق"
+        ),
+        "svc.evaluation.baseline_ma7": (
+            "المتوسط المتحرك (7 أيام) — متوسط الخطأ المطلق للتحقق"
+        ),
+        "svc.database.prepare_failed": (
+            "تعذّر تجهيز قاعدة البيانات في {path}: {error}"
+        ),
+        "svc.database.open_failed": (
+            "تعذّر فتح قاعدة البيانات في {path}: {error}"
+        ),
     },
 }
