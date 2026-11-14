@@ -960,3 +960,44 @@ It does not claim that the documentation has been created as local files or that
   reading left-to-right (DEC-066).
 - The RTL test now pins the heading selectors and the LTR exceptions,
   not just any "direction" string. Full suite still 444/444.
+
+### Manual UI Pass Complete — TASK-047 Verified, v1 Fully Closed
+
+- Date: 2026-11-14.
+- Status: Complete (TASK-047 → Verified; all 16 phases' tasks
+  TASK-001…TASK-049 now Verified with no open items).
+- Work Completed:
+  - The owner walked the full eight-section manual checklist in
+    `docs/06-development/manual-test-plan.md` across all seven pages
+    (startup & navigation, Products & Inventory, Sales Management,
+    Dashboard, Sales Analytics, Restocking Recommendations, Data
+    Import using the `data/samples/` dummy CSVs, Demand Forecast) and
+    ticked every item.
+  - Discovered issues: none. Nothing to fix from the pass.
+  - The same review confirmed the Arabic RTL hardening fix (DEC-066):
+    headings, titles, and containers now render right-to-left as
+    intended, and numeric inputs/charts stay LTR.
+  - Task records updated: TASK-047 → Verified in the task breakdown
+    with the completion record; the "Current Task Tracking" status
+    paragraph now shows all tasks Verified and 444 tests / DEC-066.
+  - Test-isolation fix exposed by the pass: the first full-suite run
+    after the owner's Data Import test failed 2 imports-page tests —
+    `test_imports_page.py` was the only page test file without the
+    temporary-database `app_db` fixture its six siblings use, so it
+    silently depended on the real database having no import batches.
+    The fixture (same pattern as the siblings) now gives the page
+    tests their own database; no assertions were changed, and the
+    real database — including the data the owner imported during the
+    manual pass — is untouched.
+- Tests Executed: full pytest suite (after the isolation fix).
+- Test Results: 444/444 passing, apart from the known pre-existing
+  upstream Streamlit/pandas deprecation warning.
+- Tasks Updated: TASK-047 → Verified.
+- Decisions Made: none new.
+- Blockers: none. v1 is fully closed — implementation, automated
+  verification, documentation, and manual verification all complete.
+- Next Steps: v1 is done; remaining work is owner-directed. Held
+  future-scope items (TASK-050+; F-012 PDF export, F-013…F-019) still
+  require explicit approval before starting. A possible v1.1 polish
+  item is translating service-layer messages to Arabic (deliberately
+  English in v1, documented in the UI overview).

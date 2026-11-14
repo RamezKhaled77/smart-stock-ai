@@ -2,7 +2,8 @@
 
 Covers the service-level preview summary and the Data Import page with
 Streamlit AppTest (page services resolve ``config.DATABASE_PATH`` at
-call time; no real database is touched — preview reads files only).
+call time; page tests run against a temporary database injected by the
+``app_db`` fixture — the real database is never touched).
 """
 
 import hashlib
@@ -11,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from smartstock.database.initialization import initialize_database
 from smartstock.domain.csv_import import CsvStructureError
 
 VALID_CSV = """date,store,item,sales
@@ -20,6 +22,22 @@ VALID_CSV = """date,store,item,sales
 2013-01-03,2,1,7
 2013-01-03,1,3,-1
 """
+
+
+@pytest.fixture
+def app_db(tmp_path: Path, monkeypatch) -> Path:
+    """Temporary database; services resolve config.DATABASE_PATH at call time.
+
+    The page renders its import-batch history from the database, so the
+    tests must not depend on the real database's contents (the owner's
+    manual TASK-047 pass left batches in it).
+    """
+    import config
+
+    db_path = tmp_path / "imports_app_test.db"
+    initialize_database(db_path)
+    monkeypatch.setattr(config, "DATABASE_PATH", db_path)
+    return db_path
 
 
 def _upload(content: str = VALID_CSV, name: str = "train.csv") -> tuple:
@@ -174,14 +192,14 @@ class TestPreviewService:
 
 
 class TestImportPage:
-    def test_empty_state_without_upload(self) -> None:
+    def test_empty_state_without_upload(self, app_db) -> None:
         app_test = _run_page()
         assert app_test.exception == []
         assert any(
             "Upload a CSV file" in info.value for info in app_test.info
         )
 
-    def test_valid_file_preview_with_metrics_and_sample(self) -> None:
+    def test_valid_file_preview_with_metrics_and_sample(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(_upload())
         app_test.run()
@@ -201,14 +219,14 @@ class TestImportPage:
         )
         assert app_test.warning == []  # a clean file has nothing to flag
 
-    def test_rejection_reasons_shown(self) -> None:
+    def test_rejection_reasons_shown(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(_upload())
         app_test.run()
         labels = [expander.label for expander in app_test.expander]
         assert any("Rejected rows" in label for label in labels)
 
-    def test_structure_error_message(self) -> None:
+    def test_structure_error_message(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(
             _upload(
@@ -223,7 +241,7 @@ class TestImportPage:
         )
         assert app_test.metric == []  # no preview metrics render
 
-    def test_file_level_error_message(self) -> None:
+    def test_file_level_error_message(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(
             _upload("", name="empty.csv")
@@ -235,7 +253,7 @@ class TestImportPage:
             for error in app_test.error
         )
 
-    def test_no_rows_in_scope_warning(self) -> None:
+    def test_no_rows_in_scope_warning(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(
             _upload(
@@ -250,7 +268,7 @@ class TestImportPage:
         )
         assert app_test.dataframe == []  # no accepted rows to sample
 
-    def test_fingerprint_caption_shown(self) -> None:
+    def test_fingerprint_caption_shown(self, app_db) -> None:
         app_test = _run_page()
         app_test.file_uploader[0].set_value(_upload())
         app_test.run()

@@ -920,7 +920,7 @@ Completion record (2026-11-11): formal verification run — **430 tests collecte
 ### TASK-047: Perform Manual Application Testing
 
 - Priority: P0
-- Status: In Progress
+- Status: Verified
 - Dependencies: TASK-044
 
 Description:
@@ -934,6 +934,16 @@ Evidence:
 - Discovered issues are tracked.
 
 Completion record (2026-11-11, **partially complete — human pass pending**): machine-verified part done — the real `app.py` was launched with `streamlit run app.py --server.headless` and every registered route (`/`, `dashboard`, `products-and-inventory`, `restocking-recommendations`, `sales-management`, `sales-analytics`, `demand-forecast`, `data-import`) answered HTTP 200 with a clean boot and clean shutdown; no runtime errors in the server log. The genuinely human part — clicking through the interface, judging layout and wording — cannot be verified by this agent, so a complete step-by-step checklist was written to `docs/06-development/manual-test-plan.md` (eight sections mirroring the seven pages plus navigation; every approved decision's user-visible behavior is a checklist item; a "Discovered issues" section tracks findings). Remaining: the owner walks the checklist; the task record updates to Verified when done.
+
+Completion record (2026-11-14, owner-executed): the owner walked the full
+eight-section checklist in `docs/06-development/manual-test-plan.md` —
+startup & navigation, Products & Inventory, Sales Management, Dashboard,
+Sales Analytics, Restocking Recommendations, Data Import (using the
+`data/samples/` dummy CSVs), and Demand Forecast — and ticked every item,
+covering all seven pages plus navigation. No issues were discovered and
+none remain open. The same review confirmed the Arabic RTL rendering fix
+(DEC-066 hardening). TASK-047 is Verified; all 16 planned phases'
+TASK-001…TASK-049 are now Verified with no open items.
 
 ### TASK-048: Review Documentation Consistency
 
@@ -1043,14 +1053,16 @@ The actual status should be updated during implementation.
 
 This document does not claim that any task has already been completed.
 
-**Status as of 2026-11-12 (phase wrap-up):** every core task
-TASK-001…TASK-049 is `Verified` — all 16 planned phases complete —
-except **TASK-047 (manual application testing), which is `In
-Progress`**: the machine-verified server smoke is done and the owner's
-click-through checklist is ready at
-`docs/06-development/manual-test-plan.md`. Tasks TASK-050+ (supplier
-management, multi-branch, purchase orders, POS integration, AI
-assistant, user roles, automated reordering) are future-scope P3
-features requiring explicit owner approval before any work starts.
-Final state: 435 automated tests passing; decisions DEC-001…DEC-063
-recorded and summarized in `docs/07-project-management/decisions.md`.
+**Status as of 2026-11-14 (TASK-047 closed):** every core task
+TASK-001…TASK-049 is `Verified` — all 16 planned phases complete, with
+no open items. TASK-047 (manual application testing) was completed by
+the owner on 2026-11-14: the full eight-section checklist in
+`docs/06-development/manual-test-plan.md` was walked across all seven
+pages with every item ticked and no discovered issues, and the same
+review confirmed the Arabic RTL rendering fix (DEC-066). Tasks
+TASK-050+ (supplier management, multi-branch, purchase orders, POS
+integration, AI assistant, user roles, automated reordering) are
+future-scope P3 features requiring explicit owner approval before any
+work starts. Final state: 444 automated tests passing; decisions
+DEC-001…DEC-066 recorded and summarized in
+`docs/07-project-management/decisions.md`.
